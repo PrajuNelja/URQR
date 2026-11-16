@@ -1,0 +1,14 @@
+# Starter ownership map. Replace each placeholder with an approved GitHub username or team.
+# Do not commit invented usernames.
+
+# Frontend representative
+# /frontend/ @<frontend-representative>
+
+# Backend representative
+# /backend/ @<backend-representative>
+
+# QA representative
+# /qa/ @<qa-representative>
+
+# Infrastructure representative
+# /infrastructure/ @<infrastructure-representative>

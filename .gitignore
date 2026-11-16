@@ -1,0 +1,53 @@
+# Java and Maven
+target/
+*.class
+*.jar
+*.war
+.mvn/timing.properties
+
+# Node.js and frontend build output
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDE and editor files
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+
+# Local databases and database artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.sqlitedb
+
+# Test reports and generated artifacts
+test-results/
+reports/
+surefire-reports/
+failsafe-reports/
+allure-results/
+*.generated.*
