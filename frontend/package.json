@@ -1,15 +1,45 @@
+
 {
-  "name": "frontend",
+  "name": "urqr-frontend",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite --config manager-pos/vite.config.ts manager-pos",
+    "build": "tsc -b manager-pos/tsconfig.json && vite build --config manager-pos/vite.config.ts manager-pos",
+    "lint": "eslint manager-pos",
+    "lint:fix": "eslint manager-pos --fix",
+    "format": "prettier --write \"manager-pos/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"manager-pos/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"manager-pos/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"manager-pos/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "preview": "vite preview --config manager-pos/vite.config.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "prettier": {
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "all",
+    "printWidth": 80,
+    "tabWidth": 2
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5",
+    "tailwindcss": "^4.3.5"
+  },
   "devDependencies": {
-    "prettier": "3.10.1"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "prettier": "3.10.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6"
   }
 }

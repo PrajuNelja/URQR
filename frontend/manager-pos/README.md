@@ -1,73 +1,133 @@
-# React + TypeScript + Vite
+# URQR – Manager POS Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 1. Project Overview
 
-Currently, two official plugins are available:
+The URQR Manager POS frontend is built using React, TypeScript, and Vite.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This application is part of the URQR Phase 1 standalone Manager POS project.
 
-## React Compiler
+## 2. Technology Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- ESLint
+- Prettier
+- pnpm
 
-## Expanding the ESLint configuration
+## 3. Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Install the following before setting up the project:
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+- Node.js 22 LTS
+- pnpm
+- Git
+- VS Code or another code editor
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Verify the installations:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+node --version
+pnpm --version
+git --version
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## 4. Project Structure
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```text
+frontend/
+├── package.json
+├── pnpm-lock.yaml
+└── manager-pos/
+    ├── index.html
+    ├── vite.config.ts
+    ├── tsconfig.json
+    ├── tsconfig.app.json
+    ├── tsconfig.node.json
+    └── src/
+        ├── assets/
+        ├── components/
+        ├── pages/
+        ├── App.tsx
+        ├── AppRouter.tsx
+        ├── index.css
+        └── main.tsx
 ```
+
+## 5. Installation
+
+Open the terminal in the `frontend` directory.
+
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+## 6. Run the Development Server
+
+```bash
+pnpm dev
+```
+
+Open the local URL displayed in the terminal.
+
+## 7. Build the Application
+
+```bash
+pnpm build
+```
+
+## 8. Preview the Production Build
+
+```bash
+pnpm preview
+```
+
+## 9. Code Quality Commands
+
+Check code using ESLint:
+
+```bash
+pnpm lint
+```
+
+Automatically fix supported ESLint issues:
+
+```bash
+pnpm lint:fix
+```
+
+Format source files:
+
+```bash
+pnpm format
+```
+
+Check formatting without modifying files:
+
+```bash
+pnpm format:check
+```
+
+## 10. Development Guidelines
+
+- Follow the existing project folder structure.
+- Use reusable components where appropriate.
+- Keep TypeScript types clear and consistent.
+- Follow the configured ESLint and Prettier rules.
+- Use the existing routing setup for approved pages.
+- Do not implement unapproved screens or features.
+- Follow the approved Phase 1 Manager POS requirements.
+
+## 11. Current Development Status
+
+- React + TypeScript + Vite setup: Completed
+- Initial routing: Completed
+- Tailwind CSS setup: Completed
+- ESLint configuration: Verified
+- Prettier configuration: Verified
+- Development and production build: Verified
+- Shared application layout: Pending approved design from the design team
