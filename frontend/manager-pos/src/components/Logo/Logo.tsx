@@ -22,8 +22,10 @@ export const Logo: React.FC<LogoProps> = ({
     <div className={`${logoConfig.base} ${className}`}>
       {/* Icon Wrapper */}
       <div className={`${logoConfig.icon.wrapper} ${currentSize.wrapper}`}>
-        {/* Lucide Icon */}
-        <Sparkles className={`${logoConfig.icon.star} ${currentSize.star}`} strokeWidth={2} />
+        <Sparkles 
+          className={`${logoConfig.icon.star} ${currentSize.star}`} 
+          strokeWidth={2} 
+        />
       </div>
 
       {/* Text Wrapper */}
