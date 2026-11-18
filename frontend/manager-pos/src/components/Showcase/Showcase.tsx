@@ -1,8 +1,12 @@
 // src/components/Showcase.tsx
-// import { Button } from "./Buttons/Button";
-// import { InputField } from "./InputField/InputField"; // We will add this next!
 
+import { Logo } from "../Logo/Logo";
+
+// 1. Imports
+
+// 2. Component
 export default function Showcase() {
+  // 3. Export / Return
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-10">
       
@@ -12,28 +16,17 @@ export default function Showcase() {
         <p className="text-text-muted">Testing all reusable components with the Ivory Luxe theme.</p>
       </div>
 
-      {/* Buttons Section */}
+      {/* Logo Section */}
       <section className="bg-surface p-6 rounded-md border border-border-subtle shadow-sm">
         <h2 className="text-xl font-serif text-primary mb-4 border-b border-border-subtle pb-2">
-          Buttons
+          Logo
         </h2>
-        
-        <div className="flex flex-wrap gap-4 items-center">
-          {/* <Button variant="primary">Primary Action</Button>
-          <Button variant="secondary">Secondary Action</Button>
-          <Button variant="outline">Outline Action</Button>
-          <Button variant="ghost">Ghost Action</Button>
-          <Button variant="primary" isLoading>Processing...</Button>
-          <Button variant="primary" disabled>Disabled</Button> */}
+        <div className="flex flex-col gap-6">
+          <Logo size="sm" />
+          <Logo size="md" />
+          <Logo size="lg" />
+          <Logo size="md" showText={false} />
         </div>
-      </section>
-
-      {/* Input Field Section (Coming next) */}
-      <section className="bg-surface p-6 rounded-md border border-border-subtle shadow-sm">
-        <h2 className="text-xl font-serif text-primary mb-4 border-b border-border-subtle pb-2">
-          Input Fields
-        </h2>
-        <p className="text-sm text-text-muted">Will be added here next.</p>
       </section>
 
     </div>
