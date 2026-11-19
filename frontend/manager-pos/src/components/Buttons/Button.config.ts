@@ -1,18 +1,72 @@
-// src/components/Buttons/Button.config.ts
+// src/components/Buttons/Buttons.config.ts
+// All configs for the Buttons folder: Button, IconButton
 
-export const buttonConfig = {
-  base: "inline-flex items-center justify-center font-sans font-medium rounded-sm transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed",
-  variants: {
-    primary: "bg-primary text-surface hover:bg-primary/90 border border-transparent",
-    secondary: "bg-surface text-primary border border-border-subtle hover:bg-app-bg",
-    outline: "bg-transparent text-primary border border-primary hover:bg-primary hover:text-surface",
-    ghost: "bg-transparent text-text-muted hover:text-primary hover:bg-app-bg border border-transparent",
-    danger: "bg-red-600 text-white hover:bg-red-700 border border-transparent",
-  },
-  sizes: {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base",
-    icon: "p-2",
-  },
+import type { ButtonSize, ButtonVariant } from "./Button.types";
+
+
+// ═══════════════════════════════════════════
+// BUTTON — BASE
+// ═══════════════════════════════════════════
+
+export const BUTTON_BASE =
+  "inline-flex items-center justify-center gap-2 font-bold tracking-[0.04em] " +
+  "rounded-md border transition-all duration-200 " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 " +
+  "disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none " +
+  "hover:-translate-y-[2px] active:translate-y-0";
+
+// ═══════════════════════════════════════════
+// BUTTON — VARIANTS
+// ═══════════════════════════════════════════
+
+export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
+  primary:
+    "bg-primary text-button-text border-primary hover:brightness-110 shadow-ivory",
+  secondary:
+    "bg-accent-gold text-button-text border-accent-gold hover:brightness-110 shadow-ivory",
+  outline:
+    "bg-transparent text-primary border-border-subtle hover:border-accent-gold hover:text-accent-gold",
+  ghost:
+    "bg-transparent text-primary border-transparent hover:bg-app-bg",
+  danger:
+    "bg-error-text text-button-text border-error-text hover:brightness-110",
 };
+
+// ═══════════════════════════════════════════
+// BUTTON — SIZES
+// ═══════════════════════════════════════════
+
+export const BUTTON_SIZES: Record<ButtonSize, string> = {
+  sm: "text-[11px] px-3 py-1.5",
+  md: "text-xs px-3.5 py-2.5",
+  lg: "text-sm px-5 py-3.5",
+  icon: "p-2",
+};
+
+// ═══════════════════════════════════════════
+// BUTTON — MODIFIERS
+// ═══════════════════════════════════════════
+
+export const BUTTON_FULL_WIDTH = "w-full";
+
+// ═══════════════════════════════════════════
+// ICON BUTTON — BASE
+// ═══════════════════════════════════════════
+
+export const ICON_BUTTON_BASE =
+  "inline-flex items-center justify-center rounded-md border " +
+  "transition-all duration-200 " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 " +
+  "disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none";
+
+export const ICON_BUTTON_SIZES: Record<"sm" | "md" | "lg", string> = {
+  sm: "w-8 h-8",
+  md: "w-9 h-9",
+  lg: "w-11 h-11",
+};
+
+// ═══════════════════════════════════════════
+// SPINNER
+// ═══════════════════════════════════════════
+
+export const SPINNER_CLASSES = "animate-spin";

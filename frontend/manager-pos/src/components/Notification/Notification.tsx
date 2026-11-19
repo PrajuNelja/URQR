@@ -1,54 +1,62 @@
 // src/components/Notification/Notification.tsx
 
-// 1. Imports
-import React, { useEffect } from "react";
-import { CheckCircle2, XCircle, AlertCircle, Info, X } from "lucide-react";
-import { notificationConfig } from "./Notification.config";
+import { useEffect } from "react";
 import type { NotificationProps } from "./Notification.types";
+import {
+  NOTIFICATION_BASE,
+  NOTIFICATION_VARIANTS,
+  NOTIFICATION_ICONS,
+  NOTIFICATION_POSITIONS,
+  NOTIFICATION_DEFAULT_DURATION,
+  NOTIFICATION_DEFAULT_POSITION,
+} from "./Notification.config";
 
-// 2. Component
-export const Notification: React.FC<NotificationProps> = ({
-  type = "info",
-  message,
+/**
+ * Notification — single toast.
+ * Matches your Showcase usage:
+ *   <Notification isOpen type message onClose />
+ */
+export const Notification = ({
   isOpen,
+  type = "success",
+  message,
   onClose,
-  duration = 3000,
-}) => {
-  // 3. Handlers & Effects
+  duration = NOTIFICATION_DEFAULT_DURATION,
+  position = NOTIFICATION_DEFAULT_POSITION,
+  icon,
+  className = "",
+}: NotificationProps) => {
+  // ── Auto-dismiss ──
   useEffect(() => {
-    if (isOpen && duration > 0) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, duration);
-      return () => clearTimeout(timer);
-    }
+    if (!isOpen || duration <= 0) return;
+    const timer = setTimeout(onClose, duration);
+    return () => clearTimeout(timer);
   }, [isOpen, duration, onClose]);
 
-  // 4. Render Variables
-  const typeConfig = notificationConfig.types[type];
-  
-  const icons = {
-    success: <CheckCircle2 size={20} className={typeConfig.iconColor} />,
-    error: <XCircle size={20} className={typeConfig.iconColor} />,
-    warning: <AlertCircle size={20} className={typeConfig.iconColor} />,
-    info: <Info size={20} className={typeConfig.iconColor} />,
-  };
+  if (!isOpen) return null;
 
-  const wrapperClasses = `
-    ${notificationConfig.wrapper}
-    ${typeConfig.border}
-    ${typeConfig.bg}
-    ${isOpen ? notificationConfig.visible : notificationConfig.hidden}
-  `.trim();
+  const IconComponent = NOTIFICATION_ICONS[type];
 
-  // 5. Export / Return
+  const classes = [
+    NOTIFICATION_BASE,
+    NOTIFICATION_VARIANTS[type],
+    NOTIFICATION_POSITIONS[position],
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={wrapperClasses}>
-      <div>{icons[type]}</div>
-      <p className="text-sm font-medium text-primary flex-1">{message}</p>
-      <button onClick={onClose} className={notificationConfig.closeBtn}>
-        <X size={16} />
-      </button>
+    <div
+      className={classes}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {icon ?? <IconComponent size={18} aria-hidden="true" />}
+      <span>{message}</span>
     </div>
   );
 };
+
+export default Notification;

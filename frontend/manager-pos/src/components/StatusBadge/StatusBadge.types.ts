@@ -1,13 +1,32 @@
 // src/components/StatusBadge/StatusBadge.types.ts
 
-import type { HTMLAttributes } from "react";
+export type StatusBadgeVariant =
+  | "success"
+  | "error"
+  | "warning"
+  | "info"
+  | "neutral";
 
+export type StatusBadgeSize = "sm" | "md";
 
-export type BadgeStatus = "paid" | "pending" | "failed" | "cancelled";
+export interface StatusBadgeProps {
+  /**
+   * Status value. Accepts either:
+   *  - a raw status string ("paid", "pending", "cancelled", "completed")
+   *  - a variant name ("success", "error", "warning", "info", "neutral")
+   * (mapped automatically via StatusBadge.config)
+   */
+  status?: string;
 
-export interface StatusBadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  /** The status to display */
-  status: BadgeStatus;
-  /** Optional custom label (e.g., to override "Paid" with "Completed") */
+  /** Explicit variant (overrides `status` mapping) */
+  variant?: StatusBadgeVariant;
+
+  /** Custom display label (defaults to the formatted status) */
   label?: string;
+
+  /** Size preset (default: 'sm') */
+  size?: StatusBadgeSize;
+
+  /** Extra classes */
+  className?: string;
 }

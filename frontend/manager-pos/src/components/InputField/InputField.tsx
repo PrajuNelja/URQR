@@ -1,89 +1,104 @@
 // src/components/InputField/InputField.tsx
 
-// 1. Imports
-import React, { useState } from "react";
-import { Eye, EyeOff, Search } from "lucide-react";
-import { inputFieldConfig } from "./InputField.config";
+import { forwardRef, useId } from "react";
 import type { InputFieldProps } from "./InputField.types";
+import {
+  FIELD_WRAPPER,
+  FIELD_LABEL,
+  FIELD_HINT,
+  FIELD_ERROR,
+  INPUT_BASE,
+  INPUT_VARIANTS,
+  INPUT_SIZES,
+  INPUT_LEFT_ICON,
+  INPUT_RIGHT_ICON,
+} from "./InputField.config";
 
-// 2. Component
-export const InputField: React.FC<InputFieldProps> = ({
-  type = "text",
-  label,
-  error,
-  leftIcon,
-  fullWidth = true,
-  className = "",
-  ...props
-}) => {
-  // 3. Handlers & State
-  const [showPassword, setShowPassword] = useState(false);
+/**
+ * InputField — text/password/number/etc. input with label, hint, error, icons.
+ *
+ * <InputField label="MANAGER ID" placeholder="e.g., MGR-8902" />
+ * <InputField label="Password" type="password" placeholder="••••••••" />
+ * <InputField label="Search" leftIcon={<Icon name="Search" />} />
+ * <InputField label="Amount" error="This field is required" />
+ */
+export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
+  (
+    {
+      label,
+      error,
+      hint,
+      leftIcon,
+      rightIcon,
+      fieldSize = "md",
+      fullWidth = true,
+      wrapperClassName = "",
+      className = "",
+      id,
+      disabled,
+      ...rest
+    },
+    ref
+  ) => {
+    const generatedId = useId();
+    const inputId = id || `input-${generatedId}`;
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
+    const inputClasses = [
+      INPUT_BASE,
+      INPUT_VARIANTS[error ? "error" : "default"],
+      INPUT_SIZES[fieldSize],
+      leftIcon ? "pl-10" : "",
+      rightIcon ? "pr-10" : "",
+      fullWidth ? "w-full" : "",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-  // 4. Render Variables
-  const actualType = type === "password" && showPassword ? "text" : type;
-
-  const renderLeftIcon = () => {
-    if (type === "search") return <Search size={16} />;
-    return leftIcon;
-  };
-
-  const renderRightIcon = () => {
-    if (type === "password") {
-      return showPassword ? <EyeOff size={16} /> : <Eye size={16} />;
-    }
-    return null;
-  };
-
-  const hasLeftIcon = !!renderLeftIcon();
-  const hasRightIcon = !!renderRightIcon() || type === "password";
-
-  const inputClasses = `
-    ${inputFieldConfig.input.base}
-    ${error ? inputFieldConfig.input.error : inputFieldConfig.input.focus}
-    ${hasLeftIcon ? inputFieldConfig.input.withLeftIcon : ""}
-    ${hasRightIcon ? inputFieldConfig.input.withRightIcon : ""}
-    ${className}
-  `.trim();
-
-  // 5. Export / Return
-  return (
-    <div className={`${fullWidth ? "w-full" : ""} ${inputFieldConfig.wrapper}`}>
-      {/* Label */}
-      {label && <label className={inputFieldConfig.label}>{label}</label>}
-
-      {/* Input Container */}
-      <div className={inputFieldConfig.inputWrapper}>
-        {/* Left Icon */}
-        {hasLeftIcon && (
-          <div className={inputFieldConfig.icon.left}>{renderLeftIcon()}</div>
+    return (
+      <div
+        className={[FIELD_WRAPPER, fullWidth ? "w-full" : "", wrapperClassName]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {label && (
+          <label htmlFor={inputId} className={FIELD_LABEL}>
+            {label}
+          </label>
         )}
 
-        {/* Input Element */}
-        <input
-          type={actualType}
-          className={inputClasses}
-          {...props}
-        />
+        <div className="relative">
+          {leftIcon && <span className={INPUT_LEFT_ICON}>{leftIcon}</span>}
 
-        {/* Right Icon (Password Toggle) */}
-        {hasRightIcon && (
-          <button
-            type="button"
-            onClick={type === "password" ? togglePasswordVisibility : undefined}
-            className={inputFieldConfig.icon.right}
-            tabIndex={-1}
-          >
-            {renderRightIcon()}
-          </button>
-        )}
+          <input
+            ref={ref}
+            id={inputId}
+            className={inputClasses}
+            disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={
+              error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+            }
+            {...rest}
+          />
+
+          {rightIcon && <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>}
+        </div>
+
+        {error ? (
+          <p id={`${inputId}-error`} className={FIELD_ERROR} role="alert">
+            {error}
+          </p>
+        ) : hint ? (
+          <p id={`${inputId}-hint`} className={FIELD_HINT}>
+            {hint}
+          </p>
+        ) : null}
       </div>
+    );
+  }
+);
 
-      {/* Error Message */}
-      {error && <span className={inputFieldConfig.errorText}>{error}</span>}
-    </div>
-  );
-};
+InputField.displayName = "InputField";
+
+export default InputField;

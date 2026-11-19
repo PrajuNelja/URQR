@@ -1,59 +1,75 @@
 // src/components/Buttons/Button.tsx
 
-// 1. Imports
-import React from "react";
+import { forwardRef } from "react";
 import { Loader2 } from "lucide-react";
-import { buttonConfig } from "./Button.config";
+import {
+  BUTTON_BASE,
+  BUTTON_VARIANTS,
+  BUTTON_SIZES,
+  BUTTON_FULL_WIDTH,
+  SPINNER_CLASSES,
+} from "./Button.config";
 import type { ButtonProps } from "./Button.types";
 
-// 2. Component
-export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  isLoading = false,
-  leftIcon,
-  rightIcon,
-  fullWidth = false,
-  className = "",
-  disabled,
-  ...props
-}) => {
-  // 3. Handlers (None needed for basic button, handled by HTML native props)
+/**
+ * Button — primary action element.
+ *
+ * <Button>Save</Button>
+ * <Button variant="outline" size="sm">Cancel</Button>
+ * <Button variant="danger" leftIcon={<Trash2 size={16} />}>Delete</Button>
+ * <Button isLoading>Saving...</Button>
+ * <Button fullWidth size="lg">Sign In</Button>
+ */
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      variant = "primary",
+      size = "md",
+      fullWidth = false,
+      isLoading = false,
+      leftIcon,
+      rightIcon,
+      children,
+      className = "",
+      disabled,
+      type = "button",
+      ...rest
+    },
+    ref
+  ) => {
+    const classes = [
+      BUTTON_BASE,
+      BUTTON_VARIANTS[variant],
+      BUTTON_SIZES[size],
+      fullWidth ? BUTTON_FULL_WIDTH : "",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-  // 4. Render Variables
-  const classes = `
-    ${buttonConfig.base}
-    ${buttonConfig.variants[variant]}
-    ${buttonConfig.sizes[size]}
-    ${fullWidth ? "w-full" : ""}
-    ${className}
-  `.trim();
+    const isDisabled = disabled || isLoading;
 
-  // 5. Export / Return
-  return (
-    <button 
-      className={classes} 
-      disabled={disabled || isLoading} 
-      {...props}
-    >
-      {/* Loading Spinner */}
-      {isLoading && (
-        <Loader2 className="animate-spin mr-2" size={16} />
-      )}
+    return (
+      <button
+        ref={ref}
+        type={type}
+        className={classes}
+        disabled={isDisabled}
+        aria-busy={isLoading}
+        {...rest}
+      >
+        {isLoading ? (
+          <Loader2 size={16} className={SPINNER_CLASSES} aria-hidden="true" />
+        ) : (
+          leftIcon
+        )}
+        {children}
+        {!isLoading && rightIcon}
+      </button>
+    );
+  }
+);
 
-      {/* Left Icon */}
-      {!isLoading && leftIcon && (
-        <span className="mr-2">{leftIcon}</span>
-      )}
+Button.displayName = "Button";
 
-      {/* Button Text */}
-      {children}
-
-      {/* Right Icon */}
-      {!isLoading && rightIcon && (
-        <span className="ml-2">{rightIcon}</span>
-      )}
-    </button>
-  );
-};
+export default Button;
