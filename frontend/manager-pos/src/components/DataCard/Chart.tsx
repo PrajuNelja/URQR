@@ -16,8 +16,10 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  LabelList,
   ResponsiveContainer,
 } from "recharts";
+import type { TooltipValueType } from "recharts";
 import type { ChartProps } from "./DataCard.types";
 import {
   CHART_COLORS,
@@ -45,9 +47,10 @@ export const Chart = ({
   series = [],
   pieDataKey = "value",
   pieNameKey = "name",
-  layout = "horizontal",
+  layout = "vertical",
   height = 240,
-  showGrid = true,
+  showGrid,
+  showValues = true,
   showTooltip = true,
   showLegend = false,
   valueFormatter,
@@ -55,6 +58,7 @@ export const Chart = ({
 }: ChartProps) => {
   // ── SAFETY: bail out if data is missing/empty ──
   const safeData: Record<string, unknown>[] = Array.isArray(data) ? data : [];
+  const shouldShowGrid = showGrid ?? type !== "bar";
 
   if (safeData.length === 0) {
     return (
@@ -78,13 +82,14 @@ export const Chart = ({
   };
 
   // ── Tooltip formatter ──
-  // Cast to `any` to bypass Recharts strict generic Formatter intersection types.
-  // We explicitly handle `undefined` to prevent runtime crashes.
   const tooltipFormatter = valueFormatter
-    ? ((v: any) => {
-        if (v === undefined || v === null) return "";
-        return valueFormatter(Number(v));
-      }) as any
+    ? (value: TooltipValueType | undefined) => {
+        if (value === undefined) return "";
+        if (Array.isArray(value)) {
+          return value.map(Number).map(valueFormatter).join(", ");
+        }
+        return valueFormatter(Number(value));
+      }
     : undefined;
 
   // ═══════════════════════════════════════════
@@ -99,9 +104,14 @@ export const Chart = ({
           <BarChart
             data={safeData}
             layout={layout}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            margin={{
+              top: 8,
+              right: isVertical && showValues ? 36 : 8,
+              left: 0,
+              bottom: 0,
+            }}
           >
-            {showGrid && (
+            {shouldShowGrid && (
               <CartesianGrid
                 stroke={CHART_GRID_COLOR}
                 strokeDasharray="3 3"
@@ -145,7 +155,32 @@ export const Chart = ({
                 fill={s.color ?? CHART_COLORS[i % CHART_COLORS.length]}
                 radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                 maxBarSize={40}
-              />
+              >
+                {!s.color &&
+                  safeData.map((item, index) => (
+                    <Cell
+                      key={`${s.key}-${index}`}
+                      fill={
+                        typeof item.color === "string"
+                          ? item.color
+                          : CHART_COLORS[index % CHART_COLORS.length]
+                      }
+                    />
+                  ))}
+                {showValues && (
+                  <LabelList
+                    dataKey={s.key}
+                    position={isVertical ? "right" : "top"}
+                    fill={CHART_AXIS_TEXT}
+                    fontSize={12}
+                    formatter={(value) =>
+                      valueFormatter
+                        ? valueFormatter(Number(value))
+                        : String(value ?? "")
+                    }
+                  />
+                )}
+              </Bar>
             ))}
           </BarChart>
         </ResponsiveContainer>
@@ -164,7 +199,7 @@ export const Chart = ({
             data={safeData}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
           >
-            {showGrid && (
+            {shouldShowGrid && (
               <CartesianGrid stroke={CHART_GRID_COLOR} strokeDasharray="3 3" />
             )}
             <XAxis dataKey={xKey} {...axisProps} />
@@ -207,7 +242,7 @@ export const Chart = ({
             data={safeData}
             margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
           >
-            {showGrid && (
+            {shouldShowGrid && (
               <CartesianGrid stroke={CHART_GRID_COLOR} strokeDasharray="3 3" />
             )}
             <XAxis dataKey={xKey} {...axisProps} />

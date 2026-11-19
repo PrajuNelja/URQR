@@ -117,12 +117,14 @@ export interface ChartProps {
   pieDataKey?: string;
   /** For pie chart: data key holding the label */
   pieNameKey?: string;
-  /** Bar layout (default: 'horizontal') */
+  /** Recharts layout; 'vertical' renders horizontal bars (default: 'vertical') */
   layout?: ChartLayout;
   /** Chart height in px (default: 240) */
   height?: number;
-  /** Show horizontal grid lines (default: true) */
+  /** Show chart grid lines (default: false for bar charts, true otherwise) */
   showGrid?: boolean;
+  /** Show values at the end of bars (default: true) */
+  showValues?: boolean;
   /** Show tooltip (default: true) */
   showTooltip?: boolean;
   /** Show legend (default: false) */
