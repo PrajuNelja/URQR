@@ -69,5 +69,4 @@ export interface NotificationProviderProps {
   /** Screen position for all toasts (default: 'top-center') */
   position?: NotificationPosition;
   /** Max toasts visible at once (default: 4) */
-  maxVisible?: number;
-}
+  maxVisible?: number;}

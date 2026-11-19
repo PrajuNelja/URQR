@@ -12,18 +12,19 @@
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
 
-  /* ── Colors ── */
-  --color-app-bg: #F8F6F0;
-  --color-surface: #FFFFFF;
-  --color-primary: #2A2118;
-  --color-accent-gold: #B8893B;
-  --color-accent-light: #C99F5F;
-  --color-text-muted: #8B857D;
-  --color-border-subtle: #E5E1D8;
+  /* ── Colors — Ivory Luxe Palette ── */
+  --color-app-bg: #F8F6F0;           /* Soft ivory background */
+  --color-surface: #FFFFFF;          /* Card backgrounds */
+  --color-primary: #2A2118;          /* Deep espresso (buttons, text) */
+  --color-accent-gold: #B8893B;      /* Gold (numbers, AI hints) */
+  --color-accent-light: #C99F5F;     /* Lighter gold (borders) */
+  --color-text-muted: #8B857D;       /* Secondary text */
+  --color-border-subtle: #E5E1D8;    /* Standard borders */
 
   --color-input-bg: #FFFFFF;
   --color-button-text: #FFFFFF;
 
+  /* Status colors (StatusBadge) */
   --color-success-bg: #D9EEDD;
   --color-success-text: #2F7A45;
   --color-error-bg: #FBD9D6;
@@ -35,15 +36,17 @@
   --color-neutral-bg: #F1EDE4;
   --color-neutral-text: #6B6257;
 
+  /* Focus ring */
   --color-accent-ring: rgba(184, 137, 59, 0.25);
 
+  /* Chart palette (recharts) */
   --color-chart-1: #2A2118;
   --color-chart-2: #B8893B;
   --color-chart-3: #C99F5F;
   --color-chart-4: #9C8A76;
   --color-chart-5: #D4C5A9;
 
-  /* ── Radius ── */
+  /* ── Border Radius ── */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -128,4 +131,4 @@
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
-}   
+}

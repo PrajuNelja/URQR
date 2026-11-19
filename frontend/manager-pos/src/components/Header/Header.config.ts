@@ -78,7 +78,7 @@ export const selectableGroupConfig = {
 // ═══════════════════════════════════════════
 
 export const appShellConfig = {
-  wrapper: "min-h-screen bg-app-bg",
+  wrapper: "min-h-screen bg-[#f6efdf]",
   main: "px-5 pt-5 pb-24 mx-auto w-full",
 } as const;
 
