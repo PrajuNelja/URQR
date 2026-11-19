@@ -1,10 +1,19 @@
 // src/components/Logo/Logo.types.ts
 
+export type LogoSize = "sm" | "md" | "lg";
+export type LogoVariant = "solid" | "outline";
+
 export interface LogoProps {
-  /** Size of the logo */
-  size?: "sm" | "md" | "lg";
-  /** Whether to show the text alongside the icon */
+  /** Size preset (default: 'md') */
+  size?: LogoSize;
+  /** Style: solid (dark bg) or outline (transparent) — default: 'solid' */
+  variant?: LogoVariant;
+  /** Show brand text next to badge (default: true) */
   showText?: boolean;
-  /** Custom class name for overriding styles */
+  /** Brand name (default: 'GRAND HORIZON') */
+  label?: string;
+  /** Subtitle under brand name (default: 'Operations Dashboard') */
+  subLabel?: string;
+  /** Extra classes on wrapper */
   className?: string;
 }

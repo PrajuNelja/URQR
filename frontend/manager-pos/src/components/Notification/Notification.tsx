@@ -1,34 +1,62 @@
-import { NOTIFICATION_CONFIG } from "./Notification.config";
+// src/components/Notification/Notification.tsx
+
+import { useEffect } from "react";
 import type { NotificationProps } from "./Notification.types";
+import {
+  NOTIFICATION_BASE,
+  NOTIFICATION_VARIANTS,
+  NOTIFICATION_ICONS,
+  NOTIFICATION_POSITIONS,
+  NOTIFICATION_DEFAULT_DURATION,
+  NOTIFICATION_DEFAULT_POSITION,
+} from "./Notification.config";
 
-export default function Notification({ type, onClose }: NotificationProps) {
-const notification = NOTIFICATION_CONFIG[type];
+/**
+ * Notification — single toast.
+ * Matches your Showcase usage:
+ *   <Notification isOpen type message onClose />
+ */
+export const Notification = ({
+  isOpen,
+  type = "success",
+  message,
+  onClose,
+  duration = NOTIFICATION_DEFAULT_DURATION,
+  position = NOTIFICATION_DEFAULT_POSITION,
+  icon,
+  className = "",
+}: NotificationProps) => {
+  // ── Auto-dismiss ──
+  useEffect(() => {
+    if (!isOpen || duration <= 0) return;
+    const timer = setTimeout(onClose, duration);
+    return () => clearTimeout(timer);
+  }, [isOpen, duration, onClose]);
 
-      return (
-<div
-      className={`fixed right-4 top-4 z-50 flex w-[calc(100vw-2rem)] max-w-sm items-center gap-3 rounded-lg border px-4 py-3 shadow-md ${notification.className}`}
-      role={notification.role}
-      aria-live={notification.role === "alert" ? "assertive" : "polite"}
+  if (!isOpen) return null;
+
+  const IconComponent = NOTIFICATION_ICONS[type];
+
+  const classes = [
+    NOTIFICATION_BASE,
+    NOTIFICATION_VARIANTS[type],
+    NOTIFICATION_POSITIONS[position],
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div
+      className={classes}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
     >
-      <span
-        className="grid size-6 shrink-0 place-items-center rounded-full bg-surface/70 text-sm font-bold"
-        aria-hidden="true"
-      >
-        {notification.icon}
-      </span>
-      <p className="min-w-0 flex-1 text-sm font-medium">
-        {notification.message}
-      </p>
-      {onClose && (
-        <button
-          type="button"
-          className="rounded-md px-1 text-lg leading-none text-text-muted hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          aria-label="Dismiss notification"
-          onClick={onClose}
-        >
-          &times;
-        </button>
-      )}
+      {icon ?? <IconComponent size={18} aria-hidden="true" />}
+      <span>{message}</span>
     </div>
   );
-}
+};
+
+export default Notification;
