@@ -1,137 +1,104 @@
 // src/components/InputField/InputField.tsx
-import React, { useState } from "react";
-import { Search, Eye, EyeOff, Calendar, Minus, Plus } from "lucide-react";
-import { inputFieldConfig } from "./InputField.config";
+
+import { forwardRef, useId } from "react";
 import type { InputFieldProps } from "./InputField.types";
+import {
+  FIELD_WRAPPER,
+  FIELD_LABEL,
+  FIELD_HINT,
+  FIELD_ERROR,
+  INPUT_BASE,
+  INPUT_VARIANTS,
+  INPUT_SIZES,
+  INPUT_LEFT_ICON,
+  INPUT_RIGHT_ICON,
+} from "./InputField.config";
 
-export const InputField: React.FC<InputFieldProps> = ({
-  type = "text",
-  inputSize = "md",
-  label,
-  error,
-  helperText,
-  className = "",
-  disabled,
-  value,
-  onChange,
-  min = 1,
-  max = 99,
-  ...props
-}) => {
-  const [showPassword, setShowPassword] = useState(false);
+/**
+ * InputField — text/password/number/etc. input with label, hint, error, icons.
+ *
+ * <InputField label="MANAGER ID" placeholder="e.g., MGR-8902" />
+ * <InputField label="Password" type="password" placeholder="••••••••" />
+ * <InputField label="Search" leftIcon={<Icon name="Search" />} />
+ * <InputField label="Amount" error="This field is required" />
+ */
+export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
+  (
+    {
+      label,
+      error,
+      hint,
+      leftIcon,
+      rightIcon,
+      fieldSize = "md",
+      fullWidth = true,
+      wrapperClassName = "",
+      className = "",
+      id,
+      disabled,
+      ...rest
+    },
+    ref
+  ) => {
+    const generatedId = useId();
+    const inputId = id || `input-${generatedId}`;
 
-  // --- 1. Render Variables ---
-  const currentSize = inputFieldConfig.sizes[inputSize];
-  const actualType = type === "password" && showPassword ? "text" : type;
-  
-  const hasLeftIcon = type === "search" || type === "date";
-  const hasRightIcon = type === "password";
+    const inputClasses = [
+      INPUT_BASE,
+      INPUT_VARIANTS[error ? "error" : "default"],
+      INPUT_SIZES[fieldSize],
+      leftIcon ? "pl-10" : "",
+      rightIcon ? "pr-10" : "",
+      fullWidth ? "w-full" : "",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-  let paddingClass = inputFieldConfig.input.padding.none;
-  if (hasLeftIcon && hasRightIcon) paddingClass = inputFieldConfig.input.padding.bothIcons;
-  else if (hasLeftIcon) paddingClass = inputFieldConfig.input.padding.leftIcon;
-  else if (hasRightIcon) paddingClass = inputFieldConfig.input.padding.rightIcon;
+    return (
+      <div
+        className={[FIELD_WRAPPER, fullWidth ? "w-full" : "", wrapperClassName]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {label && (
+          <label htmlFor={inputId} className={FIELD_LABEL}>
+            {label}
+          </label>
+        )}
 
-  // --- 2. Handlers ---
-  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
-
-  const handleDecrease = () => {
-    const currentVal = Number(value) || 0;
-    if (currentVal > Number(min) && onChange) {
-      const event = { target: { value: String(currentVal - 1) } } as React.ChangeEvent<HTMLInputElement>;
-      onChange(event);
-    }
-  };
-
-  const handleIncrease = () => {
-    const currentVal = Number(value) || 0;
-    if (currentVal < Number(max) && onChange) {
-      const event = { target: { value: String(currentVal + 1) } } as React.ChangeEvent<HTMLInputElement>;
-      onChange(event);
-    }
-  };
-
-  // --- 3. Render Helpers ---
-  const renderLeftIcon = () => {
-    if (type === "search") return <Search className={`${inputFieldConfig.icon.base} ${inputFieldConfig.icon.left} ${currentSize.icon}`} />;
-    if (type === "date") return <Calendar className={`${inputFieldConfig.icon.base} ${inputFieldConfig.icon.left} ${currentSize.icon}`} />;
-    return null;
-  };
-
-  // --- 4. Return ---
-  return (
-    <div className={`${inputFieldConfig.baseWrapper} ${className}`}>
-      {label && <label className={inputFieldConfig.label}>{label}</label>}
-
-      {/* --- QUANTITY STEPPER RENDER --- */}
-      {type === "quantity" ? (
-        <div className={inputFieldConfig.stepper.wrapper}>
-          <button
-            type="button"
-            onClick={handleDecrease}
-            disabled={disabled || Number(value) <= Number(min)}
-            className={inputFieldConfig.stepper.button}
-          >
-            <Minus className="w-4 h-4" strokeWidth={2.5} />
-          </button>
+        <div className="relative">
+          {leftIcon && <span className={INPUT_LEFT_ICON}>{leftIcon}</span>}
 
           <input
-            type="number"
-            value={value}
-            onChange={onChange}
+            ref={ref}
+            id={inputId}
+            className={inputClasses}
             disabled={disabled}
-            min={min}
-            max={max}
-            className={inputFieldConfig.stepper.input}
-            {...props}
+            aria-invalid={!!error}
+            aria-describedby={
+              error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+            }
+            {...rest}
           />
 
-          <button
-            type="button"
-            onClick={handleIncrease}
-            disabled={disabled || Number(value) >= Number(max)}
-            className={inputFieldConfig.stepper.button}
-          >
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-          </button>
+          {rightIcon && <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>}
         </div>
-      ) : (
-        /* --- STANDARD INPUT RENDER --- */
-        <div
-          className={`
-            ${inputFieldConfig.inputWrapper.base} 
-            ${currentSize.inputWrapper} 
-            ${error ? inputFieldConfig.inputWrapper.error : inputFieldConfig.inputWrapper.default}
-            ${disabled ? inputFieldConfig.inputWrapper.disabled : inputFieldConfig.inputWrapper.focus}
-          `}
-        >
-          {renderLeftIcon()}
-          <input
-            type={actualType}
-            disabled={disabled}
-            value={value}
-            onChange={onChange}
-            className={`${inputFieldConfig.input.base} ${currentSize.input} ${paddingClass}`}
-            {...props}
-          />
 
-          {type === "password" && (
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className={`${inputFieldConfig.icon.base} ${inputFieldConfig.icon.right} ${inputFieldConfig.icon.clickable}`}
-            >
-              {showPassword ? <EyeOff className={currentSize.icon} /> : <Eye className={currentSize.icon} />}
-            </button>
-          )}
-        </div>
-      )}
+        {error ? (
+          <p id={`${inputId}-error`} className={FIELD_ERROR} role="alert">
+            {error}
+          </p>
+        ) : hint ? (
+          <p id={`${inputId}-hint`} className={FIELD_HINT}>
+            {hint}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+);
 
-      {error ? (
-        <span className={`${inputFieldConfig.message.base} ${inputFieldConfig.message.error}`}>{error}</span>
-      ) : helperText ? (
-        <span className={`${inputFieldConfig.message.base} ${inputFieldConfig.message.helper}`}>{helperText}</span>
-      ) : null}
-    </div>
-  );
-};
+InputField.displayName = "InputField";
+
+export default InputField;
