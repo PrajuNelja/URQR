@@ -1,18 +1,3 @@
-<<<<<<< HEAD
-export type NotificationType = "bill-success" | "payment-success" | "error";
-
-export interface NotificationConfig {
-  message: string;
-  icon: string;
-  className: string;
-  role: "status" | "alert";
-}
-
-export interface NotificationProps {
-  type: NotificationType;
-  onClose?: () => void;
-}
-=======
 // src/components/Notification/Notification.types.ts
 
 import type { ReactNode } from "react";
@@ -86,4 +71,3 @@ export interface NotificationProviderProps {
   /** Max toasts visible at once (default: 4) */
   maxVisible?: number;
 }
->>>>>>> praju/feature/frontend-foundation
