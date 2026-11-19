@@ -1,7 +1,7 @@
 // src/components/Logo/Logo.tsx
 
 import React from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkle } from "lucide-react";
 import { logoConfig } from "./Logo.config";
 import type { LogoProps } from "./Logo.types";
 
@@ -27,9 +27,10 @@ export const Logo: React.FC<LogoProps> = ({
     <div className={`${logoConfig.base} ${className}`}>
       {/* Badge */}
       <div className={badgeClasses}>
-        <Sparkles
+        <Sparkle
           className={`${logoConfig.icon.star} ${currentSize.star}`}
-          strokeWidth={2}
+          fill="currentColor"
+          strokeWidth={1.5}
         />
       </div>
 
