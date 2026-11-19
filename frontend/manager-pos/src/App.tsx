@@ -1,10 +1,12 @@
-// src/App.tsx
 import AppRouter from "./AppRouter";
+import { NotificationProvider } from "./components/Notification/NotificationProvider";
 
 function App() {
   return (
     <div className="min-h-screen bg-app-bg text-primary">
-      <AppRouter />
+      <NotificationProvider>
+        <AppRouter />
+      </NotificationProvider>
     </div>
   );
 }
