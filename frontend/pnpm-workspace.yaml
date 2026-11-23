@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 permissions:
   '@tanstack/react-router':
     skills: false
@@ -5,3 +6,10 @@ permissions:
     skills: false
   '@tanstack/router-plugin':
     skills: false
+=======
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  msw: set this to true or false
+>>>>>>> cebb6395f88ec773e1d8350b416625fc0ee0761a

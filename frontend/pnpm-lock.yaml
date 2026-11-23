@@ -32,6 +32,7 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.108.0
         version: 5.108.0(@types/react@19.3.0)(react@19.3.1)
+<<<<<<< HEAD
         version: 4.3.5(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0)(terser@5.51.4))
       '@tanstack/react-query':
         specifier: ^5.108.0
@@ -54,6 +55,11 @@ importers:
       cn:
         specifier: ^0.5.2
         version: 0.5.2
+=======
+      '@urqr/types':
+        specifier: workspace:*
+        version: link:packages/types
+>>>>>>> cebb6395f88ec773e1d8350b416625fc0ee0761a
       lucide-react:
         specifier: ^1.74.0
         version: 1.74.0(@types/react@19.3.0)(react@19.3.1)
@@ -160,6 +166,12 @@ importers:
       workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
+
+  packages/types:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
 packages:
 

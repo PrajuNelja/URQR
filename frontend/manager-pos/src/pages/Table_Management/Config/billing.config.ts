@@ -1,8 +1,9 @@
+import type { Category } from "@urqr/types";
 import type { Dish } from "../Types/billing.types";
 
 export const TAX_RATE = 5;
 
-export const CATEGORIES = [
+export const CATEGORIES: Category[] = [
   { key: "all", label: "All" },
   { key: "starters", label: "Starters" },
   { key: "main", label: "Main Course" },
