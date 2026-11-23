@@ -1,0 +1,15 @@
+---
+description: Project guidance for the URQR monorepo
+alwaysApply: true
+---
+
+# URQR project guidance
+
+- Preserve the modular-monolith boundaries and make changes in the owning area: `backend/`, `frontend/`, `docs/`, `qa/`, or `infrastructure/`.
+- Check existing code, documentation, and build configuration before choosing patterns or commands. Some application areas are still placeholders.
+- Keep changes focused, follow established conventions, and preserve existing behavior unless the task calls for a behavior change.
+- Run the smallest relevant checks available in the project and report their exact results. Do not claim checks passed if they were not run.
+- Follow `.editorconfig`: UTF-8, LF line endings, final newline, two-space indentation by default, and four spaces for Java.
+- Never commit credentials, tokens, private keys, or real environment files. Use `.env.example` for variable names only.
+- Avoid committing build output, generated artifacts, or local test reports.
+- Record significant architectural or operational decisions in `docs/decisions/`.
