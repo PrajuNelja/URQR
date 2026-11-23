@@ -1,10 +1,6 @@
-export interface Dish {
-  id: number;
-  name: string;
-  category: string;
-  description: string;
-  price: number;
-}
+import type { ProductItem } from "@urqr/types";
+
+export type Dish = ProductItem;
 
 export interface CartItem {
   dish: Dish;
