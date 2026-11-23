@@ -5,3 +5,8 @@ permissions:
     skills: false
   '@tanstack/router-plugin':
     skills: false
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  msw: set this to true or false
