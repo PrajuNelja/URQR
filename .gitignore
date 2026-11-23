@@ -51,3 +51,10 @@ surefire-reports/
 failsafe-reports/
 allure-results/
 *.generated.*
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/k6-results/
