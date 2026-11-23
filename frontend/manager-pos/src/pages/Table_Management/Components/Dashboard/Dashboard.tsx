@@ -1,4 +1,6 @@
-// src/pages/Table_Management/Components/Dashboard/Dashboard.tsx
+
+import { Link } from "@tanstack/react-router";
+
 import AppShell from "../../../../components/Header/AppShell";
 import Header from "../../../../components/Header/Header";
 import Logo from "../../../../components/Logo/Logo";
@@ -6,7 +8,7 @@ import { DateRangePicker } from "../../../../components/DataTable/DateRangePicke
 
 import { useDashboard } from "../../Hooks/useDashboard";
 
-// Sub-components imported from the same folder
+// Dashboard sub-components
 import { DashboardHeaderActions } from "./DashboardHeaderActions";
 import { DashboardMetrics } from "./DashboardMetrics";
 import { DashboardTable } from "./DashboardTable";
@@ -59,7 +61,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Extracted Sections */}
+      {/* Dashboard Metrics */}
       <DashboardMetrics />
       <DashboardTable
         filteredOrders={filteredOrders}
