@@ -11,5 +11,3 @@ packages:
   - "manager-pos"
   - "apps/*"
   - "packages/*"
-allowBuilds:
-  msw: set this to true or false
