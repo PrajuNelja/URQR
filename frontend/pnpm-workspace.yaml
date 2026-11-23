@@ -1,0 +1,12 @@
+permissions:
+  '@tanstack/react-router':
+    skills: false
+  '@tanstack/react-table':
+    skills: false
+  '@tanstack/router-plugin':
+    skills: false
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  msw: set this to true or false
