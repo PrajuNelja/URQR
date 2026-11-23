@@ -12,6 +12,7 @@ function AppRouter() {
         <Route path="/login" element={<ManagerLogin />} />
         <Route path="/showcase" element={<Showcase />} />
         <Route path="/" element={<Billing />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
