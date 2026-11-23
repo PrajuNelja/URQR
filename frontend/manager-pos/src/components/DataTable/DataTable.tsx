@@ -1,13 +1,15 @@
 // src/components/DataTable/DataTable.tsx
 
-import type { DataTableProps, Column } from "./DataTable.types";
+import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import type { DataTableProps, Column, SortDirection } from "./DataTable.types";
 import { tableConfig, TABLE_ALIGN } from "./DataTable.config";
 import { EmptyState } from "../DataCard/EmptyState";
 
 function getRowKey<T>(
   row: T,
   index: number,
-  rowKey: DataTableProps<T>["rowKey"]
+  rowKey: DataTableProps<T>["rowKey"],
 ): string | number {
   if (typeof rowKey === "function") return rowKey(row);
   const v = (row as Record<string, unknown>)[rowKey as string];
@@ -21,6 +23,44 @@ function getCellValue<T>(row: T, key: string): React.ReactNode {
   return String(v);
 }
 
+function getSortValue<T>(
+  row: T,
+  column: Column<T>,
+): string | number | Date | null | undefined {
+  if (column.sortValue) return column.sortValue(row);
+  const value = (row as Record<string, unknown>)[column.key];
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    value instanceof Date ||
+    value === null ||
+    value === undefined
+  ) {
+    return value;
+  }
+  return String(value);
+}
+
+function compareSortValues(
+  left: string | number | Date | null | undefined,
+  right: string | number | Date | null | undefined,
+): number {
+  if (left == null) return right == null ? 0 : 1;
+  if (right == null) return -1;
+
+  const leftValue = left instanceof Date ? left.getTime() : left;
+  const rightValue = right instanceof Date ? right.getTime() : right;
+
+  if (typeof leftValue === "number" && typeof rightValue === "number") {
+    return leftValue - rightValue;
+  }
+
+  return String(leftValue).localeCompare(String(rightValue), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
 export function DataTable<T>({
   data,
   columns,
@@ -32,22 +72,75 @@ export function DataTable<T>({
   onRowClick,
   striped = false,
   compact = false,
-}: DataTableProps<T>) { // <-- Removed minWidth
+  loadingRows = 5,
+  minWidth = "980px",
+}: DataTableProps<T>) {
+  const [sort, setSort] = useState<{
+    key: string;
+    direction: SortDirection;
+  } | null>(null);
   const isClickable = typeof onRowClick === "function";
 
   const thPad = compact ? tableConfig.compact.th : "";
   const tdPad = compact ? tableConfig.compact.td : "";
+  const sortedData = useMemo(() => {
+    if (!sort) return data;
+    const column = columns.find((candidate) => candidate.key === sort.key);
+    if (!column) return data;
+
+    return data
+      .map((row, index) => ({ row, index }))
+      .sort((left, right) => {
+        const leftValue = getSortValue(left.row, column);
+        const rightValue = getSortValue(right.row, column);
+        const comparison = compareSortValues(leftValue, rightValue);
+        return comparison === 0
+          ? left.index - right.index
+          : leftValue == null || rightValue == null || sort.direction === "asc"
+            ? comparison
+            : -comparison;
+      })
+      .map(({ row }) => row);
+  }, [columns, data, sort]);
+
+  const handleSort = (column: Column<T>) => {
+    if (!column.sortable) return;
+    setSort((current) => ({
+      key: column.key,
+      direction:
+        current?.key === column.key && current.direction === "asc"
+          ? "desc"
+          : "asc",
+    }));
+  };
 
   return (
     <div className={`${tableConfig.wrapper} ${className}`.trim()}>
-      {/* Removed the inline style minWidth here */}
-      <table className={tableConfig.table}>
+      {isLoading && (
+        <span className="sr-only" role="status">
+          Loading table data
+        </span>
+      )}
+      <table
+        className={tableConfig.table}
+        style={{ minWidth }}
+        aria-busy={isLoading}
+      >
         {/* Head */}
         <thead className={tableConfig.thead}>
           <tr>
             {columns.map((col: Column<T>) => (
               <th
                 key={col.key}
+                aria-sort={
+                  col.sortable && sort?.key === col.key
+                    ? sort.direction === "asc"
+                      ? "ascending"
+                      : "descending"
+                    : col.sortable
+                      ? "none"
+                      : undefined
+                }
                 className={[
                   tableConfig.th,
                   thPad,
@@ -58,7 +151,27 @@ export function DataTable<T>({
                   .join(" ")}
                 style={col.width ? { width: col.width } : undefined}
               >
-                {col.header}
+                {col.sortable ? (
+                  <button
+                    type="button"
+                    aria-label={`Sort by ${col.header}`}
+                    className={tableConfig.sortButton}
+                    onClick={() => handleSort(col)}
+                  >
+                    {col.header}
+                    {sort?.key === col.key ? (
+                      sort.direction === "asc" ? (
+                        <ArrowUp size={14} aria-hidden="true" />
+                      ) : (
+                        <ArrowDown size={14} aria-hidden="true" />
+                      )
+                    ) : (
+                      <ArrowUpDown size={14} aria-hidden="true" />
+                    )}
+                  </button>
+                ) : (
+                  col.header
+                )}
               </th>
             ))}
           </tr>
@@ -67,14 +180,28 @@ export function DataTable<T>({
         {/* Body */}
         <tbody>
           {isLoading ? (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className={`${tableConfig.td} text-center text-text-muted py-10 border-b-0`}
-              >
-                Loading…
-              </td>
-            </tr>
+            Array.from({ length: loadingRows }, (_, rowIndex) => (
+              <tr key={`loading-${rowIndex}`} aria-hidden="true">
+                {columns.map((col, columnIndex) => (
+                  <td
+                    key={col.key}
+                    className={[
+                      tableConfig.td,
+                      tdPad,
+                      TABLE_ALIGN[col.align ?? "left"],
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <span
+                      className={`block h-4 animate-pulse rounded bg-[#eee4d3] ${
+                        columnIndex % 3 === 0 ? "w-3/4" : "w-1/2"
+                      }`}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))
           ) : data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="p-0 border-b-0">
@@ -82,7 +209,7 @@ export function DataTable<T>({
               </td>
             </tr>
           ) : (
-            data.map((row, i) => {
+            sortedData.map((row, i) => {
               const key = getRowKey(row, i, rowKey);
               const isStriped = striped && i % 2 === 1;
               const isLast = i === data.length - 1;
@@ -113,7 +240,9 @@ export function DataTable<T>({
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      {col.render ? col.render(row, i) : getCellValue(row, col.key)}
+                      {col.render
+                        ? col.render(row, i)
+                        : getCellValue(row, col.key)}
                     </td>
                   ))}
                 </tr>

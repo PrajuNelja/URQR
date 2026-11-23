@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 // ═══════════════════════════════════════════
 
 export type ColumnAlign = "left" | "center" | "right";
+export type SortDirection = "asc" | "desc";
 
 export interface Column<T> {
   /** Data key (or custom render key) */
@@ -18,6 +19,10 @@ export interface Column<T> {
   align?: ColumnAlign;
   /** Optional fixed width (e.g. "120px", "20%") */
   width?: string;
+  /** Enable client-side sorting for this column */
+  sortable?: boolean;
+  /** Value used for sorting when the row value is not the desired sort key */
+  sortValue?: (row: T) => string | number | Date | null | undefined;
   /** Custom cell renderer — receives the row + index */
   render?: (row: T, index: number) => ReactNode;
   /** Extra classes for header cell */
@@ -47,7 +52,9 @@ export interface DataTableProps<T> {
   striped?: boolean;
   /** Compact padding (default: false) */
   compact?: boolean;
-  /** Minimum table width for horizontal scroll (default: '720px') */
+  /** Number of skeleton rows shown while loading (default: 5) */
+  loadingRows?: number;
+  /** Minimum table width for horizontal scroll (default: '980px') */
   minWidth?: string;
 }
 
@@ -78,7 +85,7 @@ export interface QuantityStepperProps {
 
 export interface DateRange {
   from: string; // ISO yyyy-mm-dd
-  to: string;   // ISO yyyy-mm-dd
+  to: string; // ISO yyyy-mm-dd
 }
 
 export interface DateRangePickerProps {
