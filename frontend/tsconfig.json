@@ -1,10 +1,11 @@
-
 {
-  "compilerOptions": {
-    "moduleResolution": "bundler",
-    "paths": {
-      "@/*": ["./manager-pos/src/*"]
+  "files": [],
+  "references": [
+    {
+      "path": "./manager-pos"
+    },
+    {
+      "path": "./packages/types"
     }
-  },
-  "files": []
+  ]
 }
