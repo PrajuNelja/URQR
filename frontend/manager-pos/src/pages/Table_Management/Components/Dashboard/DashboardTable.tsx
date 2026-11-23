@@ -27,32 +27,15 @@ export const DashboardTable = ({
   // --- CSV DOWNLOAD LOGIC ---
   const handleDownloadCSV = () => {
     const headers = [
-      "Date",
-      "Time",
-      "Order ID",
-      "Items",
-      "Before Tax",
-      "After Tax",
-      "Payment Mode",
-      "Status",
+      "Date", "Time", "Order ID", "Items", "Before Tax", "After Tax", "Payment Mode", "Status",
     ];
 
     const csvRows = filteredOrders.map((order) => {
       // Fix the Date: Convert "18 Nov 2026" to "18-11-2026" so Excel reads it as a real date
       const dateParts = order.date.split(" ");
       const monthMap: Record<string, string> = {
-        Jan: "01",
-        Feb: "02",
-        Mar: "03",
-        Apr: "04",
-        May: "05",
-        Jun: "06",
-        Jul: "07",
-        Aug: "08",
-        Sep: "09",
-        Oct: "10",
-        Nov: "11",
-        Dec: "12",
+        Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+        Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
       };
       const formattedDate = `${dateParts[0]}-${monthMap[dateParts[1]] || "01"}-${dateParts[2]}`;
 
@@ -82,10 +65,7 @@ export const DashboardTable = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute(
-      "download",
-      `orders_export_${new Date().toISOString().split("T")[0]}.csv`,
-    );
+    link.setAttribute("download", `orders_export_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

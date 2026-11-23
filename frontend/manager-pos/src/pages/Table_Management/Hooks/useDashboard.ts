@@ -18,7 +18,7 @@ export const useDashboard = () => {
     return MOCK_ORDERS.filter(
       (order) =>
         order.orderId.toLowerCase().includes(lowerQuery) ||
-        order.items.toLowerCase().includes(lowerQuery),
+        order.items.toLowerCase().includes(lowerQuery)
     );
   }, [searchQuery]);
 

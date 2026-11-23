@@ -12,8 +12,8 @@ export const dashboardConfig = {
   chartGrid: "grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5",
 
   // Order Section Header
-  orderHeader:
-    "flex flex-col sm:flex-row justify-between items-center gap-4 mb-5",
+  orderHeader: "flex flex-col sm:flex-row justify-between items-center gap-4 mb-5",
+  
   searchWrapper: "w-full max-w-sm",
 };
 
@@ -28,8 +28,18 @@ export const MOCK_KPI_DATA: KPIData[] = [
     trend: "▲ +14%",
     icon: "IndianRupee",
   },
-  { label: "Total Orders", value: "897", trend: "▲ +11%", icon: "ShoppingBag" },
-  { label: "Profit", value: "₹25,995", trend: "▲ +17%", icon: "TrendingUp" },
+  {
+    label: "Total Orders",
+    value: "897",
+    trend: "▲ +11%",
+    icon: "ShoppingBag",
+  },
+  {
+    label: "Profit",
+    value: "₹25,995",
+    trend: "▲ +17%",
+    icon: "TrendingUp",
+  },
 ];
 
 export const MOCK_TOP_ITEMS: TopItem[] = [

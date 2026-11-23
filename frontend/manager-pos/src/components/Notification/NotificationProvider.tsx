@@ -1,12 +1,16 @@
 // src/components/Notification/NotificationProvider.tsx
 
-import { createContext, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type {
   NotificationProviderProps,
   NotificationContextValue,
   NotificationType,
   ToastItem,
 } from "./Notification.types";
+
+// Import the context from the new file
+import { NotificationContext } from "./NotificationContext";
+
 import {
   NOTIFICATION_BASE,
   NOTIFICATION_VARIANTS,
@@ -18,21 +22,8 @@ import {
   NOTIFICATION_DEFAULT_MAX_VISIBLE,
 } from "./Notification.config";
 
-export const NotificationContext = createContext<NotificationContextValue | null>(
-  null
-);
-
 /**
  * NotificationProvider — global toast system.
- *
- * Wrap your app:
- *   <NotificationProvider>
- *     <AppRouter />
- *   </NotificationProvider>
- *
- * Then use anywhere:
- *   const { success, error, notify } = useNotification();
- *   success("Payment complete!");
  */
 export const NotificationProvider = ({
   children,

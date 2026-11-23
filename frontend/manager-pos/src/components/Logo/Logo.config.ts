@@ -1,6 +1,6 @@
 // src/components/Logo/Logo.config.ts
 
-import type { LogoSize, LogoVariant } from "./Logo.types";
+import type { LogoVariant } from "./Logo.types";
 
 export const logoConfig = {
   base: "flex items-center gap-3 select-none",

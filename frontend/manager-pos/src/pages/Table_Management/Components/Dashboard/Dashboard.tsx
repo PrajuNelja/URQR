@@ -27,7 +27,8 @@ export default function Dashboard() {
       maxWidth="xl"
       header={
         <Header
-          title=""
+          title="Grand Horizon"
+          subtitle="Operations Dashboard"
           logo={<Logo size="md" />}
           navItems={[]}
           actions={
@@ -40,7 +41,7 @@ export default function Dashboard() {
       }
     >
       {/* Title & Date Picker */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-primary m-0 leading-tight">
             Dashboard

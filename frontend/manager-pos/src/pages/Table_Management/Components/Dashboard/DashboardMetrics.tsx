@@ -13,6 +13,7 @@ import {
 export const DashboardMetrics = () => {
   return (
     <>
+      {/* KPI Cards */}
       <div className={dashboardConfig.kpiGrid}>
         {MOCK_KPI_DATA.map((kpi, i) => (
           <KPIStat
@@ -26,6 +27,7 @@ export const DashboardMetrics = () => {
         ))}
       </div>
 
+      {/* Charts */}
       <div className={dashboardConfig.chartGrid}>
         <DataCard
           title="Top 5 Selling Items"
