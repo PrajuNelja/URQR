@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nelja Tech URQR — Day 1 ESC/POS Thermal Print Specs &amp; Handoff Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /*
+     * Tier 3 · Utilitarian (Engineering Hardware Specs & Day 1 Handoff)
+     * Hero: Answer-first compact headline + inline spec strip (no decorative chrome)
+     * Section order: Hero -> Task 1 Limitations & SVG Column Chart -> Task 2 Full-Bleed 80mm Wireframe Band (synced to finalized receipt) -> Task 3 Typography/Line-Height/Dividers Table -> Task 5 Character Width Allocation Table -> Day 1 Completion Tracker & Team Lead Handoff Notes -> Sources
+     * Fonts: Space Grotesk (headings/callouts) + Inter (body) + JetBrains Mono (data, hex codes, wireframes)
+     * Palette: Crisp gallery white #FFFFFF, jet ink #0B0E14, cobalt #1D4ED8 / #1E3A8A, emerald #047857
+     * Image radius: 0px (no photos; SVG chart + monospace wireframe)
+     * Emphasis moment: 48 / 32 column spec strip in hero
+     * Signature element: Full-bleed 80mm 48-column receipt wireframe band
+     * Chart type: Inline SVG horizontal grouped bar chart (column capacities by head density & font)
+     */
+    :root {
+      --paper: #FFFFFF;
+      --band: #F4F6F8;
+      --ink: #0B0E14;
+      --ink2: #2D3748;
+      --mute: #4A5568;
+      --hair: #D1D5DB;
+      --accent: #1D4ED8;
+      --accent-text: #1E3A8A;
+      --accent-2: #047857;
+      --accent-2-text: #065F46;
+      --ff-head: 'Space Grotesk', sans-serif;
+      --ff-body: 'Inter', sans-serif;
+      --ff-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--ff-body);
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      padding: 64px clamp(24px, 9.5vw, 112px) 88px;
+    }
+
+    a {
+      color: var(--accent-text);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+    }
+    a:hover { color: var(--ink); }
+
+    h1 {
+      font-family: var(--ff-head);
+      font-size: clamp(36px, 4.4vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+      font-weight: 700;
+      margin: 0 0 18px;
+      max-width: 24ch;
+      text-wrap: balance;
+      color: var(--ink);
+    }
+
+    h2 {
+      font-family: var(--ff-head);
+      font-size: clamp(24px, 2.5vw, 30px);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+      margin: 0 0 14px;
+      color: var(--ink);
+      text-wrap: balance;
+    }
+
+    h3 {
+      font-family: var(--ff-head);
+      font-size: 18px;
+      line-height: 1.3;
+      font-weight: 600;
+      margin: 0 0 8px;
+      color: var(--ink);
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--ink2);
+    }
+
+    .measure { max-width: 66ch; }
+
+    .deck {
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--ink2);
+      max-width: 64ch;
+      margin: 0 0 28px;
+    }
+
+    .spec-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 20px 28px;
+      padding: 20px 0;
+      border-top: 2px solid var(--ink);
+      border-bottom: 1px solid var(--hair);
+    }
+
+    .spec-val {
+      font-family: var(--ff-head);
+      font-size: 32px;
+      line-height: 1.1;
+      font-weight: 700;
+      color: var(--accent-text);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 4px;
+    }
+
+    .spec-desc {
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--mute);
+    }
+
+    .sec {
+      margin-top: 64px;
+      padding-top: 28px;
+      border-top: 1px solid var(--hair);
+    }
+
+    .sec-noborder {
+      margin-top: 64px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 36px;
+      margin-top: 24px;
+    }
+
+    .col-item {
+      padding-top: 14px;
+      border-top: 1px solid var(--hair);
+    }
+
+    .col-item p {
+      font-size: 15px;
+      margin-bottom: 0;
+    }
+
+    figure {
+      margin: 28px 0 32px;
+      padding: 0;
+    }
+
+    .fig-title {
+      font-family: var(--ff-head);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 0 0 12px;
+      line-height: 1.3;
+    }
+
+    figcaption {
+      font-size: 13px;
+      color: var(--mute);
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    .full-band {
+      margin: 64px calc(-1 * clamp(24px, 9.5vw, 112px)) 0;
+      padding: 48px clamp(24px, 9.5vw, 112px);
+      background: var(--band);
+      border-top: 1px solid var(--hair);
+      border-bottom: 1px solid var(--hair);
+    }
+
+    .wireframe-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 32px 44px;
+      align-items: start;
+      margin-top: 24px;
+    }
+
+    .mono-wireframe {
+      margin: 0;
+      padding: 18px 0;
+      border-top: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      font-family: var(--ff-mono);
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: var(--ink);
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .zone-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .zone-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--hair);
+      font-size: 15px;
+      color: var(--ink2);
+    }
+
+    .zone-list li:first-child { padding-top: 0; }
+    .zone-list li:last-child { border-bottom: none; }
+
+    .zone-list strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    code {
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14.5px;
+      line-height: 1.45;
+    }
+
+    th {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+      color: var(--ink);
+      padding: 10px 14px 10px 0;
+      border-top: 2px solid var(--ink);
+      border-bottom: 1.5px solid var(--ink);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 11px 14px 11px 0;
+      border-bottom: 1px solid var(--hair);
+      color: var(--ink2);
+      vertical-align: top;
+    }
+
+    .num {
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      white-space: nowrap;
+      color: var(--ink);
+    }
+
+    .status-done {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-2-text);
+      white-space: nowrap;
+    }
+
+    .callout-quote {
+      font-family: var(--ff-head);
+      font-size: clamp(20px, 2.2vw, 26px);
+      line-height: 1.35;
+      color: var(--ink);
+      border-left: 3px solid var(--accent);
+      padding-left: 20px;
+      margin: 28px 0 0;
+      max-width: 54ch;
+    }
+
+    .remarks-list {
+      margin: 16px 0 0;
+      padding-left: 20px;
+      color: var(--ink2);
+      max-width: 64ch;
+    }
+
+    .remarks-list li {
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    ol.sources {
+      margin: 16px 0 0;
+      padding-left: 20px;
+      font-size: 14px;
+      color: var(--ink2);
+      line-height: 1.6;
+    }
+
+    ol.sources li { margin-bottom: 8px; }
+
+    @media (max-width: 860px) {
+      .two-col, .wireframe-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>48 columns on 80mm and 32 on 58mm anchor Nelja URQR thermal print specs</h1>
+      <p class="deck">
+        Day 1 hardware specification and receipt design handoff prepared by Gagan (Design Systems &amp; Hardware Specs, Nelja Tech) on Monday, 23 November 2026 for team lead review. Synced to the finalized thermal receipt template (with streamlined footer, no Table/Token/Customer/Payment Status rows, and no-underscore 15-character Order No.).
+      </p>
+      <div class="spec-strip">
+        <div>
+          <div class="spec-val">48 cols</div>
+          <div class="spec-desc">80mm @ 203 dpi (576 dots, Font A 12×24)</div>
+        </div>
+        <div>
+          <div class="spec-val">32 cols</div>
+          <div class="spec-desc">58mm @ 203 dpi (384 dots, Font A 12×24)</div>
+        </div>
+        <div>
+          <div class="spec-val">15 chars</div>
+          <div class="spec-desc">Order No. format <code>&lt;CODE&gt;YYYYMMDD0001</code></div>
+        </div>
+        <div>
+          <div class="spec-val">5 / 5</div>
+          <div class="spec-desc">All Day 1 afternoon tasks complete for review</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="sec">
+      <h2>Print head dot counts dictate exact character budgets across 80mm and 58mm rolls</h2>
+      <p class="measure">
+        ESC/POS thermal receipt printers render strictly monospaced glyphs directly onto a fixed horizontal line of heating elements. Every line budget equals <code>floor(printable_dots / cell_width_dots)</code>, which gives standard 203 dpi (8 dots/mm) printers <strong>48 columns on 80mm paper</strong> (72mm effective width, 576 dots) and <strong>32 columns on 58mm paper</strong> (48mm effective width, 384 dots) in default Font A (<code>12×24</code> dots) (<a href="https://www.edoo-iot.com/services/58mm-vs-80mm-receipt-printer.html" target="_blank" rel="noopener noreferrer">EDOO</a>, <a href="https://mianazeemdaula.github.io/thermalink/cheatsheet/" target="_blank" rel="noopener noreferrer">Thermalink Cheat Sheet</a>).
+      </p>
+
+      <figure>
+        <div class="fig-title">Head dot density caps standard 80mm receipts at 48 columns and 58mm at 32</div>
+        <svg viewBox="0 0 680 390" width="100%" role="img" aria-label="Horizontal bar chart comparing ESC/POS column counts across 80mm 203 dpi, 80mm 180 dpi, and 58mm 203 dpi thermal printers">
+          <line x1="200" y1="36" x2="200" y2="338" stroke="#0B0E14" stroke-width="1.2"/>
+          <line x1="300" y1="36" x2="300" y2="338" stroke="#D1D5DB" stroke-width="1"/>
+          <line x1="400" y1="36" x2="400" y2="338" stroke="#D1D5DB" stroke-width="1"/>
+          <line x1="500" y1="36" x2="500" y2="338" stroke="#D1D5DB" stroke-width="1"/>
+          <line x1="600" y1="36" x2="600" y2="338" stroke="#D1D5DB" stroke-width="1"/>
+
+          <rect x="200" y="8" width="12" height="12" fill="#1D4ED8"/>
+          <text x="218" y="19" font-family="Inter, sans-serif" font-size="13" fill="#0B0E14">Font A 1× (12×24)</text>
+          <rect x="355" y="8" width="12" height="12" fill="#047857"/>
+          <text x="373" y="19" font-family="Inter, sans-serif" font-size="13" fill="#0B0E14">Font B 1× (9×17)</text>
+          <rect x="502" y="8" width="12" height="12" fill="#4A5568"/>
+          <text x="520" y="19" font-family="Inter, sans-serif" font-size="13" fill="#0B0E14">Font A 2× Width</text>
+
+          <text x="188" y="66" text-anchor="end" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600" fill="#0B0E14">80mm · 203 dpi</text>
+          <text x="188" y="84" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">576 dots (72mm)</text>
+          <rect x="200" y="48" width="288" height="20" fill="#1D4ED8"/>
+          <text x="496" y="63" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#1E3A8A">48 cols</text>
+          <rect x="200" y="72" width="384" height="20" fill="#047857"/>
+          <text x="592" y="87" font-family="JetBrains Mono, monospace" font-size="13" fill="#065F46">64 cols</text>
+          <rect x="200" y="96" width="144" height="20" fill="#4A5568"/>
+          <text x="352" y="111" font-family="JetBrains Mono, monospace" font-size="13" fill="#4A5568">24 cols</text>
+
+          <text x="188" y="168" text-anchor="end" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600" fill="#0B0E14">80mm · 180 dpi</text>
+          <text x="188" y="186" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">512 dots (TM-T88V)</text>
+          <rect x="200" y="150" width="252" height="20" fill="#1D4ED8"/>
+          <text x="460" y="165" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#1E3A8A">42 cols</text>
+          <rect x="200" y="174" width="336" height="20" fill="#047857"/>
+          <text x="544" y="189" font-family="JetBrains Mono, monospace" font-size="13" fill="#065F46">56 cols</text>
+          <rect x="200" y="198" width="126" height="20" fill="#4A5568"/>
+          <text x="334" y="213" font-family="JetBrains Mono, monospace" font-size="13" fill="#4A5568">21 cols</text>
+
+          <text x="188" y="270" text-anchor="end" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600" fill="#0B0E14">58mm · 203 dpi</text>
+          <text x="188" y="288" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">384 dots (48mm)</text>
+          <rect x="200" y="252" width="192" height="20" fill="#1D4ED8"/>
+          <text x="400" y="267" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#1E3A8A">32 cols</text>
+          <rect x="200" y="276" width="252" height="20" fill="#047857"/>
+          <text x="460" y="291" font-family="JetBrains Mono, monospace" font-size="13" fill="#065F46">42 cols</text>
+          <rect x="200" y="300" width="96" height="20" fill="#4A5568"/>
+          <text x="304" y="315" font-family="JetBrains Mono, monospace" font-size="13" fill="#4A5568">16 cols</text>
+
+          <text x="200" y="358" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">0</text>
+          <text x="300" y="358" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">16</text>
+          <text x="400" y="358" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">32</text>
+          <text x="500" y="358" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">48</text>
+          <text x="600" y="358" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#4A5568">64</text>
+          <text x="400" y="382" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" fill="#4A5568">Characters per line (columns)</text>
+        </svg>
+        <figcaption>
+          Scale: characters per line (columns). Sources: <a href="https://mediaserver.goepson.com/ImConvServlet/imconv/436ded101ebd425440d8821a9671200969865e02/original?assetDescr=TM-T20III_Specification_Sheet_CPD-58120R1.pdf" target="_blank" rel="noopener noreferrer">Epson TM-T20III Spec Sheet</a>, <a href="https://files.support.epson.com/pdf/pos/bulk/tm-t88v_hwum_en_02.pdf" target="_blank" rel="noopener noreferrer">Epson TM-T88V Manual</a>, and <a href="https://mianazeemdaula.github.io/thermalink/cheatsheet/" target="_blank" rel="noopener noreferrer">Thermalink ESC/POS Cheat Sheet</a>.
+        </figcaption>
+      </figure>
+
+      <div class="two-col">
+        <div class="col-item">
+          <h3>180 dpi hardware variance (42 vs 48 cols)</h3>
+          <p>
+            Popular 80mm units such as the <a href="https://files.support.epson.com/pdf/pos/bulk/tm-t88v_hwum_en_02.pdf" target="_blank" rel="noopener noreferrer">Epson TM-T88V</a> operate at 180 dpi (512 dots), capping Font A at <strong>42 columns</strong> rather than 48. The printer daemon must expose a configurable <code>columnsPerLine</code> setting (<code>48</code> default, <code>42</code> fallback, <code>32</code> for 58mm) instead of hardcoding 48.
+          </p>
+        </div>
+        <div class="col-item">
+          <h3>Double-width scaling halves line width</h3>
+          <p>
+            Enabling double-width text via <code>GS ! 0x10</code> or double-both via <code>GS ! 0x11</code> cuts 80mm capacity to <strong>24 columns</strong> and 58mm to <strong>16 columns</strong> (<a href="https://mianazeemdaula.github.io/thermalink/cheatsheet/" target="_blank" rel="noopener noreferrer">Thermalink Cheat Sheet</a>). Use double-height only (<code>GS ! 0x01</code>) when emphasizing totals without losing horizontal room.
+          </p>
+        </div>
+        <div class="col-item">
+          <h3>No firmware word wrapping</h3>
+          <p>
+            Printers split lines mid-word the moment the dot buffer overflows, breaking right-aligned amounts (<a href="https://www.edoo-iot.com/services/58mm-vs-80mm-receipt-printer.html" target="_blank" rel="noopener noreferrer">EDOO</a>). Software must wrap item descriptions to the reserved item column budget before transmitting bytes.
+          </p>
+        </div>
+        <div class="col-item">
+          <h3>Single-byte code pages &amp; ₹ symbol fallback</h3>
+          <p>
+            Budget thermal ROMs expect single-byte tables (<code>PC437</code>, <code>CP850</code>, <code>WPC1252</code> via <code>ESC t n</code> sent after <code>ESC @</code>) and print <code>?</code> (<code>0x3F</code>) or boxes for raw UTF-8 <code>₹</code> and Indic scripts (<a href="https://scanprinter.eu/blogs/blog/receipt-printer-special-characters-code-page" target="_blank" rel="noopener noreferrer">ScanPrinter</a>, <a href="https://karobariapp.in/blog/how-to-print-hindi-marathi-bills-on-thermal-printer" target="_blank" rel="noopener noreferrer">Karobari</a>). Use ASCII <code>Rs.</code> in raw text mode, or 1-bit raster printing via <code>GS v 0</code> at 576/384 dots for exact <code>₹</code> glyphs and logos.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="full-band">
+      <h2>Finalized 80mm thermal receipt structural wireframe</h2>
+      <p class="measure">
+        Synced directly to the finalized thermal receipt template (<code>thermal_bill_template_preview (1).html</code>): <strong>Table No.</strong>, <strong>Token No.</strong>, <strong>Customer Name</strong>, <strong>Payment Status</strong>, and duplicate footer lines are removed. <strong>Order No.</strong> uses the 15-character no-underscore format (<code>&lt;3_LETTER_CODE&gt;YYYYMMDD0001</code>), <strong>Payment Mode</strong> sits beneath <strong>GRAND TOTAL</strong>, and the footer closes cleanly with <code>THANK YOU, VISIT AGAIN!</code> and the <code>-- * --</code> star divider.
+      </p>
+
+      <div class="wireframe-grid">
+        <pre class="mono-wireframe">         1         2         3         4
+123456789012345678901234567890123456789012345678
+------------------------------------------------
+                   [ LOGO ]
+                YOUR RESTAURANT
+         -- GOOD FOOD. GREAT MEMORIES. --
+             Your Restaurant Address
+           Bengaluru, Karnataka 560001
+                Ph: 080-4567-8910
+             GSTIN: 29ABCDE1234F1Z5
+------------------------------------------------
+Bill No.        :                 SKB/25-05/0142
+Date            :                    23 Nov 2026
+Time            :                          15:16
+Order Type      :                        Dine In
+Order No.       :                YOU202611230001
+------------------------------------------------
+ITEM                   QTY       UNIT      TOTAL
+================================================
+1. Masala Dosa           1  Rs.149.00  Rs.149.00
+2. Paneer Roll           1  Rs.249.00  Rs.249.00
+3. Tea                   2   Rs.49.00   Rs.98.00
+4. Gulab Jamun           2   Rs.89.00  Rs.178.00
+------------------------------------------------
+SUBTOTAL                               Rs.674.00
+CGST (2.5%)                             Rs.16.85
+SGST (2.5%)                             Rs.16.85
+================================================
+GRAND TOTAL                            Rs.707.70
+================================================
+Payment Mode                                 UPI
+------------------------------------------------
+            THANK YOU, VISIT AGAIN!
+                   -- * --</pre>
+
+        <ul class="zone-list">
+          <li><strong>Zone 1 — Header (Centered):</strong> 44×44px framed logo icon (or 1-bit monochrome <code>GS v 0</code> bitmap), uppercase bold restaurant name, flanked tagline, 2-line address + phone, and bold 15-character GSTIN.</li>
+          <li><strong>Zone 2 — Order Metadata (Key : Value):</strong> Fixed left-aligned label (16 cols), colon at col 17, right-aligned value (31 cols). Includes <code>Bill No.</code>, <code>Date</code>, <code>Time</code>, <code>Order Type</code>, and bold <code>Order No.</code> (<code>YOU202611230001</code>). Excludes <code>Table No.</code> and <code>Token No.</code>.</li>
+          <li><strong>Zone 3 — Line Items (4-Column Table):</strong> <code>ITEM</code> (21 cols left) + <code>QTY</code> (5 cols right) + <code>UNIT</code> (11 cols right) + <code>TOTAL</code> (11 cols right) = 48 cols. Names over 21 characters wrap onto an indented continuation line.</li>
+          <li><strong>Zone 4 — Taxes &amp; Grand Total:</strong> Flat 5% tax split evenly into <code>CGST (2.5%)</code> and <code>SGST (2.5%)</code> above a solid-ruled <code>GRAND TOTAL</code> row in bold double-height (<code>ESC E 1</code> + <code>GS ! 0x01</code>).</li>
+          <li><strong>Zone 5 — Payment Mode:</strong> Single row directly under <code>GRAND TOTAL</code> showing <code>Payment Mode</code> (<code>Cash</code>, <code>UPI</code>, or <code>Other</code>). Both <code>Customer Name</code> and <code>Payment Status</code> are removed.</li>
+          <li><strong>Zone 6 — Streamlined Footer &amp; Cut:</strong> Centered <code>THANK YOU, VISIT AGAIN!</code> and <code>-- * --</code> star divider (no redundant second thank-you lines), followed by <code>ESC d 4</code> feed and <code>GS V 66 0</code> cut (<a href="https://mianazeemdaula.github.io/thermalink/cheatsheet/" target="_blank" rel="noopener noreferrer">Thermalink Cheat Sheet</a>).</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="sec-noborder">
+      <h2>Monospaced font sizing, line height, and divider dash standards</h2>
+      <p class="measure">
+        Standardizing exact dot cells, line feeds, and ASCII rule characters ensures visual parity between browser <code>@media print</code> output and raw ESC/POS bytes emitted by the local printer bridge. Font B is reserved strictly for secondary fine print because 9-dot glyphs lose legibility under dim dining lighting (<a href="https://www.edoo-iot.com/services/58mm-vs-80mm-receipt-printer.html" target="_blank" rel="noopener noreferrer">EDOO</a>).
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Element</th>
+              <th>ESC/POS Command (Hex)</th>
+              <th>Physical / Dot Spec</th>
+              <th>CSS @media print</th>
+              <th>Usage Rule</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Body Font (Font A)</strong></td>
+              <td class="num">ESC M 0 (1B 4D 00)</td>
+              <td class="num">12×24 dots (1.5×3.0mm)</td>
+              <td class="num">12px monospace</td>
+              <td>Default for all metadata, line items, taxes, and payment mode</td>
+            </tr>
+            <tr>
+              <td><strong>Compact Font (Font B)</strong></td>
+              <td class="num">ESC M 1 (1B 4D 01)</td>
+              <td class="num">9×17 dots (1.1×2.1mm)</td>
+              <td class="num">10.5px monospace</td>
+              <td>Optional secondary disclaimers only; avoid for items or prices</td>
+            </tr>
+            <tr>
+              <td><strong>Header / Grand Total</strong></td>
+              <td class="num">ESC E 1 + GS ! 0x01</td>
+              <td class="num">12×48 dots (2× height)</td>
+              <td class="num">16–18px bold</td>
+              <td>Preserves full 48/32 column width while doubling visual emphasis</td>
+            </tr>
+            <tr>
+              <td><strong>Default Line Height</strong></td>
+              <td class="num">ESC 2 (1B 32)</td>
+              <td class="num">30 dots (3.75mm)</td>
+              <td class="num">line-height: 1.45</td>
+              <td>Standard baseline (<a href="http://www.hctechsz.com/html/products/58MM_Thermal_Receipt_Printers/129.html" target="_blank" rel="noopener noreferrer">HC Tech TP-5810</a>); some Citizen units default to 4.23mm</td>
+            </tr>
+            <tr>
+              <td><strong>Tight / Compact Feed</strong></td>
+              <td class="num">ESC 3 26 (1B 33 1A)</td>
+              <td class="num">26 dots (3.25mm)</td>
+              <td class="num">line-height: 1.30</td>
+              <td>Use inside wrapped multi-line item descriptions to keep pairs grouped</td>
+            </tr>
+            <tr>
+              <td><strong>Section Divider</strong></td>
+              <td class="num">'-' × cols (0x2D)</td>
+              <td class="num">48 or 32 dashes</td>
+              <td class="num">1px dashed #374151</td>
+              <td>Separates Header, Metadata, Items, Subtotals, Payment Mode, Footer</td>
+            </tr>
+            <tr>
+              <td><strong>Heavy Total Rule</strong></td>
+              <td class="num">'=' × cols (0x3D)</td>
+              <td class="num">48 or 32 equals</td>
+              <td class="num">1.5px solid #000</td>
+              <td>Frames the Item Table header and the <code>GRAND TOTAL</code> row</td>
+            </tr>
+            <tr>
+              <td><strong>Footer Ornament &amp; Cut</strong></td>
+              <td class="num">-- * -- + ESC d 4</td>
+              <td class="num">Star rule + 4 line feed</td>
+              <td class="num">SVG star + 12mm pad</td>
+              <td>Follow with <code>GS V 66 0</code> cut so blade clears <code>-- * --</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Thermal print character width allocation tables</h2>
+      <p class="measure">
+        Every row sum below strictly equals the printer's exact column ceiling so right-aligned prices and colons never wrap. On 58mm (32 columns), the <code>UNIT</code> price moves to an indented second line <code>(2 x 49.00)</code> so item names retain 17 usable characters.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Receipt Zone / Row</th>
+              <th>80mm · 203 dpi (48 cols)</th>
+              <th>80mm · 180 dpi (42 cols)</th>
+              <th>58mm · 203 dpi (32 cols)</th>
+              <th>Overflow / Wrap Behavior</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Header (Name / GSTIN)</strong></td>
+              <td class="num">48 centered (24 if 2×W)</td>
+              <td class="num">42 centered (21 if 2×W)</td>
+              <td class="num">32 centered (16 if 2×W)</td>
+              <td>Wrap address at word boundary; never truncate GSTIN (15 chars)</td>
+            </tr>
+            <tr>
+              <td><strong>Metadata Key : Value</strong></td>
+              <td class="num">16 + 1 + 31 = 48</td>
+              <td class="num">14 + 1 + 27 = 42</td>
+              <td class="num">11 + 1 + 20 = 32</td>
+              <td><code>Order No.</code> (15 chars) fits single-line across all 3 widths</td>
+            </tr>
+            <tr>
+              <td><strong>Item Row — ITEM</strong></td>
+              <td class="num">21 cols (left)</td>
+              <td class="num">17 cols (left)</td>
+              <td class="num">17 cols (left)</td>
+              <td>Word-wrap overflow onto continuation line (3-space indent)</td>
+            </tr>
+            <tr>
+              <td><strong>Item Row — QTY</strong></td>
+              <td class="num">5 cols (right)</td>
+              <td class="num">4 cols (right)</td>
+              <td class="num">4 cols (right)</td>
+              <td>Supports quantities up to 999 with 1-char leading gutter</td>
+            </tr>
+            <tr>
+              <td><strong>Item Row — UNIT</strong></td>
+              <td class="num">11 cols (right)</td>
+              <td class="num">10 cols (right)</td>
+              <td class="num">Line 2: (qty x unit)</td>
+              <td>Dropped from line 1 on 58mm to prevent price collision</td>
+            </tr>
+            <tr>
+              <td><strong>Item Row — TOTAL</strong></td>
+              <td class="num">11 cols (right)</td>
+              <td class="num">11 cols (right)</td>
+              <td class="num">11 cols (right)</td>
+              <td>Fits up to <code>Rs.99999.99</code> (11 chars) with gutter</td>
+            </tr>
+            <tr>
+              <td><strong>Subtotals / Tax / Mode</strong></td>
+              <td class="num">36 label + 12 val = 48</td>
+              <td class="num">30 label + 12 val = 42</td>
+              <td class="num">20 label + 12 val = 32</td>
+              <td>Left-align label, right-align amount or mode (<code>Cash</code>/<code>UPI</code>/<code>Other</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Footer (2 lines)</strong></td>
+              <td class="num">48 centered</td>
+              <td class="num">42 centered</td>
+              <td class="num">32 centered</td>
+              <td><code>THANK YOU, VISIT AGAIN!</code> (23 chars) + <code>-- * --</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Day 1 completion tracker and team lead handoff notes</h2>
+      <p class="measure">
+        All five Day 1 Afternoon Session tasks assigned to Gagan are now complete and ready to check off and submit for team lead sign-off.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Completed Deliverable &amp; Verified Spec</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num">Task 1</td>
+              <td>Researched and documented ESC/POS character limitations: 32 cols (58mm / 384 dots) vs 48 cols (80mm / 576 dots), 42-col 180 dpi fallback, <code>GS !</code> scaling, and <code>Rs.</code> / <code>GS v 0</code> raster rule for <code>₹</code>.</td>
+              <td class="status-done">COMPLETED</td>
+            </tr>
+            <tr>
+              <td class="num">Task 2</td>
+              <td>Produced finalized 80mm thermal receipt structural wireframe (plus 58mm companion): <code>Order No.</code> (<code>&lt;CODE&gt;YYYYMMDD0001</code>, no underscores), 5% GST split (CGST/SGST 2.5%), <code>Payment Mode</code> only, streamlined 2-line footer, and no <code>Table No.</code>, <code>Token No.</code>, <code>Customer Name</code>, or <code>Payment Status</code>.</td>
+              <td class="status-done">COMPLETED</td>
+            </tr>
+            <tr>
+              <td class="num">Task 3</td>
+              <td>Established monospaced font sizing (Font A 12×24 / Font B 9×17), line heights (<code>ESC 2</code> 3.75mm, <code>ESC 3 26</code> tight wrap), and divider dash styles (<code>-</code> section, <code>=</code> total/table, <code>-- * --</code> footer).</td>
+              <td class="status-done">COMPLETED</td>
+            </tr>
+            <tr>
+              <td class="num">Task 4</td>
+              <td>Reviewed Screen 1 (Login) wireframe layout with Vennela and confirmed frontend form validation requirements in Zod.</td>
+              <td class="status-done">COMPLETED</td>
+            </tr>
+            <tr>
+              <td class="num">Task 5</td>
+              <td>Documented complete thermal print character width tables (48 / 42 / 32 cols) and compiled Day 1 handoff notes for team lead review.</td>
+              <td class="status-done">COMPLETED</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top: 28px;">Remarks for physical sign-off sheet / Slack handoff</h3>
+      <ol class="remarks-list">
+        <li>Finalized 80mm (48-col) and 58mm (32-col) ESC/POS character width tables with 42-col (180 dpi) fallback for <code>URQR-Bridge</code>.</li>
+        <li>Locked 80mm receipt wireframe: removed Table No., Token No., Customer Name, Payment Status, and duplicate footer lines; standardized 15-char no-underscore <code>Order No.</code> (<code>&lt;3_LETTER_CODE&gt;YYYYMMDD0001</code>).</li>
+        <li>Confirmed Screen 1 Login Zod validation with Vennela; ready for Day 2 React <code>@media print</code> and Go ESC/POS implementation once team lead signs off on keeping <code>Bill No.</code> alongside <code>Order No.</code> and confirms shop printer DPI (203 vs 180 dpi).</li>
+      </ol>
+
+      <blockquote class="callout-quote">
+        Day 2 handoff gate: confirm shop printer DPI (203 dpi 48-col vs 180 dpi 42-col) and whether <code>Bill No.</code> remains alongside <code>Order No.</code> on Phase 1 receipts.
+      </blockquote>
+    </section>
+
+    <section class="sec">
+      <h2>Sources</h2>
+      <ol class="sources">
+        <li>EDOO — <a href="https://www.edoo-iot.com/services/58mm-vs-80mm-receipt-printer.html" target="_blank" rel="noopener noreferrer">58mm vs 80mm Receipt Printer: Which Width Fits</a> (203 dpi dot budgets, 32/42 vs 48/64 columns, Font B legibility, and tax layout wrapping).</li>
+        <li>Thermalink — <a href="https://mianazeemdaula.github.io/thermalink/cheatsheet/" target="_blank" rel="noopener noreferrer">ESC/POS, ZPL and TSPL Cheat Sheet: Commands with Bytes</a> (paper width table, <code>ESC M</code>, <code>GS !</code>, <code>ESC 2</code>/<code>ESC 3</code>, <code>ESC t</code>, <code>GS v 0</code>, and cut feed commands).</li>
+        <li>Seiko Epson — <a href="https://mediaserver.goepson.com/ImConvServlet/imconv/436ded101ebd425440d8821a9671200969865e02/original?assetDescr=TM-T20III_Specification_Sheet_CPD-58120R1.pdf" target="_blank" rel="noopener noreferrer">TM-T20III Thermal Receipt Printer Specification Sheet</a> (203 dpi, 12×24 / 9×17 fonts, 48/64 columns on 80mm).</li>
+        <li>Seiko Epson — <a href="https://files.support.epson.com/pdf/pos/bulk/tm-t88v_hwum_en_02.pdf" target="_blank" rel="noopener noreferrer">TM-T88V User's Manual</a> (180 dpi, 72mm / 512 dot positions, 42 columns in Font A).</li>
+        <li>ScanPrinter — <a href="https://scanprinter.eu/blogs/blog/receipt-printer-special-characters-code-page" target="_blank" rel="noopener noreferrer">Receipt Printer Special Characters &amp; Code Pages</a> (<code>ESC @</code> reset order and single-byte code page mismatch behavior).</li>
+        <li>Karobari — <a href="https://karobariapp.in/blog/how-to-print-hindi-marathi-bills-on-thermal-printer" target="_blank" rel="noopener noreferrer">Why Thermal Printers Print ???? for Hindi Bills &amp; 1-Bit GS v 0 Raster Fix</a> (UTF-8 <code>0x3F</code> replacement and 384/576-dot rasterization for <code>₹</code> and Indic scripts).</li>
+        <li>HC Technology — <a href="http://www.hctechsz.com/html/products/58MM_Thermal_Receipt_Printers/129.html" target="_blank" rel="noopener noreferrer">TP-5810 58mm Thermal Printer Specifications</a> (3.75mm default line distance, 1.5×3.0mm Font A, 1.1×2.1mm Font B).</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

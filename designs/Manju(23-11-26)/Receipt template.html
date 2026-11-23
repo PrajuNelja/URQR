@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thermal Bill Template Preview</title>
+  <style>
+    body, svg, button, input, select {
+      font-family: var(--ff-sans, 'Google Sans Flex', 'Google Sans', sans-serif);
+    }
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .mode-caption {
+      font-size: 12px;
+      color: var(--on-surface-variant);
+      font-family: var(--ff-mono, 'Google Sans Code', monospace);
+    }
+    .stage-wrap {
+      display: flex;
+      justify-content: center;
+      background: var(--surface-dim);
+      border-radius: var(--r-m);
+      padding: 18px 14px;
+      overflow-x: auto;
+    }
+    .paper-visual {
+      width: 340px;
+      background: var(--surface-bright);
+      color: var(--on-surface);
+      border-radius: var(--r-s);
+      padding: 20px 18px;
+      font-family: var(--ff-mono, 'Google Sans Code', monospace);
+      font-size: 12px;
+      line-height: 1.45;
+      box-sizing: border-box;
+    }
+    .v-center { text-align: center; }
+    .v-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      border: 1.5px solid var(--on-surface);
+      margin-bottom: 8px;
+    }
+    .v-title {
+      font-family: var(--ff-sans, 'Google Sans Flex', 'Google Sans', sans-serif);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .v-tagline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .v-tagline-line {
+      height: 1px;
+      width: 22px;
+      background: var(--outline);
+      flex-shrink: 0;
+    }
+    .v-addr {
+      color: var(--on-surface-variant);
+      margin-bottom: 6px;
+    }
+    .v-gstin {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .v-dash {
+      border-top: 1px dashed var(--outline);
+      margin: 10px 0;
+    }
+    .v-solid {
+      border-top: 1.5px solid var(--on-surface);
+      margin: 8px 0;
+    }
+    .v-meta-row {
+      display: grid;
+      grid-template-columns: 112px 14px 1fr;
+      align-items: baseline;
+      margin: 3px 0;
+    }
+    .v-meta-key { font-weight: 600; }
+    .v-meta-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .v-items-head {
+      display: grid;
+      grid-template-columns: 1fr 34px 66px 70px;
+      font-weight: 700;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid var(--on-surface);
+      margin-bottom: 4px;
+    }
+    .v-item-row {
+      display: grid;
+      grid-template-columns: 1fr 34px 66px 70px;
+      padding: 5px 0;
+      border-bottom: 1px dashed var(--stroke-default);
+      font-variant-numeric: tabular-nums;
+    }
+    .v-item-row:last-child { border-bottom: none; }
+    .v-num { text-align: right; }
+    .v-bold { font-weight: 700; }
+    .v-sum-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 3px 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .v-grand {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: var(--ff-sans, 'Google Sans Flex', 'Google Sans', sans-serif);
+      font-size: 16px;
+      font-weight: 700;
+      padding: 6px 0;
+      border-top: 1.5px solid var(--on-surface);
+      border-bottom: 1.5px solid var(--on-surface);
+      margin: 8px 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .v-footer-star {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+    .v-footer-italic {
+      font-style: italic;
+      color: var(--on-surface-variant);
+    }
+    .paper-mono {
+      display: none;
+      background: var(--surface-bright);
+      color: var(--on-surface);
+      border-radius: var(--r-s);
+      padding: 16px 18px;
+      font-family: var(--ff-mono, 'Google Sans Code', monospace);
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre;
+      margin: 0;
+    }
+    .is-hidden { display: none; }
+    .is-shown { display: block; }
+  </style>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="top-bar">
+      <div class="lumi-segmented-group" role="group" aria-label="Receipt render mode">
+        <button type="button" class="lumi-segmented-btn is-active" data-mode="visual">Styled 80mm Bill</button>
+        <button type="button" class="lumi-segmented-btn" data-mode="esc80">80mm ESC/POS (48 cols)</button>
+        <button type="button" class="lumi-segmented-btn" data-mode="esc58">58mm ESC/POS (32 cols)</button>
+      </div>
+      <span class="mode-caption" id="mode-caption">CSS / GS v 0 Raster (576 dots)</span>
+    </div>
+
+    <div class="stage-wrap">
+      <div id="view-visual" class="paper-visual">
+        <div class="v-center">
+          <div class="v-logo" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 3v7a2 2 0 0 0 4 0V3" fill="none"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
+              <path d="M16 3c2 2 2 7 0 9v9" fill="none"/>
+            </svg>
+          </div>
+          <div class="v-title">YOUR RESTAURANT</div>
+          <div class="v-tagline">
+            <span class="v-tagline-line"></span>
+            <span>GOOD FOOD. GREAT MEMORIES.</span>
+            <span class="v-tagline-line"></span>
+          </div>
+          <div class="v-addr">
+            Your Restaurant Address<br>
+            Bengaluru, Karnataka 560001<br>
+            Ph: 080-4567-8910
+          </div>
+          <div class="v-gstin">GSTIN: 29ABCDE1234F1Z5</div>
+        </div>
+
+        <div class="v-dash"></div>
+
+        <div class="v-meta-row"><span class="v-meta-key">Bill No.</span><span>:</span><span class="v-meta-val">SKB/25-05/0142</span></div>
+        <div class="v-meta-row"><span class="v-meta-key">Date</span><span>:</span><span class="v-meta-val">23 Nov 2026</span></div>
+        <div class="v-meta-row"><span class="v-meta-key">Time</span><span>:</span><span class="v-meta-val">15:16</span></div>
+        <div class="v-meta-row"><span class="v-meta-key">Order Type</span><span>:</span><span class="v-meta-val">Dine In</span></div>
+        <div class="v-meta-row"><span class="v-meta-key">Order No.</span><span>:</span><span class="v-meta-val v-bold">YOU202611230001</span></div>
+
+        <div class="v-dash"></div>
+
+        <div class="v-items-head">
+          <span>ITEM</span>
+          <span class="v-num">QTY</span>
+          <span class="v-num">UNIT</span>
+          <span class="v-num">TOTAL</span>
+        </div>
+        <div class="v-item-row">
+          <span>1. Masala Dosa</span>
+          <span class="v-num">1</span>
+          <span class="v-num">&#8377;149.00</span>
+          <span class="v-num v-bold">&#8377;149.00</span>
+        </div>
+        <div class="v-item-row">
+          <span>2. Paneer Roll</span>
+          <span class="v-num">1</span>
+          <span class="v-num">&#8377;249.00</span>
+          <span class="v-num v-bold">&#8377;249.00</span>
+        </div>
+        <div class="v-item-row">
+          <span>3. Tea</span>
+          <span class="v-num">2</span>
+          <span class="v-num">&#8377;49.00</span>
+          <span class="v-num v-bold">&#8377;98.00</span>
+        </div>
+        <div class="v-item-row">
+          <span>4. Gulab Jamun</span>
+          <span class="v-num">2</span>
+          <span class="v-num">&#8377;89.00</span>
+          <span class="v-num v-bold">&#8377;178.00</span>
+        </div>
+
+        <div class="v-dash"></div>
+
+        <div class="v-sum-row"><span>SUBTOTAL</span><span class="v-bold">&#8377;674.00</span></div>
+        <div class="v-sum-row"><span>CGST (2.5%)</span><span>&#8377;16.85</span></div>
+        <div class="v-sum-row"><span>SGST (2.5%)</span><span>&#8377;16.85</span></div>
+
+        <div class="v-grand">
+          <span>GRAND TOTAL</span>
+          <span>&#8377;707.70</span>
+        </div>
+
+        <div class="v-sum-row"><span>Payment Mode</span><span class="v-bold">UPI</span></div>
+
+        <div class="v-dash"></div>
+
+        <div class="v-center" style="margin-top: 10px;">
+          <div class="v-bold">THANK YOU, VISIT AGAIN!</div>
+          <div class="v-footer-star">
+            <span class="v-tagline-line"></span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="12,2 15,9 22,9.5 16.5,14 18.2,21 12,17.2 5.8,21 7.5,14 2,9.5 9,9"/>
+            </svg>
+            <span class="v-tagline-line"></span>
+          </div>
+          
+        </div>
+      </div>
+
+      <pre id="view-mono" class="paper-mono"></pre>
+    </div>
+  </div>
+
+  <script>
+    const ESC80 = [
+      '                YOUR RESTAURANT                 ',
+      '         -- GOOD FOOD. GREAT MEMORIES. --       ',
+      '             Your Restaurant Address            ',
+      '           Bengaluru, Karnataka 560001          ',
+      '                Ph: 080-4567-8910               ',
+      '             GSTIN: 29ABCDE1234F1Z5             ',
+      '------------------------------------------------',
+      'Bill No.        :                 SKB/25-05/0142',
+      'Date            :                    23 Nov 2026',
+      'Time            :                          15:16',
+      'Order Type      :                        Dine In',
+      'Order No.       :                YOU202611230001',
+      '------------------------------------------------',
+      'ITEM                   QTY       UNIT      TOTAL',
+      '================================================',
+      '1. Masala Dosa           1  Rs.149.00  Rs.149.00',
+      '2. Paneer Roll           1  Rs.249.00  Rs.249.00',
+      '3. Tea                   2   Rs.49.00   Rs.98.00',
+      '4. Gulab Jamun           2   Rs.89.00  Rs.178.00',
+      '------------------------------------------------',
+      'SUBTOTAL                               Rs.674.00',
+      'CGST (2.5%)                             Rs.16.85',
+      'SGST (2.5%)                             Rs.16.85',
+      '================================================',
+      'GRAND TOTAL                            Rs.707.70',
+      '================================================',
+      'Payment Mode                                 UPI',
+      '------------------------------------------------',
+      '            THANK YOU, VISIT AGAIN!             ',
+      '                   -- * --                      '
+    ].join('\n');
+
+    const ESC58 = [
+      '        YOUR RESTAURANT         ',
+      '   GOOD FOOD. GREAT MEMORIES.   ',
+      '     Your Restaurant Address    ',
+      '   Bengaluru, Karnataka 560001  ',
+      '        Ph: 080-4567-8910       ',
+      '     GSTIN: 29ABCDE1234F1Z5     ',
+      '--------------------------------',
+      'Bill No.   :      SKB/25-05/0142',
+      'Date       :         23 Nov 2026',
+      'Time       :               15:16',
+      'Order Type :             Dine In',
+      'Order No.  :     YOU202611230001',
+      '--------------------------------',
+      'ITEM             QTY       TOTAL',
+      '================================',
+      '1. Masala Dosa     1   Rs.149.00',
+      '   (1 x 149.00)                 ',
+      '2. Paneer Roll     1   Rs.249.00',
+      '   (1 x 249.00)                 ',
+      '3. Tea             2    Rs.98.00',
+      '   (2 x 49.00)                  ',
+      '4. Gulab Jamun     2   Rs.178.00',
+      '   (2 x 89.00)                  ',
+      '--------------------------------',
+      'SUBTOTAL               Rs.674.00',
+      'CGST (2.5%)             Rs.16.85',
+      'SGST (2.5%)             Rs.16.85',
+      '================================',
+      'GRAND TOTAL            Rs.707.70',
+      '================================',
+      'Payment Mode                 UPI',
+      '--------------------------------',
+      '     THANK YOU, VISIT AGAIN!    ',
+      '            -- * --             ',
+    ].join('\n');
+
+    const visualEl = document.getElementById('view-visual');
+    const monoEl = document.getElementById('view-mono');
+    const captionEl = document.getElementById('mode-caption');
+
+    function setMode(mode) {
+      if (mode === 'visual') {
+        visualEl.classList.remove('is-hidden');
+        monoEl.classList.remove('is-shown');
+        captionEl.textContent = 'CSS / GS v 0 Raster (576 dots)';
+      } else if (mode === 'esc80') {
+        visualEl.classList.add('is-hidden');
+        monoEl.textContent = ESC80;
+        monoEl.classList.add('is-shown');
+        captionEl.textContent = 'Font A (12x24) · 48 cols · ASCII Rs.';
+      } else {
+        visualEl.classList.add('is-hidden');
+        monoEl.textContent = ESC58;
+        monoEl.classList.add('is-shown');
+        captionEl.textContent = 'Font A (12x24) · 32 cols · 2-line unit';
+      }
+    }
+
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        setMode(btn.dataset.mode);
+      });
+    });
+  </script>
+</body>
+</html>
