@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class HotelService {
     private final HotelRepository hotels;
 
-    public HotelService(HotelRepository hotels) { this.hotels = hotels; }
+    public HotelService(HotelRepository hotels) {
+        this.hotels = hotels;
+    }
 
     public HotelResponse getCurrentHotel(UUID authenticatedHotelId) {
         return hotels.findByIdAndStatus(authenticatedHotelId, "ACTIVE")
@@ -26,5 +28,4 @@ public class HotelService {
         try{hotel.update(name,currency,timezone,cutoff,receiptDetails);}catch(RuntimeException e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid hotel configuration");}
         return HotelResponse.from(hotels.save(hotel));
     }
-    @Transactional public HotelResponse status(UUID hotelId,boolean active){Hotel hotel=hotels.findById(hotelId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Hotel not found"));hotel.setStatus(active?"ACTIVE":"INACTIVE");return HotelResponse.from(hotels.save(hotel));}
 }

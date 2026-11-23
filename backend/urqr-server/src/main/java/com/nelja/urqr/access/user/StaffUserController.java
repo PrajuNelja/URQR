@@ -5,6 +5,7 @@ import com.nelja.urqr.access.role.Role;
 import com.nelja.urqr.access.role.RoleRepository;
 import com.nelja.urqr.audit.AuditService;
 import com.nelja.urqr.security.CurrentTenant;
+import com.nelja.urqr.security.RedisAuthStateService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -42,14 +43,16 @@ public class StaffUserController {
     private final CurrentTenant tenant;
     private final PasswordEncoder encoder;
     private final AuditService audit;
+    private final RedisAuthStateService authState;
 
     public StaffUserController(StaffUserRepository users, RoleRepository roles, CurrentTenant tenant,
-            PasswordEncoder encoder, AuditService audit) {
+            PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState) {
         this.users = users;
         this.roles = roles;
         this.tenant = tenant;
         this.encoder = encoder;
         this.audit = audit;
+        this.authState = authState;
     }
 
     @PostMapping
@@ -106,6 +109,7 @@ public class StaffUserController {
         if (request.roleId() != null) {
             user.setRoleId(nextRole.getId());
         }
+        boolean passwordChanged = request.password() != null && !request.password().isBlank();
         if (request.password() != null && !request.password().isBlank()) {
             if (request.password().length() < 12) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 12 characters");
@@ -114,6 +118,8 @@ public class StaffUserController {
         }
 
         users.save(user);
+        authState.invalidateStaffAuthorization(hotelId, user.getId());
+        if (passwordChanged) authState.revokeStaffTokens(hotelId, user.getId());
         audit.record(hotelId, tenant.userId(jwt), "USER_UPDATED", "User", id.toString(),
                 "role=" + previousRole.getName(), "role=" + nextRole.getName());
         return dto(user, nextRole);
@@ -132,6 +138,8 @@ public class StaffUserController {
         String oldStatus = user.getStatus();
         user.setStatus(request.active() ? "ACTIVE" : "INACTIVE");
         users.save(user);
+        authState.invalidateStaffAuthorization(hotelId, user.getId());
+        if (!request.active()) authState.revokeStaffTokens(hotelId, user.getId());
         audit.record(hotelId, tenant.userId(jwt), "USER_STATUS_CHANGED", "User", id.toString(), oldStatus,
                 user.getStatus());
         return dto(user, role);

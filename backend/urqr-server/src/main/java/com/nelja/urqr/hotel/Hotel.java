@@ -13,6 +13,7 @@ import java.util.Currency;
 import java.util.UUID;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collections;
 import jakarta.persistence.PrePersist;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -90,6 +91,9 @@ public class Hotel {
     public String getTimezone() { return timezone; }
     public LocalTime getDayCutoff() { return dayCutoff; }
     public String getStatus() { return status; }
-    public Map<String, Object> getReceiptDetails() { return Map.copyOf(receiptDetails); }
+    public Map<String, Object> getReceiptDetails() {
+        return receiptDetails == null ? Map.of()
+                : Collections.unmodifiableMap(new HashMap<>(receiptDetails));
+    }
     public Instant getCreatedAt() { return createdAt; }
 }

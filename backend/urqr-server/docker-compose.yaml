@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-urqr}
+      POSTGRES_USER: ${DB_USER:-urqr}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in backend/urqr-server/.env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data-v2:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 128m
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../..
+      dockerfile: backend/urqr-server/Dockerfile
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-urqr}
+      DB_USER: ${DB_USER:-urqr}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in backend/urqr-server/.env}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in backend/urqr-server/.env}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?Set JWT_PUBLIC_KEY in backend/urqr-server/.env}
+      JWT_TTL_MINUTES: ${JWT_TTL_MINUTES:-60}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      PLATFORM_ADMIN_USERNAME: ${PLATFORM_ADMIN_USERNAME:?Set PLATFORM_ADMIN_USERNAME in backend/urqr-server/.env}
+      PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:?Set PLATFORM_ADMIN_PASSWORD in backend/urqr-server/.env}
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "127.0.0.1:${API_PORT:-8081}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    mem_limit: 512m
+    restart: unless-stopped
+
+volumes:
+  postgres-data-v2:
+  redis-data:

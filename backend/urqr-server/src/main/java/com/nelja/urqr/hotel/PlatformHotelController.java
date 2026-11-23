@@ -5,9 +5,11 @@ import com.nelja.urqr.access.role.RoleRepository;
 import com.nelja.urqr.access.user.StaffUser;
 import com.nelja.urqr.access.user.StaffUserRepository;
 import com.nelja.urqr.audit.AuditService;
+import com.nelja.urqr.security.RedisAuthStateService;
 import com.nelja.urqr.hotel.dto.CreateHotelRequest;
 import com.nelja.urqr.hotel.dto.CreateHotelResponse;
 import com.nelja.urqr.hotel.dto.HotelResponse;
+import com.nelja.urqr.hotel.dto.HotelStatusRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -42,14 +44,16 @@ public class PlatformHotelController {
     private final StaffUserRepository users;
     private final PasswordEncoder encoder;
     private final AuditService audit;
+    private final RedisAuthStateService authState;
 
     public PlatformHotelController(HotelRepository hotels, RoleRepository roles, StaffUserRepository users,
-            PasswordEncoder encoder, AuditService audit) {
+            PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState) {
         this.hotels = hotels;
         this.roles = roles;
         this.users = users;
         this.encoder = encoder;
         this.audit = audit;
+        this.authState = authState;
     }
 
     @PostMapping
@@ -80,12 +84,14 @@ public class PlatformHotelController {
     @PatchMapping("/{hotelId}/status")
     @Transactional
     @Operation(summary = "Activate or deactivate a hotel tenant")
-    public HotelResponse status(@PathVariable UUID hotelId, @Valid @RequestBody HotelController.HotelStatus request) {
+    public HotelResponse status(@PathVariable UUID hotelId, @Valid @RequestBody HotelStatusRequest request) {
         Hotel hotel = hotels.findById(hotelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Hotel not found"));
         String previousStatus = hotel.getStatus();
         hotel.setStatus(request.active() ? "ACTIVE" : "INACTIVE");
         hotels.save(hotel);
+        authState.invalidateHotelAuthorization(hotelId);
+        if (!request.active()) authState.revokeHotelTokens(hotelId);
         audit.recordSystem(hotelId, "HOTEL_STATUS_CHANGED", "Hotel", hotelId.toString(),
                 previousStatus + " -> " + hotel.getStatus());
         return HotelResponse.from(hotel);

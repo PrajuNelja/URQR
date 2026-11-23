@@ -6,6 +6,9 @@ import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,15 +23,21 @@ public class PlatformAdminAuthController {
     private final String passwordHash;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final JwtDecoder jwtDecoder;
+    private final RedisAuthStateService authState;
 
     public PlatformAdminAuthController(
             @Value("${app.platform-admin.username:}") String configuredUsername,
             @Value("${app.platform-admin.password:}") String configuredPassword,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            JwtService jwtService,
+            JwtDecoder jwtDecoder,
+            RedisAuthStateService authState) {
         this.configuredUsername = configuredUsername == null ? "" : configuredUsername.trim();
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.jwtDecoder = jwtDecoder;
+        this.authState = authState;
         boolean hasUsername = !this.configuredUsername.isBlank();
         boolean hasPassword = configuredPassword != null && !configuredPassword.isBlank();
         if (hasUsername != hasPassword) {
@@ -55,10 +64,38 @@ public class PlatformAdminAuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid platform administrator credentials");
         }
         return new LoginResponse(jwtService.issuePlatformAdmin(configuredUsername), "Bearer",
-                jwtService.expiresAt(), configuredUsername, "PLATFORM_ADMIN");
+                jwtService.expiresAt(), jwtService.issuePlatformAdminRefresh(configuredUsername),
+                jwtService.refreshExpiresAt(), configuredUsername, "PLATFORM_ADMIN");
+    }
+
+    @PostMapping("/refresh")
+    public LoginResponse refresh(@Valid @RequestBody RefreshRequest request) {
+        Jwt refresh;
+        try {
+            refresh = jwtDecoder.decode(request.refreshToken());
+        } catch (JwtException exception) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+        }
+        String subject = refresh.getSubject();
+        if (!"refresh".equals(refresh.getClaimAsString("token_type"))
+                || !"PLATFORM_ADMIN".equals(refresh.getClaimAsString("principal_type"))
+                || subject == null || configuredUsername.isBlank()
+                || !java.security.MessageDigest.isEqual(
+                        configuredUsername.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        subject.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
+        if (!authState.consumeRefreshToken(refresh.getId())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token has already been used or revoked");
+        }
+        return new LoginResponse(jwtService.issuePlatformAdmin(configuredUsername), "Bearer",
+                jwtService.expiresAt(), jwtService.issuePlatformAdminRefresh(configuredUsername),
+                jwtService.refreshExpiresAt(), configuredUsername, "PLATFORM_ADMIN");
     }
 
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {}
+    public record RefreshRequest(@NotBlank String refreshToken) {}
     public record LoginResponse(String accessToken, String tokenType, Instant expiresAt,
+            String refreshToken, Instant refreshExpiresAt,
             String username, String role) {}
 }

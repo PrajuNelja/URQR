@@ -1,6 +1,6 @@
 package com.nelja.urqr.access.role;
 import org.springframework.transaction.annotation.Transactional;import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import com.nelja.urqr.audit.AuditService; import com.nelja.urqr.security.CurrentTenant; import jakarta.validation.Valid; import jakarta.validation.constraints.NotBlank; import jakarta.validation.constraints.Size; import java.util.*; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.security.oauth2.jwt.Jwt; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*;
+import com.nelja.urqr.audit.AuditService; import com.nelja.urqr.security.CurrentTenant; import com.nelja.urqr.security.RedisAuthStateService; import jakarta.validation.Valid; import jakarta.validation.constraints.NotBlank; import jakarta.validation.constraints.Size; import java.util.*; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.security.oauth2.jwt.Jwt; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/roles")
 @PreAuthorize("hasRole('MANAGER')")
@@ -9,10 +9,12 @@ public class RoleController {
  private final RoleRepository roles;
  private final CurrentTenant tenant;
  private final AuditService audit;
- public RoleController(RoleRepository r,CurrentTenant t,AuditService a){
+ private final RedisAuthStateService authState;
+ public RoleController(RoleRepository r,CurrentTenant t,AuditService a,RedisAuthStateService authState){
      roles=r;
      tenant=t;
      audit=a;
+     this.authState=authState;
  }
   @PostMapping
   public RoleDto create(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody RoleRequest x){
@@ -31,6 +33,7 @@ public class RoleController {
      if(!HotelStaffRole.managerCreatedRole(name))throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Custom roles can only be renamed to COOK or WAITER");
      r.rename(name);
      roles.save(r);
+     authState.invalidateHotelAuthorization(h);
      audit.record(h,tenant.userId(jwt),"ROLE_RENAMED","Role",id.toString(),old,r.getName());
      return dto(r);
  }
