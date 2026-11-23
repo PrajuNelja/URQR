@@ -1,0 +1,60 @@
+{
+  "_comment": "Centrifugo 6.10.3 configuration — URQR Platform Phase 1",
+
+  "port": 8000,
+  "address": "0.0.0.0",
+
+  "websocket": {
+    "port": 8001,
+    "address": "0.0.0.0"
+  },
+
+  "prometheus": {
+    "port": 9000,
+    "address": "0.0.0.0"
+  },
+
+  "admin": {
+    "enabled": true,
+    "port": 8000
+  },
+
+  "log_level": "info",
+  "log_format": "json",
+
+  "token_hmac_secret_key": "${CENTRIFUGO_TOKEN_HMAC_SECRET_KEY}",
+  "api_key":               "${CENTRIFUGO_API_KEY}",
+  "admin_password":        "${CENTRIFUGO_ADMIN_PASSWORD}",
+  "admin_secret":          "${CENTRIFUGO_ADMIN_SECRET}",
+
+  "channel_max_length": 255,
+  "client_channel_limit": 128,
+
+  "namespaces": [
+    {
+      "name": "orders",
+      "presence": true,
+      "join_leave": true,
+      "history_size": 100,
+      "history_ttl": "1m",
+      "recover": true
+    },
+    {
+      "name": "kitchen",
+      "presence": true,
+      "join_leave": true,
+      "history_size": 50,
+      "history_ttl": "1m",
+      "recover": true
+    },
+    {
+      "name": "notifications",
+      "presence": false,
+      "history_size": 0,
+      "recover": false
+    }
+  ],
+
+  "health": true,
+  "health_check_path": "/health"
+}
