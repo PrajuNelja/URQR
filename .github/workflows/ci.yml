@@ -101,12 +101,22 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:8.2.11-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     env:
       DB_URL:                   jdbc:postgresql://localhost:5432/urqr
       DB_USER:                  urqr
       DB_PASSWORD:              NeljaTeck
-      JWT_SECRET:               kdskjnhfirhdssjhfdushfdkjsfnjkiesdufdhjnfdjhnfujhsa
+      JWT_PRIVATE_KEY:          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsmYwZGeo9C0jOnCFtkrtCqHjWhRrhARYxgf1r6aLWs60pAU5CugdP4LS59uWQSmVxUvkSlFdqfPPPrZxdZbRVyplqq9FN3750VIYJaGFon6uAVv8xg9aXOPSd/ZiRsYJlNjbbdgB131mTZgEdVnFn2FZCusLPMNWCMrNebxhVnosqYgekouQXjWn+7YONRlJMx5rW94sxJsP4nYFnGJsvXDP+SOgjCLGp3u+2pFiaoFZLuESC8NRR/MRg0p9b/JMP6E2oidg6ANfZde0t5lJonGMbWl1K3dY1guIymjApuZrZt1yYyyA5PC2seXO1qZOTlKAnH2tBpcUVh5K9Y0a7AgMBAAECggEAGrnb+7cLklBBAd0jP/hMjtHPhEgwFU85xIjAWQlgcaZ41bSiDasIntHIqlMU0Pb0JkwWzU2zC4Y1qp7Ta5LoDbDFeMMKMejHcPP1nVdQXgb7Y3AVK/GiNOBY4G34Rfcandl7PRhUkev3zt8opQZRoSbalJKev75sETEQnTrOpdMZkcTCJ+eGRiYQh+cbHFxUss+4utI9sik5Pyuh+MtFdDESJobY8D4IF+x2w4ItlTtG+bIT0txpcnbur6KFX3QxMMdvvdwoLpPDQHtSVirxlphso6JuVqTHe2w+QrPasBjF4DM+oLnlIE7UrArUv2bhrObli38fcmiv9kqOvS3IQQKBgQDmdDpFnLk/vO6vt0VKBC9QwaxheE8qiGDXVdYu0DYVoX7kP1eiv+wA5n56Nv7tC7nAW6wr5fSZVINZITUJBrkVPsuIIzafW6mF0OyZfj0kiv6blE5lui624tlTpvst79fTjYXjOvRSdPcY21whxSDt+gptKSoep9OhEmFJOu+8SQKBgQC/u4uoSHNTFPxm+3tYoNEm5oRhXZLfFceNxhLfcbhJOb7hKZNXK3AH5avEtgLVBT4RBOiJ6FtG0xV+DaLo7PzXMhFbIe9F6trbQpf8+EgDJLRm24dtS8mBmc7zYK63DUt6lYYqDgI/bs2VTKMAWcnoAHM7TpDSqsUQXH0+HSDC4wKBgBVi/+1p5/80R2pjNbjyvnleH+NDyQUHdwVE4AWkKQDE5gPEpRtjeEF1IpOw+uOAzRI+77F7O8HnB/GDlWprB04jb7wImI8dcJQMmYh9IKt9grdpggUKzD8IumZ6/qB6u6rUXXKDDB2C4VObN+eiZbXwGHuc8F278XXnQMQNBiaRAoGAQO+P2SrQhC7zXR2HJPkyXO5tn1xFxfBmaYnQEoU9WO+JylB+amN3yfTrO/A4/VSNNM5ow2xCnbYX7V1I84JwD6IRZsATfaaRAPmI6FBec1IXF076ivXEBXTGNn9kLPL/wUCq88tSz5EDZ7FQ82l1jHG6lTeCrRbRLz1j3YmX8ukCgYEAnXy3DbPCvXHHSyVdFykXHRI2GezjeozjF9QOLvwiUQutY8j2dGIKsxodqt5GHI81nt+2H5dAey9ELZGOG2bRDCJR9wVz6IOpy00NgpGWrZ4Eu2EOagKfXHg6FUV8Xdf8+DjZAoat5UGLmWHEQvTC75g7v4MtsHQJdGKcpjTy2Gg=
+      JWT_PUBLIC_KEY:           MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArJmMGRnqPQtIzpwhbZK7Qqh41oUa4QEWMYH9a+mi1rOtKQFOQroHT+C0ufblkEplcVL5EpRXanzzz62cXWW0VcqZaqvRTd++dFSGCWhhaJ+rgFb/MYPWlzj0nf2YkbGCZTY223YAdd9Zk2YBHVZxZ9hWQrrCzzDVgjKzXm8YVZ6LKmIHpKLkF41p/u2DjUZSTMea1veLMSbD+J2BZxibL1wz/kjoIwixqd7vtqRYmqBWS7hEgvDUUfzEYNKfW/yTD+hNqInYOgDX2XXtLeZSaJxjG1pdSt3WNYLiMpowKbma2bdcmMsgOTwtrHlztamTk5SgJx9rQaXFFYeSvWNGuwIDAQAB
       JWT_TTL_MINUTES:          "60"
       PLATFORM_ADMIN_USERNAME:  platform-admin
       PLATFORM_ADMIN_PASSWORD:  NeljaTech2026
