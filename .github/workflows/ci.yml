@@ -165,7 +165,7 @@ jobs:
 
       - name: Verify module integrity
         run: |
-          go mod download
+          go mod tidy
           go mod verify
 
       - name: Tidy check (no uncommitted go.sum changes)
