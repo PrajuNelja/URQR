@@ -1,0 +1,3 @@
+package com.nelja.urqr.sales.payment;
+import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; import org.springframework.data.jpa.repository.Query; import org.springframework.data.repository.query.Param;
+public interface PaymentRepository extends JpaRepository<Payment,UUID>{Optional<Payment> findByIdAndHotelId(UUID id,UUID hotel);List<Payment> findAllByHotelIdAndOrderId(UUID hotel,UUID order);@Query("select coalesce(sum(p.amount),0) from Payment p where p.hotelId=:hotel and p.orderId=:order") java.math.BigDecimal sumAmount(@Param("hotel") UUID hotel,@Param("order") UUID order);}

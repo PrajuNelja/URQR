@@ -7,8 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nelja.urqr.audit.AuditService;
-import com.nelja.urqr.security.CurrentTenant;
+import com.nelja.urqr.platform.audit.AuditService;
+import com.nelja.urqr.platform.security.CurrentTenant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

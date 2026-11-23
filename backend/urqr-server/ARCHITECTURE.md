@@ -8,7 +8,9 @@ Implemented modules are authentication, tenant setup, hotel configuration, hotel
 
 ## Structure and workflow
 
-Feature packages keep persistence and HTTP code together: `hotel`, `access/user`, `access/role`, `menu/category`, `menu/item`, `order`, `payment`, `receipt`, `report`, and `audit`. Shared packages contain JWT/security configuration, API errors, request correlation, and OpenAPI configuration. Controllers return DTO records rather than entities.
+The Spring Modulith modules are `platform` (hotel, access, security, audit, and configuration), `sales` (orders, payments, and receipts), `menu`, `report`, and `common`. The platform and sales packages group code whose existing dependencies are cyclic; they are open modules while those package APIs remain coupled. `ModularityTests` verifies the application module graph.
+
+Feature packages keep persistence and HTTP code together within those modules. Controllers return DTO records rather than entities.
 
 Authentication uses a hotel ID only to select the username namespace at login. The server checks `(hotel_id, username)` and BCrypt password hash, then signs `uid` and `hotel_id` claims. Every request verifies the signature and reloads current active hotel, user, and role from the database. `CurrentTenant` extracts IDs from that verified token. Tenant IDs are not accepted in domain request payloads.
 
@@ -38,7 +40,7 @@ Business routes are under `/api/v1`; generated OpenAPI JSON and Swagger UI are `
 
 ## Production gaps and assumptions
 
-- Hibernate `update` is used during the current development phase. It provides no ordered migrations, review, rollback, or safe multi-instance coordination; switch to `validate` with a deliberate schema deployment process before production. Flyway was not added.
+- Flyway 12.4.0 applies the V1 tenant and access-control baseline. Hibernate `update` remains enabled for the existing hotel and point-of-sale tables; migrate those entities before switching Hibernate to `validate` for production deployments.
 - Tenant isolation is applied in repositories/services, JWT resolution, and composite foreign keys. PostgreSQL row-level security remains an optional defense in depth to evaluate with production operations.
 - OpenAPI is generated from the running controllers; endpoint behavior and common errors are summarized in `README.md`.
 - Platform hotel provisioning uses a static environment secret; protect it with TLS, restricted network access, secret rotation, and rate limiting.
