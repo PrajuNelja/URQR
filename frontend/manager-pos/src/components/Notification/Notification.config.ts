@@ -2,10 +2,6 @@
 import { CheckCircle2, XCircle, Info, AlertCircle } from "lucide-react";
 import type { NotificationType, NotificationPosition } from "./Notification.types";
 
-// ═══════════════════════════════════════════
-// TOAST (Radix UI style)
-// ═══════════════════════════════════════════
-
 export const NOTIFICATION_BASE =
   "fixed z-[60] flex items-start gap-3 px-4 py-3 rounded-[8px] border text-sm " +
   "shadow-lg animate-[toastIn_0.3s_ease-out] pointer-events-auto w-full max-w-sm";
@@ -34,10 +30,6 @@ export const NOTIFICATION_POSITIONS: Record<NotificationPosition, string> = {
 export const NOTIFICATION_STACK_BASE =
   "fixed z-[60] flex flex-col gap-2.5 pointer-events-none bottom-4 right-4 w-full max-w-sm";
 
-// ═══════════════════════════════════════════
-// ALERT (Inline Banners)
-// ═══════════════════════════════════════════
-
 export const ALERT_BASE = "flex items-start gap-3 p-4 rounded-[8px] border text-sm w-full";
 
 export const ALERT_VARIANTS: Record<NotificationType, string> = {
@@ -47,9 +39,13 @@ export const ALERT_VARIANTS: Record<NotificationType, string> = {
   warning: "bg-warning-bg border-warning/40 text-warning",
 };
 
-// ═══════════════════════════════════════════
-// DEFAULTS
-// ═══════════════════════════════════════════
+/** Per-variant auto-dismiss durations (ms) — matches Day 2 spec */
+export const NOTIFICATION_DURATIONS: Record<NotificationType, number> = {
+  success: 4000,
+  error: 6000,
+  warning: 5000,
+  info: 4000,
+};
 
 export const NOTIFICATION_DEFAULT_DURATION = 4000;
 export const NOTIFICATION_DEFAULT_POSITION: NotificationPosition = "bottom-right";

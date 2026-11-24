@@ -19,3 +19,24 @@
   --on-primary: #FFFFFF;
   --input-bg: #FFFFFF;
 }
+/* Warm Dark Sepia Theme */
+.dark {
+  --color-bg: #1B1511;
+  --color-surface: #251D17;
+  --color-surface-alt: #2E241C;
+  --color-border: #43352A;
+  --color-primary: #B07C54;
+  --color-primary-dark: #8B5E3C;
+  --color-text: #F5EEE0;
+  --color-text-secondary: #BFAEA0;
+  --color-success: #68A362;
+  --color-success-bg: #1E2E1D;
+  --color-warning: #E08A2E;
+  --color-warning-bg: #332414;
+  --color-error: #E55353;
+  --color-error-bg: #361A1A;
+  --color-disabled: #3A2F27;
+  --color-disabled-text: #857467;
+  --color-on-primary: #FFFFFF;
+  --color-input-bg: #1F1813;
+}

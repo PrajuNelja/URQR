@@ -7,7 +7,7 @@ import {
   NOTIFICATION_VARIANTS,
   NOTIFICATION_ICONS,
   NOTIFICATION_POSITIONS,
-  NOTIFICATION_DEFAULT_DURATION,
+  NOTIFICATION_DURATIONS,
   NOTIFICATION_DEFAULT_POSITION,
 } from "./Notification.config";
 
@@ -16,16 +16,18 @@ export const Notification = ({
   type = "success",
   message,
   onClose,
-  duration = NOTIFICATION_DEFAULT_DURATION,
+  duration,
   position = NOTIFICATION_DEFAULT_POSITION,
   icon,
   className = "",
 }: NotificationProps) => {
+  const effectiveDuration = duration ?? NOTIFICATION_DURATIONS[type];
+
   useEffect(() => {
-    if (!isOpen || duration <= 0) return;
-    const timer = setTimeout(onClose, duration);
+    if (!isOpen || effectiveDuration <= 0) return;
+    const timer = setTimeout(onClose, effectiveDuration);
     return () => clearTimeout(timer);
-  }, [isOpen, duration, onClose]);
+  }, [isOpen, effectiveDuration, onClose]);
 
   if (!isOpen) return null;
 
@@ -41,7 +43,11 @@ export const Notification = ({
     .join(" ");
 
   return (
-    <div className={classes} role="status" aria-live="polite">
+    <div
+      className={classes}
+      role={type === "error" ? "alert" : "status"}
+      aria-live={type === "error" ? "assertive" : "polite"}
+    >
       {icon ?? <IconComponent size={18} className="shrink-0 mt-0.5" aria-hidden="true" />}
       <div className="flex-1 flex flex-col justify-center min-h-[20px]">
         <span className="font-semibold leading-tight">{message}</span>

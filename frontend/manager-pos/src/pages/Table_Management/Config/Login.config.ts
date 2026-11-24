@@ -4,18 +4,20 @@ export const LOGIN_COPY = {
   brand: "GRAND HORIZON",
   headline: "Where every table runs itself.",
   description: "AI-assisted operations for the modern hotel restaurant.",
-  welcome: "Manager Terminal Login",
-  instructions: "Enter your manager credentials to open the terminal.",
+  welcome: "Welcome back,\nManager",
+  instructions:
+    "Please enter your credentials to access the management dashboard.",
   usernameLabel: "Manager Username",
-  usernamePlaceholder: "Enter your username",
-  passwordLabel: "Password / Touch PIN",
-  passwordPlaceholder: "Enter password or PIN",
-  submitLabel: "Authenticate & Open Register",
-  submittingLabel: "Authenticating Terminal…",
+  usernamePlaceholder: "e.g., MGR-8902",
+  passwordLabel: "Password",
+  passwordPlaceholder: "Enter password",
+  submitLabel: "Sign In",
+  submittingLabel: "Signing In…",
+  demoHint: "Demo: enter any ID and password",
 } as const;
 
 export const LOGIN_HIGHLIGHTS = [
-  "Terminal: POS Register #01",
-  "Hardware: ESC/POS Thermal Bridge Online",
-  "Security: Multi-tenant Encrypted Vault",
+  "Peak dining forecast: 8:15 PM",
+  "Occupancy today: 92%",
+  "Predicted revenue +12%",
 ] as const;

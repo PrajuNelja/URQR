@@ -14,6 +14,8 @@ export interface InputFieldProps
   hint?: string;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  /** NEW: rendered inside the input wrapper, right-aligned (e.g. eye toggle) */
+  suffix?: ReactNode;
   fieldSize?: FieldSize;
   fullWidth?: boolean;
   wrapperClassName?: string;

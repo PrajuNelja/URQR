@@ -21,6 +21,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       hint,
       leftIcon,
       rightIcon,
+      suffix,
       fieldSize = "md",
       fullWidth = true,
       wrapperClassName = "",
@@ -39,7 +40,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       INPUT_VARIANTS[error ? "error" : "default"],
       INPUT_SIZES[fieldSize],
       leftIcon ? "pl-10" : "",
-      rightIcon ? "pr-10" : "",
+      rightIcon || suffix ? "pr-12" : "",
       fullWidth ? "w-full" : "",
       className,
     ]
@@ -74,6 +75,11 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           />
 
           {rightIcon && <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>}
+          {suffix && (
+            <span className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+              {suffix}
+            </span>
+          )}
         </div>
 
         {error ? (
