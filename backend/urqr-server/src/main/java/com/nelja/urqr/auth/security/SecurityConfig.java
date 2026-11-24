@@ -70,8 +70,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", "X-Correlation-ID"));
-        configuration.setExposedHeaders(List.of("X-Correlation-ID", "X-Request-Id"));
+        configuration.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", "X-Correlation-ID", "X-Request-Id", "X-Tenant-ID", "X-Hotel-ID"));
+        configuration.setExposedHeaders(List.of("X-Correlation-ID", "X-Request-Id", "X-Tenant-ID"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(1800L);
 
