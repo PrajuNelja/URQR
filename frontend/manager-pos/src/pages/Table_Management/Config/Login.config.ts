@@ -4,17 +4,17 @@ export const LOGIN_COPY = {
   description: "AI-assisted operations for the modern hotel restaurant.",
   welcome: "Welcome back, Manager",
   instructions: "Please enter your credentials to access the management dashboard.",
-  userNameLabel: "User Name",
-  userNamePlaceholder: "Enter your User Name",
-  passwordLabel: "Password",
-  passwordPlaceholder: "Enter your password",
+  usernameLabel: "Username",
+  usernamePlaceholder: "Enter your username",
+  passwordLabel: "PIN / Password",
+  passwordPlaceholder: "Enter your PIN or password",
   submitLabel: "Log In",
-  credentialsHint: "User Name : Vishh\nPassword : 2305",
+  credentialsHint: "Username : pos_manager_1\nPassword : Manager@123",
 } as const;
 
 export const LOGIN_CREDENTIALS = {
-  userName: "Vishh",
-  password: "2305",
+  username: "pos_manager_1",
+  password: "Manager@123",
 } as const;
 
 export const LOGIN_HIGHLIGHTS = [
