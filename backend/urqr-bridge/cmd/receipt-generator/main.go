@@ -2,7 +2,8 @@
 // and Base64 payloads for 58mm (32 col) and 80mm (48 col) thermal receipts.
 //
 // Can also stream directly to any ESC/POS TCP printer simulator on port 9100:
-//   go run ./cmd/receipt-generator -roll=58 -host=virtual-printer.online -port=9100
+//   go run ./cmd/receipt-generator -roll=80 -out=receipt_80mm.bin
+//   go run ./cmd/receipt-generator -roll=58 -out=receipt_58mm.bin
 package main
 
 import (
@@ -29,7 +30,8 @@ func main() {
 		roll = printer.RollWidth80mm
 	}
 
-	rawBytes := generateReceipt(roll)
+	sampleData := createSampleReceiptData(roll)
+	rawBytes := printer.GenerateReceipt(sampleData)
 
 	fmt.Printf("====================================================================\n")
 	fmt.Printf("  URQR ESC/POS THERMAL RECEIPT — %dmm PROFILE (%d COLUMNS)\n", *rollFlag, int(roll))
@@ -72,145 +74,46 @@ func main() {
 	}
 }
 
-func generateReceipt(roll printer.RollWidth) []byte {
-	b := printer.NewBuilder()
-
-	// Header
-	b.Justify(printer.JustifyCenter).
-		Bold(true).
-		FontSize(printer.FontDoubleHW).
-		Println("NELJA TECH").
-		Bold(false).
-		FontSize(printer.FontNormal)
-
-	if roll == printer.RollWidth58mm {
-		b.Println("58mm THERMAL POS").
-			Println("GSTIN: 29AAAAA0000A1Z5").
-			Println(printer.SeparatorLine(roll)).
-			Println("Bill: #1042        Table: T-04").
-			Println("24-Nov 12:25      Svr: Prajwal").
-			Println(printer.SeparatorLine(roll))
-	} else {
-		b.Println("URQR STANDALONE POS -- 80mm ROLL").
-			Println("Branch: Indiranagar, Bengaluru").
-			Println("GSTIN: 29AAAAA0000A1Z5").
-			Println(printer.SeparatorLine(roll)).
-			Println("Bill No: #1042        Table: T-04   Svr: Prajwal").
-			Println("Date: 24-Nov-2026 12:25 PM").
-			Println(printer.SeparatorLine(roll))
+func createSampleReceiptData(roll printer.RollWidth) printer.ReceiptData {
+	return printer.ReceiptData{
+		RollWidth: roll,
+		Store: printer.ReceiptStore{
+			Name:    "NELJA TECH STANDALONE POS",
+			Branch:  "Indiranagar, Bengaluru",
+			Address: "100 Feet Rd, HAL 2nd Stage",
+			GSTIN:   "29AAAAA0000A1Z5",
+			Phone:   "+91-80-4920-1122",
+		},
+		Order: printer.ReceiptOrder{
+			OrderID:       "1042",
+			BillNumber:    "BL-2026-1042",
+			TableNumber:   "T-04",
+			ServerName:    "Prajwal",
+			PaymentMode:   "Dynamic UPI QR",
+			TransactionID: "TXN98765432100",
+			Timestamp:     "24-Nov-2026 12:25 PM",
+		},
+		Items: []printer.ReceiptItem{
+			{Name: "Butter Chicken Special Boneless with Rich Gravy", Quantity: 2, UnitPrice: 240.00, TotalPrice: 480.00},
+			{Name: "Garlic Naan Butter Glazed", Quantity: 4, UnitPrice: 40.00, TotalPrice: 160.00},
+			{Name: "Paneer Tikka XL Sizzling Platter", Quantity: 1, UnitPrice: 280.00, TotalPrice: 280.00},
+			{Name: "Fresh Lime Soda Sweet & Salt Mix", Quantity: 2, UnitPrice: 60.00, TotalPrice: 120.00},
+			{Name: "Jeera Rice Aromatic Basmati", Quantity: 1, UnitPrice: 140.00, TotalPrice: 140.00},
+		},
+		Taxes: printer.ReceiptTaxes{
+			CGST:     29.50,
+			CGSTRate: 2.5,
+			SGST:     29.50,
+			SGSTRate: 2.5,
+			TotalTax: 59.00,
+		},
+		Totals: printer.ReceiptTotals{
+			Subtotal:   1180.00,
+			Discount:   0.00,
+			Tax:        59.00,
+			GrandTotal: 1239.00,
+		},
 	}
-
-	// Column Header
-	if roll == printer.RollWidth58mm {
-		b.Justify(printer.JustifyLeft).
-			Bold(true).
-			Println(printer.FormatColumns(
-				printer.Column{Text: "ITEM", Width: 18, Right: false},
-				printer.Column{Text: "QTY", Width: 3, Right: true},
-				printer.Column{Text: "PRICE", Width: 9, Right: true},
-			)).
-			Bold(false).
-			Println(printer.SeparatorLine(roll))
-	} else {
-		b.Justify(printer.JustifyLeft).
-			Bold(true).
-			Println(printer.FormatColumns(
-				printer.Column{Text: "ITEM DESCRIPTION", Width: 30, Right: false},
-				printer.Column{Text: "QTY", Width: 4, Right: true},
-				printer.Column{Text: "PRICE (INR)", Width: 12, Right: true},
-			)).
-			Bold(false).
-			Println(printer.SeparatorLine(roll))
-	}
-
-	// Line items
-	items := []struct {
-		desc  string
-		qty   int
-		price float64
-	}{
-		{"Butter Chicken", 2, 480.00},
-		{"Garlic Naan", 4, 160.00},
-		{"Paneer Tikka XL", 1, 280.00},
-		{"Fresh Lime Soda", 2, 120.00},
-		{"Jeera Rice", 1, 140.00},
-	}
-
-	subtotal := 0.0
-	for _, it := range items {
-		subtotal += it.price
-		b.Println(printer.ReceiptLineForRoll(roll, it.desc, it.qty, it.price))
-	}
-
-	cgst := subtotal * 0.025
-	sgst := subtotal * 0.025
-	grandTotal := subtotal + cgst + sgst
-
-	b.Println(printer.SeparatorLine(roll))
-
-	if roll == printer.RollWidth58mm {
-		b.Println(printer.FormatColumns(
-			printer.Column{Text: "Subtotal", Width: 18, Right: false},
-			printer.Column{Text: "", Width: 3, Right: true},
-			printer.Column{Text: fmt.Sprintf("%.2f", subtotal), Width: 9, Right: true},
-		))
-		b.Println(printer.FormatColumns(
-			printer.Column{Text: "CGST (2.5%)", Width: 18, Right: false},
-			printer.Column{Text: "", Width: 3, Right: true},
-			printer.Column{Text: fmt.Sprintf("%.2f", cgst), Width: 9, Right: true},
-		))
-		b.Println(printer.FormatColumns(
-			printer.Column{Text: "SGST (2.5%)", Width: 18, Right: false},
-			printer.Column{Text: "", Width: 3, Right: true},
-			printer.Column{Text: fmt.Sprintf("%.2f", sgst), Width: 9, Right: true},
-		))
-		b.Println(printer.SeparatorLine(roll)).
-			Bold(true).
-			Println(printer.FormatColumns(
-				printer.Column{Text: "TOTAL", Width: 18, Right: false},
-				printer.Column{Text: "", Width: 3, Right: true},
-				printer.Column{Text: fmt.Sprintf("Rs.%.2f", grandTotal), Width: 9, Right: true},
-			)).
-			Bold(false)
-	} else {
-		b.Println(printer.FormatColumns(
-			printer.Column{Text: "Subtotal", Width: 30, Right: false},
-			printer.Column{Text: "", Width: 4, Right: true},
-			printer.Column{Text: fmt.Sprintf("%.2f", subtotal), Width: 12, Right: true},
-		))
-		b.Println(printer.FormatColumns(
-			printer.Column{Text: "CGST (2.5%)", Width: 30, Right: false},
-			printer.Column{Text: "", Width: 4, Right: true},
-			printer.Column{Text: fmt.Sprintf("%.2f", cgst), Width: 12, Right: true},
-		))
-		b.Println(printer.FormatColumns(
-			printer.Column{Text: "SGST (2.5%)", Width: 30, Right: false},
-			printer.Column{Text: "", Width: 4, Right: true},
-			printer.Column{Text: fmt.Sprintf("%.2f", sgst), Width: 12, Right: true},
-		))
-		b.Println(printer.SeparatorLine(roll)).
-			Bold(true).
-			FontSize(printer.FontDoubleHeight).
-			Println(printer.FormatColumns(
-				printer.Column{Text: "TOTAL AMOUNT", Width: 26, Right: false},
-				printer.Column{Text: "", Width: 4, Right: true},
-				printer.Column{Text: fmt.Sprintf("Rs.%.2f", grandTotal), Width: 16, Right: true},
-			)).
-			Bold(false).
-			FontSize(printer.FontNormal)
-	}
-
-	b.Println(printer.SeparatorLine(roll)).
-		Justify(printer.JustifyCenter).
-		Println("Payment: Dynamic UPI QR").
-		Println("upi://pay?pa=urqr@nelja&am=1239.00").
-		LineFeed(1).
-		Println("*** THANK YOU FOR VISITING ***").
-		Println("Powered by URQR Platform").
-		LineFeed(4).
-		Cut()
-
-	return b.Bytes()
 }
 
 func formatHex(data []byte) string {

@@ -152,6 +152,14 @@ func (b *Builder) Cut() *Builder {
 	return b
 }
 
+func (b *Builder) Barcode(data string) *Builder {
+	b.buf.Write(GSBarcodeHeight(64))
+	b.buf.Write(GSBarcodeWidth(2))
+	b.buf.Write(GSHRIPosition(HRIBelow))
+	b.buf.Write(GSBarcodeCode128(data))
+	return b
+}
+
 // Bytes returns the assembled command bytes.
 func (b *Builder) Bytes() []byte {
 	return b.buf.Bytes()

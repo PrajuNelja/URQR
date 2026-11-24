@@ -1,1 +1,6 @@
 *.bin
+*.exe
+bin/
+coverage.out
+receipt_58mm
+receipt_80mm
