@@ -1,6 +1,6 @@
 // src/components/Notification/Notification.tsx
-
 import { useEffect } from "react";
+import { X } from "lucide-react";
 import type { NotificationProps } from "./Notification.types";
 import {
   NOTIFICATION_BASE,
@@ -11,11 +11,6 @@ import {
   NOTIFICATION_DEFAULT_POSITION,
 } from "./Notification.config";
 
-/**
- * Notification — single toast.
- * Matches your Showcase usage:
- *   <Notification isOpen type message onClose />
- */
 export const Notification = ({
   isOpen,
   type = "success",
@@ -26,7 +21,6 @@ export const Notification = ({
   icon,
   className = "",
 }: NotificationProps) => {
-  // ── Auto-dismiss ──
   useEffect(() => {
     if (!isOpen || duration <= 0) return;
     const timer = setTimeout(onClose, duration);
@@ -47,14 +41,19 @@ export const Notification = ({
     .join(" ");
 
   return (
-    <div
-      className={classes}
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      {icon ?? <IconComponent size={18} aria-hidden="true" />}
-      <span>{message}</span>
+    <div className={classes} role="status" aria-live="polite">
+      {icon ?? <IconComponent size={18} className="shrink-0 mt-0.5" aria-hidden="true" />}
+      <div className="flex-1 flex flex-col justify-center min-h-[20px]">
+        <span className="font-semibold leading-tight">{message}</span>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="shrink-0 p-1 -mr-2 text-current opacity-70 hover:opacity-100 transition-opacity"
+        aria-label="Close notification"
+      >
+        <X size={16} />
+      </button>
     </div>
   );
 };
