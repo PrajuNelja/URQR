@@ -7,7 +7,7 @@ export interface CartItem {
   quantity: number;
 }
 
-export type PaymentMethod = "Cash" | "UPI" | "Others";
+export type PaymentMethod = "Cash" | "UPI" | "Card";
 
 export interface ReceiptData {
   orderId: string;
@@ -19,6 +19,4 @@ export interface ReceiptData {
   tax: number;
   total: number;
   paymentMethod: string;
-  cashCollected?: number;
-  change?: number;
 }
