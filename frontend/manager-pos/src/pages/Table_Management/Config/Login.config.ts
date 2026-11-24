@@ -1,24 +1,21 @@
+// src/pages/Table_Management/Config/Login.config.ts
+
 export const LOGIN_COPY = {
   brand: "GRAND HORIZON",
   headline: "Where every table runs itself.",
   description: "AI-assisted operations for the modern hotel restaurant.",
-  welcome: "Welcome back, Manager",
-  instructions: "Please enter your credentials to access the management dashboard.",
-  userNameLabel: "User Name",
-  userNamePlaceholder: "Enter your User Name",
-  passwordLabel: "Password",
-  passwordPlaceholder: "Enter your password",
-  submitLabel: "Log In",
-  credentialsHint: "User Name : Vishh\nPassword : 2305",
-} as const;
-
-export const LOGIN_CREDENTIALS = {
-  userName: "Vishh",
-  password: "2305",
+  welcome: "Manager Terminal Login",
+  instructions: "Enter your manager credentials to open the terminal.",
+  usernameLabel: "Manager Username",
+  usernamePlaceholder: "Enter your username",
+  passwordLabel: "Password / Touch PIN",
+  passwordPlaceholder: "Enter password or PIN",
+  submitLabel: "Authenticate & Open Register",
+  submittingLabel: "Authenticating Terminal…",
 } as const;
 
 export const LOGIN_HIGHLIGHTS = [
-  "Peak dining forecast: 8:15 PM",
-  "Occupancy today: 92%",
-  "Predicted revenue +12%",
+  "Terminal: POS Register #01",
+  "Hardware: ESC/POS Thermal Bridge Online",
+  "Security: Multi-tenant Encrypted Vault",
 ] as const;

@@ -1,92 +1,119 @@
+// src/pages/Table_Management/Hooks/useManagerLogin.ts
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
+import axios from "axios";
+import { z } from "zod";
 
+import { apiClient } from "../../../lib/apiClient";
+import { useAuthStore } from "../../../lib/authStore";
 import type {
-  ChangeEventHandler,
-  FormEventHandler,
-} from "react";
-
-import { LOGIN_CREDENTIALS } from "../Config/Login.config";
-
-import type {
-  LoginCredentials,
   LoginFeedback,
-  ManagerLoginFormState,
+  BackendAuthResponse,
 } from "../Types/Login.types";
 
-export const useManagerLogin = (): ManagerLoginFormState => {
-  // TanStack Router navigation
-  const navigate = useNavigate();
+// ═══════════════════════════════════════════
+// SCHEMA — matches Spring Boot @NotBlank String username
+// ═══════════════════════════════════════════
 
-  const [values, setValues] = useState<LoginCredentials>({
-    userName: "",
-    password: "",
-  });
+const LoginFormSchema = z.object({
+  username: z.string().trim().min(1, "Username is required"),
+  password: z
+    .string()
+    .min(4, "Password / PIN must be at least 4 characters"),
+});
+
+export type LoginFormValues = z.infer<typeof LoginFormSchema>;
+
+// ═══════════════════════════════════════════
+// HOOK
+// ═══════════════════════════════════════════
+
+export const useManagerLogin = () => {
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [feedback, setFeedback] = useState<LoginFeedback>({
     isOpen: false,
     type: "error",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const dismissFeedback = useCallback(() => {
-    setFeedback((current) => ({
-      ...current,
-      isOpen: false,
-    }));
-  }, []);
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(LoginFormSchema),
+    defaultValues: { username: "", password: "" },
+    mode: "onTouched",
+  });
 
-  const onUserNameChange: ChangeEventHandler<HTMLInputElement> = (
-    event
-  ) => {
-    setValues((current) => ({
-      ...current,
-      userName: event.target.value,
-    }));
+  const dismissFeedback = () =>
+    setFeedback((prev) => ({ ...prev, isOpen: false }));
+
+  const onSubmit = form.handleSubmit(async (data: LoginFormValues) => {
+    setIsSubmitting(true);
     dismissFeedback();
-  };
 
-  const onPasswordChange: ChangeEventHandler<HTMLInputElement> = (
-    event
-  ) => {
-    setValues((current) => ({
-      ...current,
-      password: event.target.value,
-    }));
-    dismissFeedback();
-  };
+    try {
+      // POST /api/v1/auth/login  (baseURL already includes /api/v1)
+      const response = await apiClient.post<BackendAuthResponse>(
+        "/auth/login",
+        {
+          username: data.username.trim(),
+          password: data.password, // never trim password
+        }
+      );
 
-  const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
+      const { accessToken, hotelId, userId, username, role } =
+        response.data;
 
-    // Validate login credentials
-    const isValid =
-      values.userName === LOGIN_CREDENTIALS.userName &&
-      values.password === LOGIN_CREDENTIALS.password;
+      // 1. Persist for axios request interceptor
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("tenant_id", hotelId);
 
-    setFeedback({
-      isOpen: true,
-      type: isValid ? "success" : "error",
-      message: isValid
-        ? "Login successful."
-        : "Login failed. Please check your user name and password.",
-    });
+      // 2. Update zustand store — matches your 3-arg signature:
+      //    setAuth(user, tenantId, accessToken)
+      setAuth(
+        { id: userId, name: username, role },
+        hotelId,
+        accessToken
+      );
 
-    // Navigate only after successful login
-    if (isValid) {
-      void navigate({
-        to: "/dashboard",
+      // 3. Success toast + route
+      setFeedback({
+        isOpen: true,
+        type: "success",
+        message: `Welcome, ${username}. Opening register…`,
       });
-    }
-  };
 
-  return {
-    ...values,
-    feedback,
-    onUserNameChange,
-    onPasswordChange,
-    onSubmit,
-    dismissFeedback,
-  };
+      setTimeout(() => {
+        void navigate({ to: "/pos/billing" });
+      }, 350);
+    } catch (err: unknown) {
+      let errorMessage = "Unable to connect to authentication server.";
+
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401) {
+          errorMessage = "Invalid username or password.";
+        } else if (err.response?.data?.message) {
+          errorMessage = String(err.response.data.message);
+        } else if (err.code === "ECONNABORTED") {
+          errorMessage = "Connection timed out. Please try again.";
+        } else if (!err.response) {
+          errorMessage = "Connection unavailable. Please try again.";
+        }
+      }
+
+      setFeedback({
+        isOpen: true,
+        type: "error",
+        message: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  });
+
+  return { form, feedback, isSubmitting, onSubmit, dismissFeedback };
 };
