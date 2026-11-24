@@ -1,0 +1,24 @@
+{
+  "name": "@urqr/types",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "types": "./ZodSchema/index.ts",
+  "exports": {
+    ".": {
+      "types": "./ZodSchema/index.ts",
+      "import": "./ZodSchema/index.ts"
+    },
+    "./auth": {
+      "types": "./ZodSchema/auth.schema.ts",
+      "import": "./ZodSchema/auth.schema.ts"
+    },
+    "./catalog": {
+      "types": "./ZodSchema/catalog.schema.ts",
+      "import": "./ZodSchema/catalog.schema.ts"
+    }
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

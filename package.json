@@ -1,0 +1,26 @@
+{
+  "name": "urqr",
+  "version": "1.0.0",
+  "description": "URQR is the Hotel & Restaurant Operations Platform developed by NELJA TECH. The repository is organized as a modular monolith with shared frontend packages and dedicated documentation, quality assurance, and infrastructure areas.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PrajuNelja/URQR.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PrajuNelja/URQR/issues"
+  },
+  "homepage": "https://github.com/PrajuNelja/URQR#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6"
+  }
+}

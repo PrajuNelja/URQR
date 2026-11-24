@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./manager-pos"
+    },
+    {
+      "path": "./packages/types"
+    }
+  ]
+}

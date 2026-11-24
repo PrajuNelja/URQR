@@ -1,0 +1,13 @@
+permissions:
+  '@tanstack/react-router':
+    skills: false
+  '@tanstack/react-table':
+    skills: false
+  '@tanstack/router-plugin':
+    skills: false
+  msw:
+    build: true
+packages:
+  - "manager-pos"
+  - "apps/*"
+  - "packages/*"

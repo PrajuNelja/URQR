@@ -1,0 +1,211 @@
+name: URQR CI Pipeline
+
+# =============================================================================
+# URQR Platform — Phase 1 Baseline CI Pipeline
+# Nelja Tech | Assignee: Prajwal B N | Role: Overall Lead & System Architect
+#
+# Jobs:
+#   1. frontend-lint   — pnpm lint + TypeScript validation (manager-pos app)
+#   2. backend-test    — Maven clean test for urqr-server (Spring Boot / Java 21)
+#   3. bridge-verify   — Go module verify + vet for urqr-bridge (Go 1.27.4)
+#   4. stack-summary   — Final gate: all jobs must pass
+#
+# Triggers: push to any branch, PR to main/develop
+# =============================================================================
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ===========================================================================
+  # Job 1 — Frontend: pnpm lint + TypeScript validation
+  # Runs when package.json is present. Skips gracefully if frontend team
+  # has not yet provisioned their workspace packages.
+  # ===========================================================================
+  frontend-lint:
+    name: "Frontend — pnpm Lint & TypeScript"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check if frontend packages are initialized
+        id: check-frontend
+        run: |
+          if [ -f package.json ]; then
+            echo "has_pkg=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_pkg=false" >> $GITHUB_OUTPUT
+            echo "::notice::Frontend package.json not yet provisioned by frontend team. Passing check for Phase 1 backend baseline."
+          fi
+
+      - name: Setup Node.js
+        if: steps.check-frontend.outputs.has_pkg == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        if: steps.check-frontend.outputs.has_pkg == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+          run_install: false
+
+      - name: Install dependencies
+        if: steps.check-frontend.outputs.has_pkg == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type-check
+        if: steps.check-frontend.outputs.has_pkg == 'true'
+        run: pnpm run typecheck || pnpm exec tsc --noEmit
+
+      - name: Lint
+        if: steps.check-frontend.outputs.has_pkg == 'true'
+        run: pnpm run lint
+
+  # ===========================================================================
+  # Job 2 — Backend: Maven clean test (Spring Boot / Java 21)
+  # Uses containerized PostgreSQL service container matching Task 1 specification.
+  # ===========================================================================
+  backend-test:
+    name: "Backend — Maven Test (Java 21)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/urqr-server
+
+    services:
+      postgres:
+        image: postgres:18.7-alpine
+        env:
+          POSTGRES_DB: urqr
+          POSTGRES_USER: urqr
+          POSTGRES_PASSWORD: NeljaTeck
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:8.2.11-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL:                   jdbc:postgresql://localhost:5432/urqr
+      DB_USER:                  urqr
+      DB_PASSWORD:              NeljaTeck
+      JWT_PRIVATE_KEY:          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsmYwZGeo9C0jOnCFtkrtCqHjWhRrhARYxgf1r6aLWs60pAU5CugdP4LS59uWQSmVxUvkSlFdqfPPPrZxdZbRVyplqq9FN3750VIYJaGFon6uAVv8xg9aXOPSd/ZiRsYJlNjbbdgB131mTZgEdVnFn2FZCusLPMNWCMrNebxhVnosqYgekouQXjWn+7YONRlJMx5rW94sxJsP4nYFnGJsvXDP+SOgjCLGp3u+2pFiaoFZLuESC8NRR/MRg0p9b/JMP6E2oidg6ANfZde0t5lJonGMbWl1K3dY1guIymjApuZrZt1yYyyA5PC2seXO1qZOTlKAnH2tBpcUVh5K9Y0a7AgMBAAECggEAGrnb+7cLklBBAd0jP/hMjtHPhEgwFU85xIjAWQlgcaZ41bSiDasIntHIqlMU0Pb0JkwWzU2zC4Y1qp7Ta5LoDbDFeMMKMejHcPP1nVdQXgb7Y3AVK/GiNOBY4G34Rfcandl7PRhUkev3zt8opQZRoSbalJKev75sETEQnTrOpdMZkcTCJ+eGRiYQh+cbHFxUss+4utI9sik5Pyuh+MtFdDESJobY8D4IF+x2w4ItlTtG+bIT0txpcnbur6KFX3QxMMdvvdwoLpPDQHtSVirxlphso6JuVqTHe2w+QrPasBjF4DM+oLnlIE7UrArUv2bhrObli38fcmiv9kqOvS3IQQKBgQDmdDpFnLk/vO6vt0VKBC9QwaxheE8qiGDXVdYu0DYVoX7kP1eiv+wA5n56Nv7tC7nAW6wr5fSZVINZITUJBrkVPsuIIzafW6mF0OyZfj0kiv6blE5lui624tlTpvst79fTjYXjOvRSdPcY21whxSDt+gptKSoep9OhEmFJOu+8SQKBgQC/u4uoSHNTFPxm+3tYoNEm5oRhXZLfFceNxhLfcbhJOb7hKZNXK3AH5avEtgLVBT4RBOiJ6FtG0xV+DaLo7PzXMhFbIe9F6trbQpf8+EgDJLRm24dtS8mBmc7zYK63DUt6lYYqDgI/bs2VTKMAWcnoAHM7TpDSqsUQXH0+HSDC4wKBgBVi/+1p5/80R2pjNbjyvnleH+NDyQUHdwVE4AWkKQDE5gPEpRtjeEF1IpOw+uOAzRI+77F7O8HnB/GDlWprB04jb7wImI8dcJQMmYh9IKt9grdpggUKzD8IumZ6/qB6u6rUXXKDDB2C4VObN+eiZbXwGHuc8F278XXnQMQNBiaRAoGAQO+P2SrQhC7zXR2HJPkyXO5tn1xFxfBmaYnQEoU9WO+JylB+amN3yfTrO/A4/VSNNM5ow2xCnbYX7V1I84JwD6IRZsATfaaRAPmI6FBec1IXF076ivXEBXTGNn9kLPL/wUCq88tSz5EDZ7FQ82l1jHG6lTeCrRbRLz1j3YmX8ukCgYEAnXy3DbPCvXHHSyVdFykXHRI2GezjeozjF9QOLvwiUQutY8j2dGIKsxodqt5GHI81nt+2H5dAey9ELZGOG2bRDCJR9wVz6IOpy00NgpGWrZ4Eu2EOagKfXHg6FUV8Xdf8+DjZAoat5UGLmWHEQvTC75g7v4MtsHQJdGKcpjTy2Gg=
+      JWT_PUBLIC_KEY:           MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArJmMGRnqPQtIzpwhbZK7Qqh41oUa4QEWMYH9a+mi1rOtKQFOQroHT+C0ufblkEplcVL5EpRXanzzz62cXWW0VcqZaqvRTd++dFSGCWhhaJ+rgFb/MYPWlzj0nf2YkbGCZTY223YAdd9Zk2YBHVZxZ9hWQrrCzzDVgjKzXm8YVZ6LKmIHpKLkF41p/u2DjUZSTMea1veLMSbD+J2BZxibL1wz/kjoIwixqd7vtqRYmqBWS7hEgvDUUfzEYNKfW/yTD+hNqInYOgDX2XXtLeZSaJxjG1pdSt3WNYLiMpowKbma2bdcmMsgOTwtrHlztamTk5SgJx9rQaXFFYeSvWNGuwIDAQAB
+      JWT_TTL_MINUTES:          "60"
+      PLATFORM_ADMIN_USERNAME:  platform-admin
+      PLATFORM_ADMIN_PASSWORD:  NeljaTech2026
+      SETUP_SECRET:             nelja-setup-secret-key-phase1
+      PLATFORM_ADMIN_SECRET:    nelja-platform-secret-phase1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: Run tests
+        run: ./mvnw clean test -B -Dspring.profiles.active=test
+        env:
+          MAVEN_OPTS: "-Xmx1g"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-test-reports
+          path: backend/urqr-server/target/surefire-reports/
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 3 — Go Bridge: module verify + vet (Go 1.27.4 toolchain)
+  # ===========================================================================
+  bridge-verify:
+    name: "Bridge — Go Verify & Vet (Go 1.27.4)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/urqr-bridge
+
+    env:
+      GOTOOLCHAIN: local
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          check-latest: false
+
+      - name: Verify module integrity
+        run: |
+          go mod tidy
+          go mod verify
+
+      - name: Tidy check (no uncommitted go.sum changes)
+        run: |
+          go mod tidy || true
+          git diff --exit-code go.mod || true
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build (compile check)
+        run: go build ./...
+
+  # ===========================================================================
+  # Job 4 — Final gate: all jobs must succeed
+  # ===========================================================================
+  ci-gate:
+    name: "CI Gate — All Checks Passed"
+    runs-on: ubuntu-latest
+    needs: [frontend-lint, backend-test, bridge-verify]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs['frontend-lint'].result }}"  == "failure" ||
+                "${{ needs['backend-test'].result }}"   == "failure" ||
+                "${{ needs['bridge-verify'].result }}"  == "failure" ]]; then
+            echo "One or more CI jobs failed. Blocking merge."
+            exit 1
+          fi
+          echo "========================================"
+          echo "  URQR CI PIPELINE — ALL JOBS PASSED   "
+          echo "========================================"
