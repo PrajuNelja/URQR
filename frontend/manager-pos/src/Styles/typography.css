@@ -1,22 +1,21 @@
-@theme {
-  /* Fonts */
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-}
-
+/* src/styles/typography.css */
 @layer base {
-  /* Automatically apply Serif font to all headings */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-serif);
-    font-weight: 600;
-    color: var(--color-primary);
+    font-family: var(--font-sans); /* Inter instead of Playfair */
+    color: var(--color-text);
+    margin: 0;
   }
 
-  /* Body defaults */
-  body {
+  /* Standard text defaults */
+  p, span, div {
     font-family: var(--font-sans);
-    font-weight: 400;
-    color: var(--color-primary);
+    color: var(--color-text);
     line-height: 1.5;
+  }
+
+  /* Helper / Hints (12-13px) */
+  small, .text-helper {
+    font-size: 13px;
+    color: var(--color-text-muted);
   }
 }
