@@ -13,6 +13,16 @@ if (!rootElement) {
   throw new Error("Root element not found. Check index.html.");
 }
 
+if (isTauriRuntime()) {
+  window.addEventListener(
+    "contextmenu",
+    (event) => {
+      event.preventDefault();
+    },
+    true,
+  );
+}
+
 async function enableMocking() {
   if (import.meta.env.DEV && !isTauriRuntime()) {
     const { worker } = await import("./mocks/browser");

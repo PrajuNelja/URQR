@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Expand, Maximize2, Minimize, Minimize2, X } from "lucide-react";
+import { Expand, Minimize, Minimize2, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   bridgeClient,
@@ -101,20 +101,6 @@ function WindowControls() {
           }
         >
           <Minimize size={16} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          aria-label="Maximize or restore window"
-          title="Maximize or restore"
-          className="rounded p-2 hover:bg-white/10"
-          onClick={() =>
-            void runWindowAction(
-              () => getCurrentWindow().toggleMaximize(),
-              "toggle maximize",
-            )
-          }
-        >
-          <Maximize2 size={16} aria-hidden="true" />
         </button>
         <button
           type="button"
