@@ -6,32 +6,31 @@ export const LoginRequestSchema = z
     tenantSlug: z
       .string()
       .min(1, "Tenant slug is required")
-      .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
+      .regex(
+        /^[a-z0-9-]+$/,
+        "Slug can only contain lowercase letters, numbers, and hyphens",
+      ),
 
     // 2. Sanitized Username - trims whitespace to prevent accidental spaces
-    username: z
-      .string()
-      .min(1, "Username is required")
-      .trim(),
+    username: z.string().min(1, "Username is required").trim(),
 
-    // 3. Minimum Password Length (set to 4 as requested)
+    // 3. Password: Minimum 8 chars, strictly alphanumeric (no symbols), no max limit
     password: z
       .string()
-      .min(4, "Password must be at least 4 characters"),
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^[a-zA-Z0-9]+$/,
+        "Password must be strictly alphanumeric (letters and numbers only)",
+      ),
   })
   .strict();
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
+// Optional: If your backend still returns a token for auth response
 export const AuthResponseSchema = z
   .object({
     accessToken: z.string().min(1),
-    user: z
-      .object({
-        id: z.string().min(1),
-        email: z.string().email(),
-      })
-      .strict(),
   })
   .strict();
 
