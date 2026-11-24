@@ -14,10 +14,11 @@ export const LoginRequestSchema = z
       .min(1, "Username is required")
       .trim(),
 
-    // 3. Minimum Password Length (set to 4 as requested)
+    // 3. Password: Minimum 8 chars, strictly alphanumeric (no symbols), no max limit
     password: z
       .string()
-      .min(4, "Password must be at least 4 characters"),
+      .min(8, "Password must be at least 8 characters")
+      .regex(/^[a-zA-Z0-9]+$/, "Password must be strictly alphanumeric (letters and numbers only)"),
   })
   .strict();
 
