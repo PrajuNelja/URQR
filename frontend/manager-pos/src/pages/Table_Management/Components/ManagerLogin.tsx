@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Keypad as KeypadIcon } from "lucide-react";
+import { Sparkles, Calculator as KeypadIcon } from "lucide-react";
 import Button from "../../../components/Buttons/Button";
 import InputField from "../../../components/InputField/InputField";
 import Logo from "../../../components/Logo/Logo";

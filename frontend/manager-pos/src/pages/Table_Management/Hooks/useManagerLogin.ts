@@ -119,11 +119,16 @@ export const useManagerLogin = (): ManagerLoginFormState => {
       void navigate({
         to: "/pos/billing",
       });
-    } catch (error: any) {
-      const errorMsg =
-        error.response?.data?.message ||
-        error.message ||
-        "Login failed. Please check your username and password.";
+    } catch (error: unknown) {
+      let errorMsg = "Login failed. Please check your username and password.";
+      if (typeof error === "object" && error !== null) {
+        const resp = (error as { response?: { data?: { message?: string } } }).response;
+        if (resp?.data?.message) {
+          errorMsg = resp.data.message;
+        } else if (error instanceof Error) {
+          errorMsg = error.message;
+        }
+      }
 
       setFeedback({
         isOpen: true,

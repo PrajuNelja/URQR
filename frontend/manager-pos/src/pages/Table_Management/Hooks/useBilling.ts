@@ -126,8 +126,9 @@ export const useBilling = () => {
       setReceipt(newReceipt);
       setIsReceiptOpen(true);
       clearCart();
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to process payment");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to process payment";
+      setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
     }
