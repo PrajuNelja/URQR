@@ -1,5 +1,4 @@
 // src/components/InputField/TextArea.tsx
-
 import { forwardRef, useId } from "react";
 import type { TextAreaProps } from "./InputField.types";
 import {
@@ -11,12 +10,6 @@ import {
   TEXTAREA_ERROR,
 } from "./InputField.config";
 
-/**
- * TextArea — multi-line input with label, hint, error.
- *
- * <TextArea label="NOTE" placeholder="e.g., no onions..." rows={2} />
- * <TextArea label="Note" error="Too long" value={note} onChange={...} />
- */
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   (
     {

@@ -1,5 +1,4 @@
 // src/components/InputField/InputField.tsx
-
 import { forwardRef, useId } from "react";
 import type { InputFieldProps } from "./InputField.types";
 import {
@@ -14,14 +13,6 @@ import {
   INPUT_RIGHT_ICON,
 } from "./InputField.config";
 
-/**
- * InputField — text/password/number/etc. input with label, hint, error, icons.
- *
- * <InputField label="MANAGER ID" placeholder="e.g., MGR-8902" />
- * <InputField label="Password" type="password" placeholder="••••••••" />
- * <InputField label="Search" leftIcon={<Icon name="Search" />} />
- * <InputField label="Amount" error="This field is required" />
- */
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
   (
     {
