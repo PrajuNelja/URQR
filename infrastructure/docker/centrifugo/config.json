@@ -1,60 +1,63 @@
 {
-  "_comment": "Centrifugo 6.10.3 configuration — URQR Platform Phase 1",
-
-  "port": 8000,
-  "address": "0.0.0.0",
-
-  "websocket": {
-    "port": 8001,
-    "address": "0.0.0.0"
+  "http_server": {
+    "port": 8000,
+    "internal_port": "9000"
   },
 
-  "prometheus": {
-    "port": 9000,
-    "address": "0.0.0.0"
+  "client": {
+    "token": {
+      "hmac_secret_key": "${CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY}"
+    },
+    "allowed_origins": ["*"]
+  },
+
+  "http_api": {
+    "key": "${CENTRIFUGO_HTTP_API_KEY}",
+    "external": true
   },
 
   "admin": {
     "enabled": true,
-    "port": 8000
+    "password": "${CENTRIFUGO_ADMIN_PASSWORD}",
+    "secret": "${CENTRIFUGO_ADMIN_SECRET}"
   },
 
-  "log_level": "info",
-  "log_format": "json",
+  "prometheus": {
+    "enabled": true
+  },
 
-  "token_hmac_secret_key": "${CENTRIFUGO_TOKEN_HMAC_SECRET_KEY}",
-  "api_key":               "${CENTRIFUGO_API_KEY}",
-  "admin_password":        "${CENTRIFUGO_ADMIN_PASSWORD}",
-  "admin_secret":          "${CENTRIFUGO_ADMIN_SECRET}",
+  "health": {
+    "enabled": true
+  },
 
-  "channel_max_length": 255,
-  "client_channel_limit": 128,
+  "log": {
+    "level": "info"
+  },
 
-  "namespaces": [
-    {
-      "name": "orders",
-      "presence": true,
-      "join_leave": true,
-      "history_size": 100,
-      "history_ttl": "1m",
-      "recover": true
-    },
-    {
-      "name": "kitchen",
-      "presence": true,
-      "join_leave": true,
-      "history_size": 50,
-      "history_ttl": "1m",
-      "recover": true
-    },
-    {
-      "name": "notifications",
-      "presence": false,
-      "history_size": 0,
-      "recover": false
-    }
-  ],
-
-  "health": true,
-  "health_check_path": "/health"
+  "channel": {
+    "namespaces": [
+      {
+        "name": "orders",
+        "presence": true,
+        "join_leave": true,
+        "history_size": 100,
+        "history_ttl": "1m",
+        "force_recovery": true
+      },
+      {
+        "name": "kitchen",
+        "presence": true,
+        "join_leave": true,
+        "history_size": 50,
+        "history_ttl": "1m",
+        "force_recovery": true
+      },
+      {
+        "name": "notifications",
+        "presence": false,
+        "history_size": 0,
+        "force_recovery": false
+      }
+    ]
+  }
 }

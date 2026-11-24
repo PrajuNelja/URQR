@@ -6,7 +6,9 @@
   "directories": {
     "doc": "docs"
   },
-  "scripts": {},
+  "scripts": {
+    "exa:search": "node scripts/exa-web-search.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PrajuNelja/URQR.git"
@@ -22,5 +24,8 @@
   "devDependencies": {
     "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6"
+  },
+  "dependencies": {
+    "exa-js": "2.29.0"
   }
 }
