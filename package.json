@@ -6,13 +6,19 @@
   "directories": {
     "doc": "docs"
   },
-  "scripts": {},
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test tests/frontend-smoke.spec.ts",
+    "test:viewport": "playwright test tests/pos-viewport.spec.ts",
+    "test:backend-health": "playwright test tests/backend-health.spec.ts",
+    "test:report": "playwright show-report"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PrajuNelja/URQR.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["urqr", "hotel", "pos"],
+  "author": "NELJA TECH",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
