@@ -1,5 +1,5 @@
 package com.nelja.urqr.menu.category;
-import jakarta.persistence.*; import java.util.UUID;import com.nelja.urqr.hotel.Hotel;
+import jakarta.persistence.*; import java.util.UUID;import com.nelja.urqr.platform.hotel.Hotel;
 @Entity @Table(name="menu_category",uniqueConstraints={@UniqueConstraint(name="uk_category_hotel_name",columnNames={"hotel_id","name"}),@UniqueConstraint(name="uk_category_hotel_id",columnNames={"hotel_id","id"})},indexes=@Index(name="ix_category_hotel_active",columnList="hotel_id,active"))
 public class MenuCategory {
  @Id @GeneratedValue(strategy=GenerationType.UUID)

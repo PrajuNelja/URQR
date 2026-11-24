@@ -2,9 +2,9 @@ package com.nelja.urqr.menu.item;
 import org.springframework.transaction.annotation.Transactional;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
-import com.nelja.urqr.audit.AuditService;
+import com.nelja.urqr.platform.audit.AuditService;
 import com.nelja.urqr.menu.category.MenuCategoryRepository;
-import com.nelja.urqr.security.CurrentTenant;
+import com.nelja.urqr.platform.security.CurrentTenant;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
