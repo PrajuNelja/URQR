@@ -1,0 +1,32 @@
+package com.nelja.urqr.platform.security;
+
+import com.nelja.urqr.common.exception.RequestIdFilter;
+import com.nelja.urqr.common.response.ApiError;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
+
+@Component
+public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    private final JsonMapper mapper;
+
+    public JsonAuthenticationEntryPoint(JsonMapper m) {
+        mapper = m;
+    }
+
+    @Override
+    public void commence(HttpServletRequest r, HttpServletResponse s, AuthenticationException e) throws IOException {
+        s.setStatus(401);
+        s.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        mapper.writeValue(s.getOutputStream(), new ApiError(Instant.now(), 401, "UNAUTHENTICATED",
+                "Authentication is required", r.getRequestURI(),
+                (String) r.getAttribute(RequestIdFilter.ATTRIBUTE), List.of()));
+    }
+}

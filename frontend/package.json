@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --config manager-pos/vite.config.ts manager-pos",
     "build": "tsc -b manager-pos/tsconfig.json && vite build --config manager-pos/vite.config.ts manager-pos",
+    "typecheck": "tsc -b manager-pos/tsconfig.json --noEmit",
     "lint": "eslint manager-pos",
     "lint:fix": "eslint manager-pos --fix",
     "format": "prettier --write \"manager-pos/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"manager-pos/*.{ts,tsx,js,jsx,json,css,md}\"",
@@ -64,18 +65,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
-    "msw": "^2.15.0",
-    "prettier": "3.10.1",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.6"
-  },
-  "msw": {
-    "workerDirectory": [
-      "manager-pos/public"
-    ],
     "jsdom": "^31.0.1",
-    "msw": "^3.0.7",
+    "msw": "^2.15.0",
     "prettier": "3.10.1",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.1",
@@ -83,5 +74,10 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.1.1",
     "workbox-window": "^7.4.1"
+  },
+  "msw": {
+    "workerDirectory": [
+      "manager-pos/public"
+    ]
   }
 }

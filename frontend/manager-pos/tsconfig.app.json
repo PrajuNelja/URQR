@@ -19,7 +19,9 @@
 
     /* Import alias */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@urqr/types": ["../packages/types/ZodSchema/index.ts"],
+      "@urqr/types/*": ["../packages/types/ZodSchema/*"]
     },
 
     /* Linting */

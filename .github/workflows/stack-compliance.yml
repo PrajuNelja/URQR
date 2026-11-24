@@ -1,0 +1,216 @@
+name: Stack Compliance — Ban Kafka, Kubernetes & Microservices
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# =============================================================================
+# URQR Phase 1 Mandatory Architecture Rules (Prajwal B N — System Architect)
+# This job FAILS any commit that introduces banned dependencies or patterns.
+#
+# BANNED:
+#   • Apache Kafka (and all Kafka-derivative clients/streams/connect)
+#   • Kubernetes manifests (kubectl, Helm, kustomize, k8s YAML keys)
+#   • Microservices infrastructure (service mesh, sidecars, Istio, Linkerd,
+#     Spring Cloud Gateway acting as a router, Netflix OSS, gRPC cross-service)
+#
+# ALLOWED:
+#   • Docker Compose (single-node dev & staging)
+#   • PostgreSQL + PgBouncer, Redis, Centrifugo
+#   • Spring Boot monolith, Spring Security, Spring Data JPA
+# =============================================================================
+
+jobs:
+  stack-compliance:
+    name: Enforce Architecture Constraints
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history so git diff works
+
+      # -----------------------------------------------------------------------
+      # 1. Scan Maven pom.xml files for banned dependency groupIds / artifactIds
+      # -----------------------------------------------------------------------
+      - name: "[Maven] Detect banned dependencies in pom.xml"
+        shell: bash
+        run: |
+          echo "=== Scanning Maven POM files for banned dependencies ==="
+          BANNED_PATTERNS=(
+            # Kafka
+            "org\.apache\.kafka"
+            "spring-kafka"
+            "kafka-streams"
+            "kafka-clients"
+            "confluent"
+            "io\.confluent"
+            "reactor-kafka"
+            # Kubernetes / Helm / K8s
+            "kubernetes-client"
+            "fabric8.*kubernetes"
+            "io\.fabric8"
+            "spring-cloud-kubernetes"
+            # Microservices infrastructure
+            "spring-cloud-gateway"
+            "spring-cloud-netflix"
+            "spring-cloud-openfeign"
+            "spring-cloud-loadbalancer"
+            "spring-cloud-circuitbreaker"
+            "io\.grpc"
+            "grpc-spring"
+            "istio"
+            "linkerd"
+          )
+
+          FAIL=0
+          while IFS= read -r pomfile; do
+            for pattern in "${BANNED_PATTERNS[@]}"; do
+              if grep -Eq "$pattern" "$pomfile"; then
+                echo "::error file=$pomfile::BANNED dependency matched pattern '$pattern'"
+                FAIL=1
+              fi
+            done
+          done < <(find . -name "pom.xml" ! -path "*/node_modules/*")
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "ARCHITECTURE VIOLATION: Remove banned dependencies before merging."
+            exit 1
+          fi
+          echo "Maven scan: PASSED"
+
+      # -----------------------------------------------------------------------
+      # 2. Scan source code for banned import statements (Java / Kotlin)
+      # -----------------------------------------------------------------------
+      - name: "[Source] Detect banned imports in Java/Kotlin source"
+        shell: bash
+        run: |
+          echo "=== Scanning Java/Kotlin source for banned imports ==="
+          BANNED_IMPORTS=(
+            "org\.apache\.kafka"
+            "org\.springframework\.kafka"
+            "io\.confluent"
+            "io\.fabric8\.kubernetes"
+            "io\.kubernetes"
+            "org\.springframework\.cloud\.gateway"
+            "org\.springframework\.cloud\.netflix"
+            "org\.springframework\.cloud\.openfeign"
+            "io\.grpc"
+          )
+
+          FAIL=0
+          while IFS= read -r srcfile; do
+            for pattern in "${BANNED_IMPORTS[@]}"; do
+              if grep -Eq "^import $pattern" "$srcfile"; then
+                echo "::error file=$srcfile::BANNED import matched pattern '$pattern'"
+                FAIL=1
+              fi
+            done
+          done < <(find backend -type f \( -name "*.java" -o -name "*.kt" \) 2>/dev/null)
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "ARCHITECTURE VIOLATION: Remove banned imports before merging."
+            exit 1
+          fi
+          echo "Source import scan: PASSED"
+
+      # -----------------------------------------------------------------------
+      # 3. Detect Kubernetes manifests committed to infrastructure/
+      # -----------------------------------------------------------------------
+      - name: "[Infra] Detect Kubernetes manifests"
+        shell: bash
+        run: |
+          echo "=== Scanning YAML files for Kubernetes resource definitions ==="
+          K8S_KEYS=(
+            "^kind: Deployment$"
+            "^kind: StatefulSet$"
+            "^kind: DaemonSet$"
+            "^kind: Service$"
+            "^kind: Ingress$"
+            "^kind: ConfigMap$"
+            "^kind: Secret$"
+            "^kind: Namespace$"
+            "^kind: HorizontalPodAutoscaler$"
+            "^kind: PersistentVolumeClaim$"
+            "apiVersion: apps/v1"
+            "apiVersion: networking.k8s.io"
+          )
+
+          FAIL=0
+          # Only scan infrastructure/deployment — not docker-compose or app YAMLs
+          while IFS= read -r yamlfile; do
+            for key in "${K8S_KEYS[@]}"; do
+              if grep -Eq "$key" "$yamlfile"; then
+                echo "::error file=$yamlfile::BANNED Kubernetes manifest key '$key' detected"
+                FAIL=1
+              fi
+            done
+          done < <(find infrastructure/deployment -type f \( -name "*.yaml" -o -name "*.yml" \) 2>/dev/null)
+
+          # Also flag Helm chart directories
+          if find . -name "Chart.yaml" ! -path "*/node_modules/*" | grep -q .; then
+            echo "::error::BANNED: Helm chart (Chart.yaml) detected in repository"
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "ARCHITECTURE VIOLATION: Remove Kubernetes/Helm artifacts before merging."
+            exit 1
+          fi
+          echo "Kubernetes manifest scan: PASSED"
+
+      # -----------------------------------------------------------------------
+      # 4. Scan Docker Compose for banned service images
+      # -----------------------------------------------------------------------
+      - name: "[Docker] Detect banned images in docker-compose files"
+        shell: bash
+        run: |
+          echo "=== Scanning Docker Compose files for banned images ==="
+          BANNED_IMAGES=(
+            "confluentinc/"
+            "bitnami/kafka"
+            "apache/kafka"
+            "wurstmeister/kafka"
+            "bitnami/pgbouncer"
+            "k8s.gcr.io"
+            "registry.k8s.io"
+            "istio/"
+            "linkerd/"
+          )
+
+          FAIL=0
+          while IFS= read -r composefile; do
+            for img in "${BANNED_IMAGES[@]}"; do
+              if grep -q "$img" "$composefile"; then
+                echo "::error file=$composefile::BANNED image '$img' detected"
+                FAIL=1
+              fi
+            done
+          done < <(find . -name "docker-compose*.yml" -o -name "docker-compose*.yaml" 2>/dev/null)
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "ARCHITECTURE VIOLATION: Remove banned container images before merging."
+            exit 1
+          fi
+          echo "Docker Compose image scan: PASSED"
+
+      # -----------------------------------------------------------------------
+      # 5. Summary report
+      # -----------------------------------------------------------------------
+      - name: Compliance summary
+        if: success()
+        run: |
+          echo "============================================="
+          echo "  URQR Stack Compliance: ALL CHECKS PASSED  "
+          echo "  Approved stack: PostgreSQL + PgBouncer,   "
+          echo "  Redis, Centrifugo, Spring Boot monolith   "
+          echo "============================================="
