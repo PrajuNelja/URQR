@@ -1,12 +1,7 @@
 // src/components/Header/SelectableGroup.tsx
-
 import type { SelectableGroupProps } from "./Header.types";
 import { selectableGroupConfig } from "./Header.config";
 
-/**
- * SelectableGroup — generic single-select button group.
- * Used for Payment Methods (Cash / UPI / Others).
- */
 export const SelectableGroup = ({
   options,
   value,

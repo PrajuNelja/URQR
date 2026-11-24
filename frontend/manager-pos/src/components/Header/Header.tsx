@@ -1,22 +1,7 @@
 // src/components/Header/Header.tsx
-
 import type { HeaderProps } from "./Header.types";
 import { headerConfig } from "./Header.config";
 
-/**
- * Header — top bar with logo, title, nav, and right actions.
- *
- * <Header
- *   variant="dashboard"
- *   title="Dashboard"
- *   subtitle="Business overview"
- *   logo={<Logo size="md" />}
- *   navItems={[{ key: "pos", label: "Billing POS" }, { key: "dash", label: "Dashboard" }]}
- *   activeNav="pos"
- *   onNavChange={(k) => setActive(k)}
- *   actions={<Button variant="ghost">Logout</Button>}
- * />
- */
 export const Header = ({
   variant = "dashboard",
   title,
@@ -33,7 +18,6 @@ export const Header = ({
       className={`${headerConfig.base} ${className}`.trim()}
       data-variant={variant}
     >
-      {/* Left: logo + title */}
       <div className={headerConfig.left}>
         {logo}
         <div className={headerConfig.titleBlock}>
@@ -44,7 +28,6 @@ export const Header = ({
         </div>
       </div>
 
-      {/* Center: nav */}
       {navItems && navItems.length > 0 && (
         <nav className={headerConfig.nav} aria-label="Primary">
           {navItems.map((item) => {
@@ -54,9 +37,7 @@ export const Header = ({
                 key={item.key}
                 type="button"
                 className={
-                  isActive
-                    ? headerConfig.navItemActive
-                    : headerConfig.navItem
+                  isActive ? headerConfig.navItemActive : headerConfig.navItem
                 }
                 onClick={() => onNavChange?.(item.key)}
                 aria-current={isActive ? "page" : undefined}
@@ -68,7 +49,6 @@ export const Header = ({
         </nav>
       )}
 
-      {/* Right: actions */}
       {actions && <div className={headerConfig.actions}>{actions}</div>}
     </header>
   );
