@@ -1,6 +1,9 @@
 
 import { create } from "zustand";
 
+// Maximum quantity allowed for one product
+export const MAX_CART_QUANTITY = 15;
+
 // 1. Product details received from catalog
 export interface CartProduct {
   id: string;
@@ -25,16 +28,9 @@ export interface CartLineItem {
 // 3. Cart state and functions
 interface CartState {
   items: CartLineItem[];
-
   addItem: (product: CartProduct) => void;
-
-  setQuantity: (
-    productId: string,
-    quantity: number
-  ) => void;
-
+  setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
-
   clearCart: () => void;
 }
 
@@ -43,108 +39,113 @@ const isValidAmount = (amount: number) =>
   Number.isSafeInteger(amount) && amount >= 0;
 
 // 4. Create the Zustand cart store
-export const useCartStore = create<CartState>()(
-  (set) => ({
-    // Initially empty cart
-    items: [],
+export const useCartStore = create<CartState>()((set) => ({
+  // Initially empty cart
+  items: [],
 
-    // ADD PRODUCT
-    addItem: (product) =>
-      set((state) => {
-        const discount = product.itemDiscountPaise ?? 0;
-        const taxRate = product.taxRateBps ?? null;
+  // ADD PRODUCT
+  addItem: (product) =>
+    set((state) => {
+      const discount = product.itemDiscountPaise ?? 0;
+      const taxRate = product.taxRateBps ?? null;
 
-        if (
-          !product.id.trim() ||
-          !product.name.trim() ||
-          !isValidAmount(product.unitPricePaise) ||
-          !isValidAmount(discount) ||
-          discount > product.unitPricePaise ||
-          (taxRate !== null &&
-            !isValidAmount(taxRate))
-        ) {
+      if (
+        !product.id.trim() ||
+        !product.name.trim() ||
+        !isValidAmount(product.unitPricePaise) ||
+        !isValidAmount(discount) ||
+        discount > product.unitPricePaise ||
+        (taxRate !== null && !isValidAmount(taxRate))
+      ) {
+        return state;
+      }
+
+      const existing = state.items.find(
+        (item) => item.productId === product.id
+      );
+
+      // Product exists: increase quantity, but stop at 15
+      if (existing) {
+        if (existing.quantity >= MAX_CART_QUANTITY) {
           return state;
-        }
-
-        const existing = state.items.find(
-          (item) => item.productId === product.id
-        );
-
-        // If product exists, increase quantity
-        if (existing) {
-          if (!Number.isSafeInteger(existing.quantity + 1)) {
-            return state;
-          }
-
-          return {
-            items: state.items.map((item) =>
-              item.productId === product.id
-                ? {
-                    ...item,
-                    quantity: item.quantity + 1,
-                  }
-                : item
-            ),
-          };
-        }
-
-        // Otherwise add a new product
-        return {
-          items: [
-            ...state.items,
-            {
-              productId: product.id,
-              productName: product.name,
-              quantity: 1,
-              unitPricePaise: product.unitPricePaise,
-              itemDiscountPaise: discount,
-              taxRateBps: taxRate,
-              taxable: product.taxable ?? null,
-            },
-          ],
-        };
-      }),
-
-    // UPDATE PRODUCT QUANTITY
-    setQuantity: (productId, quantity) =>
-      set((state) => {
-        if (
-          !Number.isSafeInteger(quantity) ||
-          quantity < 0
-        ) {
-          return state;
-        }
-
-        // Quantity zero removes the product
-        if (quantity === 0) {
-          return {
-            items: state.items.filter(
-              (item) => item.productId !== productId
-            ),
-          };
         }
 
         return {
           items: state.items.map((item) =>
-            item.productId === productId
-              ? { ...item, quantity }
+            item.productId === product.id
+              ? {
+                  ...item,
+                  quantity: item.quantity + 1,
+                }
               : item
           ),
         };
-      }),
+      }
 
-    // REMOVE PRODUCT
-    removeItem: (productId) =>
-      set((state) => ({
-        items: state.items.filter(
-          (item) => item.productId !== productId
+      // New product: add with quantity 1
+      return {
+        items: [
+          ...state.items,
+          {
+            productId: product.id,
+            productName: product.name,
+            quantity: 1,
+            unitPricePaise: product.unitPricePaise,
+            itemDiscountPaise: discount,
+            taxRateBps: taxRate,
+            taxable: product.taxable ?? null,
+          },
+        ],
+      };
+    }),
+
+  // UPDATE PRODUCT QUANTITY
+  setQuantity: (productId, quantity) =>
+    set((state) => {
+      // Reject negative, decimal, or invalid quantities
+      if (
+        !Number.isSafeInteger(quantity) ||
+        quantity < 0
+      ) {
+        return state;
+      }
+
+      // Restrict maximum quantity to 15
+      const safeQuantity = Math.min(
+        quantity,
+        MAX_CART_QUANTITY
+      );
+
+      // Automatically delete product at zero
+      if (safeQuantity === 0) {
+        return {
+          items: state.items.filter(
+            (item) => item.productId !== productId
+          ),
+        };
+      }
+
+      // Otherwise update the product quantity
+      return {
+        items: state.items.map((item) =>
+          item.productId === productId
+            ? { ...item, quantity: safeQuantity }
+            : item
         ),
-      })),
+      };
+    }),
 
-    // CLEAR ENTIRE CART
-    clearCart: () =>
-      set({
-        items: [],
-      }),
-  })
-);
+  // REMOVE ONE PRODUCT
+  removeItem: (productId) =>
+    set((state) => ({
+      items: state.items.filter(
+        (item) => item.productId !== productId
+      ),
+    })),
+
+  // CLEAR ENTIRE CART
+  clearCart: () =>
+    set({
+      items: [],
+    }),
+}));

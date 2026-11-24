@@ -1,21 +1,23 @@
+
 /* src/styles/components.css */
 @layer components {
   /* Input Focus Ring */
   .input-focus-ring:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.2);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
   }
 
-  /* Card Hover (No shadows, just border shift per spec) */
+  /* Card Hover */
   .card-hover {
     transition: border-color 0.2s ease, background-color 0.2s ease;
   }
+
   .card-hover:hover {
     border-color: var(--color-primary);
     background-color: var(--color-surface-alt);
   }
 
-  /* Button Hover (Primary Dark) */
+  /* Button Hover */
   .btn-hover-primary:hover {
     background-color: var(--color-primary-dark);
     color: var(--color-on-primary);
@@ -25,5 +27,111 @@
   .modal-backdrop {
     background-color: rgba(59, 42, 30, 0.55);
     backdrop-filter: blur(2px);
+  }
+
+  /* ==========================================
+     POS QUANTITY STEPPER - ORDER SUMMARY
+     Theme-based and two-digit friendly
+     ========================================== */
+
+  .pos-quantity-stepper {
+    display: grid;
+    grid-template-columns: 28px minmax(24px, 1fr) 28px;
+    align-items: center;
+
+    width: 104px;
+    max-width: 100%;
+    height: 36px;
+    padding: 0 6px;
+
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+  }
+
+  /* Plus and minus buttons */
+  .pos-quantity-stepper__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+    padding: 0;
+
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-primary);
+
+    cursor: pointer;
+  }
+
+  .pos-quantity-stepper__button:hover:not(:disabled) {
+    background-color: var(--color-app-bg);
+    color: var(--color-accent-gold);
+  }
+
+  .pos-quantity-stepper__button:disabled {
+    background: transparent;
+    color: var(--color-text-muted);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Quantity number: supports 1 to 15 */
+  .pos-quantity-stepper__value {
+    display: block;
+    min-width: 24px;
+
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  /* Small: for POS Order Summary */
+  .pos-quantity-stepper--sm {
+    width: 96px;
+    height: 32px;
+    padding: 0 6px;
+    grid-template-columns: 24px minmax(24px, 1fr) 24px;
+  }
+
+  .pos-quantity-stepper--sm .pos-quantity-stepper__button {
+    width: 24px;
+    height: 28px;
+  }
+
+  .pos-quantity-stepper--sm .pos-quantity-stepper__value {
+    min-width: 24px;
+    font-size: 14px;
+  }
+
+  /* Large variant */
+  .pos-quantity-stepper--lg {
+    width: 116px;
+    height: 40px;
+    grid-template-columns: 32px minmax(24px, 1fr) 32px;
+  }
+
+  .pos-quantity-stepper--lg .pos-quantity-stepper__button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pos-quantity-stepper--lg .pos-quantity-stepper__value {
+    font-size: 16px;
+  }
+
+  .pos-quantity-stepper--disabled {
+    opacity: 0.7;
   }
 }
