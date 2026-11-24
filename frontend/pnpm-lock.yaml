@@ -157,7 +157,11 @@ importers:
         specifier: ^7.4.1
         version: 7.4.1
 
-  manager-pos: {}
+  manager-pos:
+    dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.108.2
+        version: 5.108.2(@types/react@19.3.0)(react@19.3.1)
 
   packages/types:
     dependencies:
