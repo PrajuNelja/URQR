@@ -397,7 +397,7 @@ class UrqrServerApplicationTests {
                     "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)");
                     PreparedStatement hotel = owner.prepareStatement("""
                     INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
-                    VALUES (?, 'Tenant test hotel', 'INR', 'Asia/Kolkata', '06:00', 'ACTIVE', now())
+                    VALUES (?, 'Tenant test hotel', 'INR', 'Asia/Kolkata', '00:00', 'ACTIVE', now())
                     """);
                     PreparedStatement role = owner.prepareStatement(
                             "INSERT INTO hotel_role(id,hotel_id,name) VALUES (?,?, 'MANAGER')");
