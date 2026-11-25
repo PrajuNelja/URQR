@@ -6,6 +6,7 @@ import { BillingCart } from "./BillingCart";
 import { BillingPayment } from "./BillingPayment";
 import { BillingReceiptModal } from "./BillingReceiptModal";
 import { PosCheckoutModal } from "./PosCheckoutModal";
+import { DesktopWindowControls } from "../../../../components/Header/DesktopWindowControls";
 
 // --------------------------------------------------
 // HEADER - Grand Horizon POS Branding
@@ -50,6 +51,7 @@ function Header() {
         >
           Logout
         </Link>
+        <DesktopWindowControls className="ml-1" />
       </nav>
     </header>
   );
