@@ -8,6 +8,7 @@ export const TAX_RATE = 5;
 // Labels follow the Billing HTML.
 export const CATEGORIES: Category[] = [
   { key: "all", label: "All" },
+  { key: "starters", label: "Starters" },
   { key: "main", label: "Main Course" },
   { key: "desserts", label: "Desserts" },
   { key: "beverages", label: "Drinks" },
