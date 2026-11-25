@@ -229,12 +229,12 @@ export const useBilling = () => {
   // This is a frontend demonstration checkout.
   // Real transactions must be confirmed by the backend.
   const handleCompletePayment = useCallback(
-    (checkout: CheckoutRequest): boolean => {
+    (checkout: CheckoutRequest): ReceiptData | null => {
       if (
         !totals.items.length ||
         !Number.isFinite(checkout.amountTendered)
       ) {
-        return false;
+        return null;
       }
 
       const duePaise = Math.round(totals.total * 100);
@@ -243,7 +243,7 @@ export const useBilling = () => {
         Math.round(checkout.payableAmount * 100) !==
         duePaise
       ) {
-        return false;
+        return null;
       }
 
       const receivedPaise = Math.round(
@@ -254,7 +254,7 @@ export const useBilling = () => {
         checkout.paymentMode === "Cash" &&
         receivedPaise < duePaise
       ) {
-        return false;
+        return null;
       }
 
       const method: PaymentMethod =
@@ -316,7 +316,7 @@ export const useBilling = () => {
       setIsReceiptOpen(true);
       clearCart();
 
-      return true;
+      return newReceipt;
     },
     [totals, clearCart]
   );
