@@ -1,0 +1,307 @@
+{
+  "metadata": {
+    "project": "URQR Platform — Phase 1 Standalone Manager POS",
+    "assignee": "Nayana",
+    "role": "Functional & API QA Lead",
+    "scope": "POS Catalog & Inventory Test Data Matrix",
+    "version": "1.0.0",
+    "lastUpdated": "2026-11-25T08:15:00Z"
+  },
+  "taxSlabs": [
+    {
+      "code": "GST_0",
+      "name": "Zero Tax / Exempt",
+      "ratePercent": 0.0,
+      "components": [
+        { "name": "EXEMPT", "rate": 0.0 }
+      ]
+    },
+    {
+      "code": "GST_5",
+      "name": "Standard Food & Restaurant Dining",
+      "ratePercent": 5.0,
+      "components": [
+        { "name": "CGST", "rate": 2.5 },
+        { "name": "SGST", "rate": 2.5 }
+      ]
+    },
+    {
+      "code": "GST_12",
+      "name": "Processed Foods & Packaged Juices",
+      "ratePercent": 12.0,
+      "components": [
+        { "name": "CGST", "rate": 6.0 },
+        { "name": "SGST", "rate": 6.0 }
+      ]
+    },
+    {
+      "code": "GST_18",
+      "name": "Beverages, Confectionery & Branded Goods",
+      "ratePercent": 18.0,
+      "components": [
+        { "name": "CGST", "rate": 9.0 },
+        { "name": "SGST", "rate": 9.0 }
+      ]
+    },
+    {
+      "code": "GST_20_SPECIAL",
+      "name": "Specialty Beverages with Hospitality Cess",
+      "ratePercent": 20.0,
+      "components": [
+        { "name": "CGST", "rate": 9.0 },
+        { "name": "SGST", "rate": 9.0 },
+        { "name": "F&B Service Cess", "rate": 2.0 }
+      ]
+    }
+  ],
+  "categories": [
+    { "id": 1, "key": "main-course", "label": "Main Course" },
+    { "id": 2, "key": "breads", "label": "Breads" },
+    { "id": 3, "key": "beverages", "label": "Beverages" },
+    { "id": 4, "key": "starters", "label": "Starters" },
+    { "id": 5, "key": "desserts", "label": "Desserts" },
+    { "id": 6, "key": "salads", "label": "Salads" }
+  ],
+  "items": [
+    {
+      "id": 101,
+      "name": "Paneer Butter Masala",
+      "category": "Main Course",
+      "categoryKey": "main-course",
+      "description": "Rich cottage cheese cubes simmered in spiced tomato and butter gravy",
+      "price": 280.00,
+      "taxSlab": "GST_5",
+      "taxRate": 5.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 2.5, "amount": 7.00 },
+        { "name": "SGST", "rate": 2.5, "amount": 7.00 }
+      ],
+      "inStock": true,
+      "stockQuantity": 45,
+      "lowStockThreshold": 10,
+      "allowBackorder": false,
+      "itemType": "STANDARD",
+      "hsnCode": "21069099"
+    },
+    {
+      "id": 102,
+      "name": "Garlic Naan",
+      "category": "Breads",
+      "categoryKey": "breads",
+      "description": "Crisp traditional tandoori flatbread brushed with garlic and clarified butter",
+      "price": 60.00,
+      "taxSlab": "GST_5",
+      "taxRate": 5.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 2.5, "amount": 1.50 },
+        { "name": "SGST", "rate": 2.5, "amount": 1.50 }
+      ],
+      "inStock": true,
+      "stockQuantity": 120,
+      "lowStockThreshold": 20,
+      "allowBackorder": false,
+      "itemType": "STANDARD",
+      "hsnCode": "19059090"
+    },
+    {
+      "id": 103,
+      "name": "Dal Makhani",
+      "category": "Main Course",
+      "categoryKey": "main-course",
+      "description": "Slow cooked whole black lentils with creamy butter and aromatic spices",
+      "price": 220.00,
+      "taxSlab": "GST_5",
+      "taxRate": 5.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 2.5, "amount": 5.50 },
+        { "name": "SGST", "rate": 2.5, "amount": 5.50 }
+      ],
+      "inStock": true,
+      "stockQuantity": 30,
+      "lowStockThreshold": 8,
+      "allowBackorder": false,
+      "itemType": "STANDARD",
+      "hsnCode": "21069099"
+    },
+    {
+      "id": 104,
+      "name": "Butter Roti",
+      "category": "Breads",
+      "categoryKey": "breads",
+      "description": "Whole wheat bread baked in traditional clay tandoor with fresh butter",
+      "price": 35.00,
+      "taxSlab": "GST_5",
+      "taxRate": 5.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 2.5, "amount": 0.88 },
+        { "name": "SGST", "rate": 2.5, "amount": 0.88 }
+      ],
+      "inStock": true,
+      "stockQuantity": 150,
+      "lowStockThreshold": 25,
+      "allowBackorder": false,
+      "itemType": "STANDARD",
+      "hsnCode": "19059090"
+    },
+    {
+      "id": 105,
+      "name": "Veg Dum Biryani",
+      "category": "Main Course",
+      "categoryKey": "main-course",
+      "description": "Fragrant basmati rice layered with garden vegetables and saffron spices",
+      "price": 250.00,
+      "taxSlab": "GST_5",
+      "taxRate": 5.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 2.5, "amount": 6.25 },
+        { "name": "SGST", "rate": 2.5, "amount": 6.25 }
+      ],
+      "inStock": true,
+      "stockQuantity": 25,
+      "lowStockThreshold": 5,
+      "allowBackorder": false,
+      "itemType": "STANDARD",
+      "hsnCode": "21069099"
+    },
+    {
+      "id": 201,
+      "name": "Tandoori Platter Special",
+      "category": "Starters",
+      "categoryKey": "starters",
+      "description": "Chef special assorted chargrilled kebabs and cottage cheese chunks",
+      "price": 450.00,
+      "taxSlab": "GST_5",
+      "taxRate": 5.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 2.5, "amount": 11.25 },
+        { "name": "SGST", "rate": 2.5, "amount": 11.25 }
+      ],
+      "inStock": false,
+      "stockQuantity": 0,
+      "lowStockThreshold": 5,
+      "allowBackorder": false,
+      "itemType": "OUT_OF_STOCK",
+      "hsnCode": "21069099"
+    },
+    {
+      "id": 202,
+      "name": "Alphonso Mango Kulfi",
+      "category": "Desserts",
+      "categoryKey": "desserts",
+      "description": "Authentic reduced milk kulfi infused with Ratnagiri Alphonso mango pulp",
+      "price": 120.00,
+      "taxSlab": "GST_18",
+      "taxRate": 18.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 9.0, "amount": 10.80 },
+        { "name": "SGST", "rate": 9.0, "amount": 10.80 }
+      ],
+      "inStock": false,
+      "stockQuantity": 0,
+      "lowStockThreshold": 10,
+      "allowBackorder": false,
+      "itemType": "OUT_OF_STOCK",
+      "hsnCode": "21050000"
+    },
+    {
+      "id": 203,
+      "name": "Seasonal Berry Tart",
+      "category": "Desserts",
+      "categoryKey": "desserts",
+      "description": "Crusty almond pastry shell loaded with fresh wild forest berries",
+      "price": 180.00,
+      "taxSlab": "GST_18",
+      "taxRate": 18.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 9.0, "amount": 16.20 },
+        { "name": "SGST", "rate": 9.0, "amount": 16.20 }
+      ],
+      "inStock": false,
+      "stockQuantity": 0,
+      "lowStockThreshold": 5,
+      "allowBackorder": false,
+      "itemType": "OUT_OF_STOCK",
+      "hsnCode": "19059090"
+    },
+    {
+      "id": 301,
+      "name": "Mineral Water Bottle 1L",
+      "category": "Beverages",
+      "categoryKey": "beverages",
+      "description": "Purified packaged drinking water with natural essential minerals",
+      "price": 30.00,
+      "taxSlab": "GST_18",
+      "taxRate": 18.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 9.0, "amount": 2.70 },
+        { "name": "SGST", "rate": 9.0, "amount": 2.70 }
+      ],
+      "inStock": true,
+      "stockQuantity": 200,
+      "lowStockThreshold": 30,
+      "allowBackorder": false,
+      "itemType": "MULTI_TAX",
+      "hsnCode": "22011010"
+    },
+    {
+      "id": 302,
+      "name": "Fresh Cold-Pressed Orange Juice",
+      "category": "Beverages",
+      "categoryKey": "beverages",
+      "description": "100% pure fresh Valencia oranges pressed without added sugar or water",
+      "price": 110.00,
+      "taxSlab": "GST_12",
+      "taxRate": 12.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 6.0, "amount": 6.60 },
+        { "name": "SGST", "rate": 6.0, "amount": 6.60 }
+      ],
+      "inStock": true,
+      "stockQuantity": 25,
+      "lowStockThreshold": 5,
+      "allowBackorder": false,
+      "itemType": "MULTI_TAX",
+      "hsnCode": "20091900"
+    },
+    {
+      "id": 303,
+      "name": "Farm Fresh Green Salad (Zero-Tax)",
+      "category": "Salads",
+      "categoryKey": "salads",
+      "description": "Crisp cucumber, tomatoes, organic greens, and fresh lemon wedges",
+      "price": 90.00,
+      "taxSlab": "GST_0",
+      "taxRate": 0.0,
+      "taxComponents": [
+        { "name": "EXEMPT", "rate": 0.0, "amount": 0.00 }
+      ],
+      "inStock": true,
+      "stockQuantity": 50,
+      "lowStockThreshold": 10,
+      "allowBackorder": false,
+      "itemType": "MULTI_TAX",
+      "hsnCode": "07069000"
+    },
+    {
+      "id": 304,
+      "name": "Craft Mocktail Tower (Multi-Tax & Cess)",
+      "category": "Beverages",
+      "categoryKey": "beverages",
+      "description": "Signature fruit blend mocktail tower with sparkling mint and lime",
+      "price": 650.00,
+      "taxSlab": "GST_20_SPECIAL",
+      "taxRate": 20.0,
+      "taxComponents": [
+        { "name": "CGST", "rate": 9.0, "amount": 58.50 },
+        { "name": "SGST", "rate": 9.0, "amount": 58.50 },
+        { "name": "F&B Service Cess", "rate": 2.0, "amount": 13.00 }
+      ],
+      "inStock": true,
+      "stockQuantity": 15,
+      "lowStockThreshold": 3,
+      "allowBackorder": false,
+      "itemType": "MULTI_TAX",
+      "hsnCode": "22029990"
+    }
+  ]
+}

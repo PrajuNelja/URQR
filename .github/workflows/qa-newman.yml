@@ -11,6 +11,8 @@ on:
     paths:
       - "backend/**"
       - "qa/postman/**"
+      - "qa/test-data/**"
+      - "scripts/run-newman-smoke.js"
       - ".github/workflows/qa-newman.yml"
   pull_request:
     branches: [main, develop]
@@ -45,3 +47,13 @@ jobs:
 
       - name: Run Newman Smoke & Contract Verification
         run: node scripts/run-newman-smoke.js
+
+      - name: Archive Newman Test Reports (JUnit XML & HTML)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: newman-api-reports
+          path: |
+            qa/evidence/newman-results.xml
+            qa/evidence/newman-report.html
+          retention-days: 14

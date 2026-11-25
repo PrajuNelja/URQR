@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
 		"name": "URQR Phase 1 POS - API Regression Collection",
-		"description": "Comprehensive Postman test collection for URQR Standalone Manager POS Phase 1 authored by Nayana (QA Lead). Covers Auth endpoints, RS256 JWT structure validation, negative security tests, brute-force throttling, and catalog contracts.",
+		"description": "Comprehensive Postman test collection for URQR Standalone Manager POS Phase 1 authored by Nayana (QA Lead). Covers Auth endpoints, RS256 JWT structure validation, negative security tests, brute-force throttling, and catalog contracts (category filters, search queries, pagination, out-of-stock and multi-tax matrix).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -536,7 +536,445 @@
 			"response": []
 		},
 		{
-			"name": "11 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)",
+			"name": "11 - Catalog Category Filter (Main Course)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for category filter query', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || jsonData.products);",
+							"",
+							"pm.test('Returned category results is a non-empty array', function () {",
+							"    pm.expect(Array.isArray(products)).to.be.true;",
+							"    pm.expect(products.length).to.be.above(0);",
+							"});",
+							"",
+							"pm.test('All returned products have category Main Course', function () {",
+							"    products.forEach(function (prod) {",
+							"        pm.expect(prod.category).to.eql('Main Course');",
+							"    });",
+							"});",
+							"",
+							"pm.test('Results include known standard items: Paneer Butter Masala', function () {",
+							"    const names = products.map(p => p.name);",
+							"    pm.expect(names).to.include('Paneer Butter Masala');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products?category=Main+Course",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					],
+					"query": [
+						{
+							"key": "category",
+							"value": "Main Course"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "12 - Catalog Category Filter (Empty on Non-Existent Category)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for non-existent category query', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || []);",
+							"",
+							"pm.test('Empty array returned when category has no matches', function () {",
+							"    pm.expect(Array.isArray(products)).to.be.true;",
+							"    pm.expect(products.length).to.eql(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products?category=NonExistentCategory99",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					],
+					"query": [
+						{
+							"key": "category",
+							"value": "NonExistentCategory99"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "13 - Catalog Search Query (Search for \"Paneer\")",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for search query', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || jsonData.products);",
+							"",
+							"pm.test('Search returns matching item records', function () {",
+							"    pm.expect(Array.isArray(products)).to.be.true;",
+							"    pm.expect(products.length).to.be.above(0);",
+							"});",
+							"",
+							"pm.test('Returned items match substring query \"Paneer\"', function () {",
+							"    products.forEach(function (prod) {",
+							"        const match = prod.name.toLowerCase().includes('paneer') || (prod.description && prod.description.toLowerCase().includes('paneer'));",
+							"        pm.expect(match).to.be.true;",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products?search=Paneer",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					],
+					"query": [
+						{
+							"key": "search",
+							"value": "Paneer"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "14 - Catalog Search Query Case-Insensitive (Search for \"naan\")",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for case-insensitive search', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || jsonData.products);",
+							"",
+							"pm.test('Found matching item Garlic Naan', function () {",
+							"    pm.expect(products.some(p => p.name === 'Garlic Naan')).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products?search=naan",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					],
+					"query": [
+						{
+							"key": "search",
+							"value": "naan"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "15 - Catalog Pagination (Page 1 with Size 2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for paginated query', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test('Pagination metadata conforms to Spring Boot pageable contract', function () {",
+							"    pm.expect(jsonData).to.have.property('items');",
+							"    pm.expect(jsonData).to.have.property('page');",
+							"    pm.expect(jsonData).to.have.property('size');",
+							"    pm.expect(jsonData).to.have.property('totalElements');",
+							"    pm.expect(jsonData).to.have.property('totalPages');",
+							"    pm.expect(jsonData.page).to.eql(1);",
+							"    pm.expect(jsonData.size).to.eql(2);",
+							"    pm.expect(jsonData.items.length).to.eql(2);",
+							"    pm.expect(jsonData.totalElements).to.be.above(4);",
+							"    pm.expect(jsonData.totalPages).to.be.above(2);",
+							"    pm.environment.set('page1_first_id', jsonData.items[0].id);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products?page=1&size=2",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "size",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "16 - Catalog Pagination (Page 2 with Size 2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for page 2 query', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test('Page 2 returns distinct items from Page 1', function () {",
+							"    pm.expect(jsonData.page).to.eql(2);",
+							"    pm.expect(jsonData.size).to.eql(2);",
+							"    pm.expect(jsonData.items.length).to.eql(2);",
+							"    const page1FirstId = pm.environment.get('page1_first_id');",
+							"    if (page1FirstId) {",
+							"        const page2Ids = jsonData.items.map(i => i.id);",
+							"        pm.expect(page2Ids).to.not.include(parseInt(page1FirstId, 10));",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products?page=2&size=2",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "2"
+						},
+						{
+							"key": "size",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "17 - Out-of-Stock and Multi-Tax Inventory Verification",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for full catalog audit', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const products = Array.isArray(jsonData) ? jsonData : jsonData.items;",
+							"",
+							"pm.test('Out-of-stock items have inStock false and zero quantity', function () {",
+							"    const oosItems = products.filter(p => p.itemType === 'OUT_OF_STOCK' || p.inStock === false);",
+							"    pm.expect(oosItems.length).to.be.above(0);",
+							"    oosItems.forEach(item => {",
+							"        pm.expect(item.inStock).to.be.false;",
+							"        pm.expect(item.stockQuantity).to.eql(0);",
+							"    });",
+							"});",
+							"",
+							"pm.test('Multi-tax items carry tax rate and component breakdowns', function () {",
+							"    const multiTaxItems = products.filter(p => p.itemType === 'MULTI_TAX');",
+							"    pm.expect(multiTaxItems.length).to.be.above(0);",
+							"    multiTaxItems.forEach(item => {",
+							"        pm.expect(item).to.have.property('taxRate');",
+							"        pm.expect(item).to.have.property('taxComponents');",
+							"        pm.expect(Array.isArray(item.taxComponents)).to.be.true;",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "18 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)",
 			"event": [
 				{
 					"listen": "test",
@@ -583,7 +1021,7 @@
 			"response": []
 		},
 		{
-			"name": "12 - Super-Manager Cross-Tenant Metrics Query",
+			"name": "19 - Super-Manager Cross-Tenant Metrics Query",
 			"event": [
 				{
 					"listen": "test",
