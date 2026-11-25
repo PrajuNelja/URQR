@@ -60,12 +60,12 @@ function WindowControls() {
   return (
     <header
       data-tauri-drag-region
-      className="flex h-10 items-center justify-between border-b border-white/10 bg-slate-950 px-3 text-white"
+      className="flex h-10 items-center justify-between border-b border-primary-dark/20 bg-primary-dark px-3 text-on-primary select-none"
     >
       <div data-tauri-drag-region className="flex items-center gap-4">
         <span
           data-tauri-drag-region
-          className="select-none text-sm font-semibold"
+          className="text-sm font-semibold tracking-wide"
         >
           URQR Manager POS
         </span>
@@ -87,17 +87,28 @@ function WindowControls() {
                 : printerPresentation.tone === "disconnected"
                   ? "bg-red-400"
                   : "bg-amber-400"
+          className="flex items-center gap-2 text-xs font-medium text-on-primary/80"
+        >
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 rounded-full transition-colors ${
+              bridgeStatus === "connected"
+                ? "bg-success"
+                : bridgeStatus === "connecting"
+                  ? "bg-warning"
+                  : "bg-error"
             }`}
           />
           Printer {printerPresentation.label.toLowerCase()}
         </span>
       </div>
+      
       <div className="flex h-full items-center gap-1">
         <button
           type="button"
           aria-label="Minimize window"
           title="Minimize"
-          className="rounded p-2 hover:bg-white/10"
+          className="rounded-md p-2 outline-none transition-colors hover:bg-on-primary/10 focus-visible:ring-2 focus-visible:ring-on-primary"
           onClick={() =>
             void runWindowAction(
               () => getCurrentWindow().minimize(),
@@ -107,11 +118,12 @@ function WindowControls() {
         >
           <Minimize size={16} aria-hidden="true" />
         </button>
+        
         <button
           type="button"
           aria-label={isFullscreen ? "Exit full screen" : "Enter full screen"}
           title={isFullscreen ? "Exit full screen" : "Full screen"}
-          className="rounded p-2 hover:bg-white/10"
+          className="rounded-md p-2 outline-none transition-colors hover:bg-on-primary/10 focus-visible:ring-2 focus-visible:ring-on-primary"
           onClick={() => void toggleFullscreen()}
         >
           {isFullscreen ? (
@@ -120,11 +132,12 @@ function WindowControls() {
             <Expand size={16} aria-hidden="true" />
           )}
         </button>
+        
         <button
           type="button"
           aria-label="Close window"
           title="Close"
-          className="rounded p-2 hover:bg-red-600"
+          className="rounded-md p-2 outline-none transition-colors hover:bg-error focus-visible:ring-2 focus-visible:ring-on-primary"
           onClick={() =>
             void runWindowAction(() => getCurrentWindow().close(), "close")
           }

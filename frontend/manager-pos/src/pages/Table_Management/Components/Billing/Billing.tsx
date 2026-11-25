@@ -1,20 +1,9 @@
 
-import { useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-
-import {
-  LayoutDashboard,
-  LogOut,
-  ReceiptText,
-  UserRound,
-  X,
-} from "lucide-react";
+import { useRef, useState } from "react";
 
 import { Button } from "../../../../components/Buttons/Button";
-import { IconButton } from "../../../../components/Buttons/IconButton";
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { OrderTotals } from "../../../../components/Cart/OrderTotals";
-import { DesktopWindowControls } from "../../../../components/Header/DesktopWindowControls";
 import { formatINR } from "../../../../lib/money";
 import { useBridgeHeartbeat } from "../../Hooks/useBridgeHeartbeat";
 import { useNotification } from "../../../../components/Notification/useNotification";
@@ -25,6 +14,7 @@ import { TAX_RATE } from "../../Config/billing.config";
 import { useBilling } from "../../Hooks/useBilling";
 
 import { BillingHeader } from "./BillingHeader";
+import { BillingSidebar } from "./BillingSidebar";
 import { BillingCatalog } from "./BillingCatalog";
 import { BillingCart } from "./BillingCart";
 import { BillingReceiptModal } from "./BillingReceiptModal";
@@ -51,84 +41,17 @@ export default function Billing() {
   const { printReceipt } = useBridgeHeartbeat(false);
   const { success, error, warning } = useNotification();
 
-  // BILLING SCREEN STATE
   const [navOpen, setNavOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [orderNote, setOrderNote] = useState("");
 
   const searchRef = useRef<HTMLInputElement>(null);
-  const drawerRef = useRef<HTMLElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
 
-  // SIDEBAR ESCAPE AND TAB KEY HANDLING
-  useEffect(() => {
-    if (!navOpen) return;
-
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-
-    closeRef.current?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setNavOpen(false);
-      }
-
-      if (event.key !== "Tab") return;
-
-      const elements =
-        drawerRef.current?.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled])'
-        );
-
-      if (!elements?.length) return;
-
-      const first = elements[0];
-      const last = elements[elements.length - 1];
-
-      if (
-        event.shiftKey &&
-        document.activeElement === first
-      ) {
-        event.preventDefault();
-        last.focus();
-      } else if (
-        !event.shiftKey &&
-        document.activeElement === last
-      ) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener(
-        "keydown",
-        onKeyDown
-      );
-
-      previous?.focus();
-    };
-  }, [navOpen]);
-
-  // ORDER TOTALS IN PAISE
-  const subtotalPaise = Math.round(
-    totals.subtotal * 100
-  );
-
-  const taxPaise = Math.round(
-    totals.tax * 100
-  );
-
-  const grandTotalPaise = Math.round(
-    totals.total * 100
-  );
+  // Order totals
+  const subtotalPaise = Math.round(totals.subtotal * 100);
+  const taxPaise = Math.round(totals.tax * 100);
+  const grandTotalPaise = Math.round(totals.total * 100);
 
   const cgstPaise = Math.round(taxPaise / 2);
 
@@ -147,8 +70,7 @@ export default function Billing() {
 
   return (
     <main className="urqr-billing-screen">
-
-      {/* FULL-WIDTH HEADER */}
+      {/* FULL-WIDTH BILLING HEADER */}
       <BillingHeader
         searchText={searchQuery}
         onSearchChange={setSearchQuery}
@@ -157,86 +79,14 @@ export default function Billing() {
         menuOpen={navOpen}
       />
 
-      {/* EXPANDABLE NAVIGATION SIDEBAR */}
-      {navOpen && (
-        <div
-          id="urqr-billing-drawer"
-          className="urqr-billing-drawer"
-        >
-          <button
-            type="button"
-            className="urqr-billing-backdrop"
-            aria-label="Close navigation"
-            onClick={() => setNavOpen(false)}
-          />
+      {/* THE ONE ACTIVE SIDEBAR */}
+      <BillingSidebar
+        isOpen={navOpen}
+        onClose={() => setNavOpen(false)}
+      />
 
-          <aside
-            ref={drawerRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="POS navigation"
-            className="urqr-billing-drawer-panel"
-          >
-            <div className="urqr-billing-drawer-head">
-              <strong>URQR Manager POS</strong>
-
-              <IconButton
-                ref={closeRef}
-                label="Close navigation"
-                icon={<X size={18} />}
-                variant="ghost"
-                onClick={() => setNavOpen(false)}
-              />
-            </div>
-
-            {/* TOP NAVIGATION */}
-            <nav
-              className="urqr-billing-drawer-links"
-              aria-label="Main navigation"
-            >
-              <Link
-                to="/pos/billing"
-                aria-current="page"
-                onClick={() => setNavOpen(false)}
-              >
-                <ReceiptText size={19} />
-                Billing
-              </Link>
-
-              <Link
-                to="/dashboard"
-                onClick={() => setNavOpen(false)}
-              >
-                <LayoutDashboard size={19} />
-                Dashboard
-              </Link>
-            </nav>
-
-            {/* BOTTOM PROFILE AND LOGOUT */}
-            <div className="urqr-billing-drawer-bottom">
-              <div className="urqr-billing-profile">
-                <UserRound size={19} />
-                Manager profile
-              </div>
-
-              <Link
-                to="/login"
-                onClick={() => setNavOpen(false)}
-              >
-                <LogOut size={19} />
-                Logout
-              </Link>
-
-              <DesktopWindowControls />
-            </div>
-          </aside>
-        </div>
-      )}
-
-      {/* FULL SCREEN — 60% CATALOG / 40% ORDER */}
+      {/* 60% CATALOG / 40% ORDER SUMMARY */}
       <div className="urqr-billing-workspace">
-
-        {/* LEFT PRODUCT CATALOG */}
         <BillingCatalog
           searchQuery={searchQuery}
           activeTab={activeTab}
@@ -246,7 +96,6 @@ export default function Billing() {
           cart={cart}
         />
 
-        {/* RIGHT ORDER SUMMARY */}
         <aside
           className="urqr-billing-summary"
           aria-label="Order Summary"
@@ -254,12 +103,8 @@ export default function Billing() {
           <BillingCart
             items={totals.items}
             updateQuantity={updateQuantity}
-            clearCart={clearCart}
-            note={orderNote}
-            setNote={setOrderNote}
           />
 
-          {/* TOTALS AND PAYMENT ACTIONS */}
           <div className="urqr-billing-summary-footer">
             <OrderTotals
               subtotalPaise={subtotalPaise}
@@ -295,7 +140,7 @@ export default function Billing() {
         </aside>
       </div>
 
-      {/* UNPAID ORDER PREVIEW MODAL */}
+      {/* DRAFT ORDER PREVIEW */}
       <PopupModal
         isOpen={previewOpen}
         onClose={() => setPreviewOpen(false)}
@@ -311,10 +156,7 @@ export default function Billing() {
         }
       >
         <div className="urqr-billing-order-preview">
-          <p>
-            Unpaid order preview.
-            This is not a completed receipt.
-          </p>
+          <p>This is an unpaid order preview.</p>
 
           {totals.items.map(({ dish, quantity }) => (
             <div
@@ -327,8 +169,7 @@ export default function Billing() {
 
               <strong>
                 {formatINR(
-                  Math.round(dish.price * 100) *
-                  quantity
+                  Math.round(dish.price * 100) * quantity
                 )}
               </strong>
             </div>
@@ -343,7 +184,7 @@ export default function Billing() {
         </div>
       </PopupModal>
 
-      {/* EXISTING CHECKOUT MODAL */}
+      {/* REUSE EXISTING CHECKOUT MODAL */}
       <PosCheckoutModal
         isOpen={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
@@ -416,7 +257,7 @@ export default function Billing() {
         }}
       />
 
-      {/* EXISTING RECEIPT MODAL */}
+      {/* REUSE EXISTING RECEIPT MODAL */}
       <BillingReceiptModal
         isOpen={isReceiptOpen}
         onClose={() => setIsReceiptOpen(false)}

@@ -1,4 +1,3 @@
-
 import { Button } from "../Buttons/Button";
 import { InputField } from "../InputField/InputField";
 import { parseINRToPaise } from "../../lib/money";
@@ -12,7 +11,9 @@ interface CashAmountInputProps {
 const QUICK_AMOUNTS = [50, 100, 200] as const;
 
 export function CashAmountInput({
-  value, onChange, disabled = false,
+  value,
+  onChange,
+  disabled = false,
 }: CashAmountInputProps) {
   function addCash(rupees: number) {
     const currentPaise = parseINRToPaise(value) ?? 0;
@@ -39,6 +40,7 @@ export function CashAmountInput({
             onChange(next);
           }
         }}
+        // Let components.css handle the 52px height and font-size
         className="pos-cash-input__field"
         wrapperClassName="pos-cash-input__wrapper"
       />
@@ -49,6 +51,7 @@ export function CashAmountInput({
             key={amount}
             variant="outline"
             disabled={disabled}
+            // Removing size prop so components.css `.pos-cash-input__button` controls the 48px height completely
             className="pos-cash-input__button"
             onClick={() => addCash(amount)}
           >

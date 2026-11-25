@@ -35,12 +35,6 @@ const resolveLabel = (status?: string, label?: string) => {
 
 /**
  * StatusBadge — colored pill for order/payment status.
- *
- * <StatusBadge status="paid" />           // green "Paid"
- * <StatusBadge status="pending" />        // yellow "Pending"
- * <StatusBadge status="cancelled" />      // red "Cancelled"
- * <StatusBadge variant="info" label="New" />
- * <StatusBadge variant="success" size="md" label="Completed" />
  */
 export const StatusBadge = ({
   status,

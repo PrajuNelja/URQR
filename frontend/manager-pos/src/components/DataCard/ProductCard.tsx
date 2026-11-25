@@ -1,16 +1,19 @@
+
 import { Button } from "../Buttons/Button";
 import { StatusBadge } from "../StatusBadge/StatusBadge";
 import { Card } from "./Card";
 import { formatINR } from "../../lib/money";
 
-export type StockState = "in-stock" | "low-stock" | "sold-out";
+export type StockState =
+  | "in-stock"
+  | "low-stock"
+  | "sold-out";
 
 interface ProductCardProps {
   name: string;
   pricePaise: number;
   imageUrl?: string;
   stockState?: StockState;
-  stock?: number;
   inCartQuantity?: number;
   maxQuantity?: number;
   onAdd: () => void;
@@ -24,7 +27,6 @@ export function ProductCard({
   pricePaise,
   imageUrl,
   stockState,
-  stock,
   inCartQuantity = 0,
   maxQuantity = 15,
   onAdd,
@@ -35,63 +37,97 @@ export function ProductCard({
   const soldOut = stockState === "sold-out";
   const inOrder = inCartQuantity > 0;
   const maxed = inCartQuantity >= maxQuantity;
-  const state = soldOut ? "sold-out" : inOrder ? "active" : previewHover ? "hover" : "default";
-  const qtyLabel = inCartQuantity >= 5 ? "5+" : inCartQuantity.toString();
 
-  const indicator = inOrder ? (
-    <div className="pos-product-card__indicators" aria-label={`${inCartQuantity} in order`}>
-      <span className="pos-product-card__check" aria-hidden="true">✓</span>
-      <span className="pos-product-card__count" aria-hidden="true">×{qtyLabel}</span>
-    </div>
-  ) : null;
+  const state = soldOut
+    ? "sold-out"
+    : inOrder
+      ? "active"
+      : previewHover
+        ? "hover"
+        : "default";
 
-  const stockLabel =
-    stockState === "in-stock"
-      ? stock !== undefined
-        ? `${stock} in stock`
-        : "In stock"
-      : stockState === "low-stock"
-        ? stock !== undefined
-          ? `Only ${stock} left`
-          : "Low stock"
-        : "Sold Out";
+  const qtyLabel =
+    inCartQuantity >= 5
+      ? "5+"
+      : inCartQuantity.toString();
 
+  // Reuse existing StatusBadge variants.
   const stockVariant =
     stockState === "in-stock"
-      ? "neutral"
+      ? "success"
       : stockState === "low-stock"
         ? "warning"
         : "error";
 
+  const stockLabel =
+    stockState === "in-stock"
+      ? "In stock"
+      : stockState === "low-stock"
+        ? "Low stock"
+        : "Sold out";
+
+  const indicator = inOrder ? (
+    <div
+      className="pos-product-card__indicators"
+      aria-label={`${inCartQuantity} in order`}
+    >
+      <span
+        className="pos-product-card__check"
+        aria-hidden="true"
+      >
+        ✓
+      </span>
+
+      <span
+        className="pos-product-card__count"
+        aria-hidden="true"
+      >
+        {qtyLabel}
+      </span>
+    </div>
+  ) : null;
+
   return (
     <Card
       padding="none"
-      role="button"
-      tabIndex={soldOut ? -1 : 0}
-      onClick={() => {
-        if (!soldOut && !maxed) {
-          onAdd();
-        }
-      }}
-      className={`pos-product-card pos-product-card--${state} ${compact ? "pos-product-card--compact" : ""} cursor-pointer ${className}`}
+      className={`
+        pos-product-card
+        pos-product-card--${state}
+        ${compact ? "pos-product-card--compact" : ""}
+        ${className}
+      `}
     >
+      {/* PRODUCT IMAGE */}
       {!compact && (
         <div className="pos-product-card__image">
           {imageUrl ? (
-            <img src={imageUrl} alt={name} loading="lazy" />
+            <img
+              src={imageUrl}
+              alt={name}
+              loading="lazy"
+            />
           ) : (
             <span>PRODUCT IMAGE</span>
           )}
+
           {indicator}
         </div>
       )}
 
+      {/* PRODUCT DETAILS */}
       <div className="pos-product-card__content">
         <div className="pos-product-card__name-row">
-          <h3 className="pos-product-card__name" title={name}>{name}</h3>
+          <h3
+            className="pos-product-card__name"
+            title={name}
+          >
+            {name}
+          </h3>
+
           {compact && indicator}
         </div>
 
+        {/* PRICE AND REUSABLE STOCK BADGE */}
         <div className="pos-product-card__price-row">
           <strong className="pos-product-card__price">
             {formatINR(pricePaise)}
@@ -101,19 +137,17 @@ export function ProductCard({
             <StatusBadge
               label={stockLabel}
               variant={stockVariant}
-              className={`pos-product-card__status pos-product-card__status--${stockState}`}
+              size="sm"
             />
           )}
         </div>
 
+        {/* REUSABLE ADD BUTTON */}
         <Button
           fullWidth
           variant={inOrder ? "primary" : "outline"}
           disabled={soldOut || maxed}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdd();
-          }}
+          onClick={onAdd}
           aria-pressed={inOrder}
           className="pos-product-card__action"
         >
@@ -127,3 +161,5 @@ export function ProductCard({
     </Card>
   );
 }
+
+export default ProductCard;

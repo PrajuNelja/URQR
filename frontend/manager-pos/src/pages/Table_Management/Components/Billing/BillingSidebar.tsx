@@ -1,17 +1,11 @@
 
 import { useEffect, useRef } from "react";
-import { Link } from "@tanstack/react-router";
-import {
-  Hotel,
-  LayoutDashboard,
-  LogOut,
-  ReceiptText,
-  UserRound,
-  X,
-} from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { LayoutDashboard, LogOut, ReceiptText, X } from "lucide-react";
 
 import { IconButton } from "../../../../components/Buttons/IconButton";
-import { DesktopWindowControls } from "../../../../components/Header/DesktopWindowControls";
+import { Button } from "../../../../components/Buttons/Button";
+import { useAuthStore } from "../../../../lib/authStore";
 
 interface BillingSidebarProps {
   isOpen: boolean;
@@ -22,36 +16,43 @@ export function BillingSidebar({
   isOpen,
   onClose,
 }: BillingSidebarProps) {
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
   const sidebarRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const previous =
+    const previousFocus =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     closeRef.current?.focus();
 
-    function onKeyDown(event: KeyboardEvent) {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
+        return;
       }
 
       if (event.key !== "Tab") return;
 
-      const focusable =
+      const elements =
         sidebarRef.current?.querySelectorAll<HTMLElement>(
           'a[href], button:not([disabled])'
         );
 
-      if (!focusable?.length) return;
+      if (!elements?.length) return;
 
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
+      const first = elements[0];
+      const last = elements[elements.length - 1];
 
       if (
         event.shiftKey &&
@@ -66,98 +67,132 @@ export function BillingSidebar({
         event.preventDefault();
         first.focus();
       }
-    }
+    };
 
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      previous?.focus();
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
     };
   }, [isOpen, onClose]);
+
+  const handleLogout = () => {
+    clearAuth();
+    onClose();
+
+    void navigate({
+      to: "/login",
+      replace: true,
+    });
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div
+      id="urqr-billing-drawer"
+      className="urqr-billing-drawer fixed inset-0 z-[100]"
+    >
+      {/* Overlay */}
       <button
         type="button"
-        className="absolute inset-0 h-full w-full bg-black/40"
+        className="urqr-billing-backdrop absolute inset-0 bg-black/40"
         aria-label="Close navigation"
         onClick={onClose}
       />
 
+      {/* Sidebar */}
       <aside
         ref={sidebarRef}
-        id="billing-navigation"
         role="dialog"
         aria-modal="true"
-        aria-label="POS navigation"
-        className="absolute inset-y-0 left-0 flex w-[280px] max-w-[85vw] flex-col border-r border-border bg-surface p-4 shadow-xl"
+        aria-label="Billing navigation"
+        className="
+          urqr-billing-drawer-panel
+          absolute inset-y-0 left-0
+          flex w-[350px] max-w-[90vw] flex-col
+          bg-surface px-6 py-6 shadow-xl
+        "
       >
-        <div className="flex items-center justify-between border-b border-border pb-4">
-          <div className="flex items-center gap-2 text-text">
-            <Hotel size={22} aria-hidden="true" />
-            <span className="font-semibold">
-              Grand Horizon
-            </span>
-          </div>
+        {/* Hotel name and close button */}
+        <div
+          className="
+            urqr-billing-drawer-head
+            flex items-center justify-between gap-3
+            border-b border-border pb-6
+          "
+        >
+          <h2 className="text-[19px] font-bold tracking-wide text-text">
+            GRAND HORIZON
+          </h2>
 
           <IconButton
             ref={closeRef}
             label="Close navigation"
-            icon={<X size={18} />}
+            icon={<X size={20} />}
             variant="ghost"
             size="sm"
             onClick={onClose}
           />
         </div>
 
+        {/* Top navigation */}
         <nav
-          className="mt-5 flex flex-col gap-2"
           aria-label="Main navigation"
+          className="urqr-billing-drawer-links mt-6 flex flex-col gap-3"
         >
           <Link
             to="/pos/billing"
-            onClick={onClose}
             aria-current="page"
-            className="flex items-center gap-3 rounded-lg bg-primary px-4 py-3 text-sm font-semibold !text-white"
+            onClick={onClose}
+            className="
+              flex min-h-[54px] items-center gap-4
+              rounded-xl bg-primary px-4 py-3
+              text-[15px] font-semibold !text-white
+            "
           >
-            <ReceiptText size={19} aria-hidden="true" />
-            POS Billing
+            <ReceiptText size={21} aria-hidden="true" />
+            <span>Billing</span>
           </Link>
 
           <Link
             to="/dashboard"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-text hover:bg-surface-alt"
+            className="
+              flex min-h-[54px] items-center gap-4
+              rounded-xl px-4 py-3 text-[15px]
+              font-medium text-text hover:bg-surface-alt
+            "
           >
-            <LayoutDashboard size={19} aria-hidden="true" />
-            Dashboard
+            <LayoutDashboard size={21} aria-hidden="true" />
+            <span>Dashboard</span>
           </Link>
         </nav>
 
-        <div className="mt-auto space-y-4 border-t border-border pt-4">
-          {/* Preserve existing kiosk and bridge functions */}
-          <div className="overflow-x-auto">
-            <DesktopWindowControls />
-          </div>
-
-          <div className="flex items-center gap-3 rounded-lg bg-surface-alt px-3 py-3">
-            <UserRound size={21} aria-hidden="true" />
-            <span className="text-sm font-medium text-text">
-              Manager profile
-            </span>
-          </div>
-
-          <Link
-            to="/login"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm font-semibold text-text hover:bg-surface-alt"
+        {/* Bottom — Logout only */}
+        <div
+          className="
+            urqr-billing-drawer-bottom
+            mt-auto border-t border-border pt-5
+          "
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            fullWidth
+            leftIcon={<LogOut size={20} aria-hidden="true" />}
+            className="
+              !min-h-[50px] !justify-start !gap-4
+              !rounded-xl !px-4 !text-[15px]
+              !font-semibold !text-text
+              hover:!bg-surface-alt
+            "
+            onClick={handleLogout}
           >
-            <LogOut size={19} aria-hidden="true" />
             Logout
-          </Link>
+          </Button>
         </div>
       </aside>
     </div>

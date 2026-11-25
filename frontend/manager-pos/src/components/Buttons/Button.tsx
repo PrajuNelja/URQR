@@ -28,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const classes = [
-      BUTTON_BASE,
+      BUTTON_BASE, // <-- FIXED: Added the base styles back
       BUTTON_VARIANTS[variant],
       BUTTON_SIZES[size],
       fullWidth ? BUTTON_FULL_WIDTH : "",
@@ -53,7 +53,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (
           leftIcon
         )}
-        {children}
+        
+        {/* Using flex-1 for text to center it properly when icon is present */}
+        <span className="flex-1 text-center">
+          {children}
+        </span>
+        
         {!isLoading && rightIcon}
       </button>
     );
