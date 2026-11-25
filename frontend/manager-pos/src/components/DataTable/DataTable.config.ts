@@ -11,13 +11,17 @@ export const tableConfig = {
     "block w-full max-w-full overflow-x-auto rounded-lg border border-[#e8d9bf] bg-[#fffaf1] shadow-[0_2px_0_#e5d7bf] align-top",
 
   /** Table element */
-  table: "w-full min-w-[980px] border-collapse text-sm text-left whitespace-nowrap",
+  table: "w-full border-collapse text-sm text-left whitespace-nowrap",
 
   /** Header row */
   thead: "bg-[#f8f1e4]",
 
   /** Header cell */
   th: "font-semibold text-text-muted text-[12px] px-4 py-3 border-b border-[#e8d9bf]",
+
+  /** Sort button */
+  sortButton:
+    "inline-flex items-center gap-1.5 text-inherit font-inherit hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-gold",
 
   /** Body cell */
   td: "px-4 py-3.5 border-b border-[#eee4d3] text-primary text-[13px]",

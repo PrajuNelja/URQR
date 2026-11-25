@@ -42,6 +42,10 @@ export const STATUS_VARIANT_MAP: Record<string, StatusBadgeVariant> = {
   inactive: "neutral",
   draft: "neutral",
   unknown: "neutral",
+  "out-of-stock": "error",
+  out_of_stock: "error",
+  "out of stock": "error",
+  outofstock: "error",
 };
 
 export const STATUS_LABEL_MAP: Record<string, string> = {
@@ -57,6 +61,10 @@ export const STATUS_LABEL_MAP: Record<string, string> = {
   in_progress: "In Progress",
   active: "Active",
   inactive: "Inactive",
+  "out-of-stock": "Out of Stock",
+  out_of_stock: "Out of Stock",
+  "out of stock": "Out of Stock",
+  outofstock: "Out of Stock",
   draft: "Draft",
   new: "New",
   success: "Success",

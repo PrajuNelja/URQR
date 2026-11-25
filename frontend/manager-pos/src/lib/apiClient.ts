@@ -8,6 +8,10 @@ export const apiClient = axios.create({
 
 // Request interceptor: inject tenant ID and Authorization token
 apiClient.interceptors.request.use((config) => {
+  const requestId = crypto.randomUUID();
+  config.headers.set("X-Request-ID", requestId);
+  config.headers.set("X-Correlation-ID", requestId);
+
   const tenantId = localStorage.getItem("tenant_id");
   if (tenantId) {
     config.headers["X-Tenant-ID"] = tenantId;
@@ -39,5 +43,5 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./index.css";
 import { queryClient } from "./queryClient";
+import { isTauriRuntime } from "./lib/bridge/bridgeClient";
 
 const rootElement = document.getElementById("root");
 
@@ -13,8 +14,18 @@ if (!rootElement) {
   throw new Error("Root element not found. Check index.html.");
 }
 
+if (isTauriRuntime()) {
+  window.addEventListener(
+    "contextmenu",
+    (event) => {
+      event.preventDefault();
+    },
+    true,
+  );
+}
+
 async function enableMocking() {
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && !isTauriRuntime()) {
     const { worker } = await import("./mocks/browser");
 
     await worker.start({
