@@ -42,7 +42,8 @@ export const useBilling = () => {
 
   const filteredDishes = useMemo(() => {
     return dishes.filter((dish) => {
-      const matchesCategory = activeTab === "all" || dish.category.toLowerCase() === activeTab.toLowerCase();
+      
+      const matchesCategory =activeTab === "all" ||dish.category.toLowerCase() ===(activeTab === "main"? "main course": activeTab.toLowerCase());
       const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
