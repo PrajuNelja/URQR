@@ -5,6 +5,10 @@ import { Button } from "../../../../components/Buttons/Button";
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { OrderTotals } from "../../../../components/Cart/OrderTotals";
 import { formatINR } from "../../../../lib/money";
+import { useBridgeHeartbeat } from "../../Hooks/useBridgeHeartbeat";
+import { useNotification } from "../../../../components/Notification/useNotification";
+import { serializeReceiptForBridge } from "../../../../lib/bridge/printPayload";
+import type { BridgePrintRequest } from "../../../../lib/bridge/bridgeClient";
 
 import { TAX_RATE } from "../../Config/billing.config";
 import { useBilling } from "../../Hooks/useBilling";
@@ -34,6 +38,8 @@ export default function Billing() {
     isReceiptOpen,
     setIsReceiptOpen,
   } = useBilling();
+  const { printReceipt } = useBridgeHeartbeat(false);
+  const { success, error, warning } = useNotification();
 
   const [navOpen, setNavOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -191,9 +197,63 @@ export default function Billing() {
             : paymentMethod
         }
         onConfirmPayment={(checkout) => {
-          if (handleCompletePayment(checkout)) {
-            setCheckoutOpen(false);
+          const checkoutStartedAt = performance.now();
+          const completedReceipt = handleCompletePayment(checkout);
+          if (!completedReceipt) {
+            error(
+              "Checkout could not be completed. Review the order and payment amount.",
+            );
+            return;
           }
+
+          setCheckoutOpen(false);
+          let request: BridgePrintRequest;
+          try {
+            request = serializeReceiptForBridge(
+              completedReceipt,
+              localStorage.getItem("tenant_id"),
+              checkout.notes,
+            );
+          } catch (cause) {
+            const message =
+              cause instanceof Error
+                ? cause.message
+                : "Invalid receipt payload.";
+            error(`Payment completed, but the receipt was not sent: ${message}`);
+            return;
+          }
+
+          void printReceipt(request, checkoutStartedAt)
+            .then((response) => {
+              if (!response.success) {
+                error(
+                  `Payment completed, but receipt printing failed: ${
+                    response.message ?? response.status
+                  }`,
+                );
+                return;
+              }
+
+              const dispatchLatency = response.dispatchLatencyMs ?? 0;
+              if (dispatchLatency < 50) {
+                success(
+                  `Receipt printed; dispatched in ${dispatchLatency} ms.`,
+                );
+              } else {
+                warning(
+                  `Receipt printed, but dispatch took ${dispatchLatency} ms (target: under 50 ms).`,
+                );
+              }
+            })
+            .catch((cause: unknown) => {
+              const message =
+                cause instanceof Error
+                  ? cause.message
+                  : "Unknown bridge error";
+              error(
+                `Payment completed, but receipt printing failed: ${message}`,
+              );
+            });
         }}
       />
 

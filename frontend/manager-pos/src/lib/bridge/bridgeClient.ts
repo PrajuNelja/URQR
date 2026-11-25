@@ -1,44 +1,145 @@
-export type BridgeMessage =
-  | { type: "connected"; service: string }
-  | { type: "ack"; id: string; status: string }
-  | { type: "pong"; id: string; status: string }
-  | { type: "error"; id?: string; error: string };
-
-type BridgeCommand = {
-  type: "hello" | "ping";
-  id: string;
-};
-
 export type BridgeConnectionStatus =
-  | "disconnected"
-  | "connecting"
-  | "connected";
+  "DISCONNECTED" | "CONNECTING" | "CONNECTED" | "ERROR";
+
+export type BridgePrinterStatus =
+  | "PRINTER_READY"
+  | "PRINTER_OFFLINE"
+  | "PAPER_OUT"
+  | "COVER_OPEN"
+  | "PRINTING"
+  | "PRINT_ERROR"
+  | "UNKNOWN";
+
+export interface BridgePrintItem {
+  id?: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  taxRate?: number;
+  category?: string;
+}
+
+export interface BridgePrintRequest {
+  action: "print" | "reprint";
+  orderId: string;
+  tenantId: string;
+  billNumber?: string;
+  tableNumber?: string;
+  serverName?: string;
+  paymentMode?: string;
+  transactionId?: string;
+  timestamp?: string;
+  notes?: string;
+  store: {
+    name: string;
+    branch?: string;
+    address?: string;
+    gstin?: string;
+    phone?: string;
+  };
+  items: BridgePrintItem[];
+  taxes: {
+    cgst: number;
+    cgstRate?: number;
+    sgst: number;
+    sgstRate?: number;
+    vat?: number;
+    vatRate?: number;
+    totalTax: number;
+  };
+  totals: {
+    subtotal: number;
+    discount?: number;
+    tax: number;
+    grandTotal: number;
+  };
+  rollWidth?: 58 | 80;
+}
+
+export interface BridgePrintResponse {
+  success: boolean;
+  orderId?: string;
+  status: string;
+  message?: string;
+  latencyMs?: number;
+  dispatchLatencyMs?: number;
+}
+
+export interface BridgeState {
+  status: BridgeConnectionStatus;
+  isOnline: boolean;
+  printerStatus: BridgePrinterStatus | null;
+  latencyMs: number;
+  lastHeartbeat: number | null;
+  reconnectAttempts: number;
+  lastMessage: string;
+}
+
+type StateListener = (state: BridgeState) => void;
+type BridgeEvent =
+  | { event: "pong"; timestamp?: number; status: string }
+  | {
+      event: "printer_status";
+      status: string;
+      message?: string;
+      timestamp?: number;
+    }
+  | BridgePrintResponse;
 
 const HEARTBEAT_INTERVAL_MS = 3000;
 const HEARTBEAT_TIMEOUT_MS = 2000;
+const PRINT_TIMEOUT_MS = 5000;
+const RECONNECT_DELAY_MS = 3000;
 
 const bridgeUrl =
-  import.meta.env.VITE_BRIDGE_WS_URL ?? "ws://127.0.0.1:9100/ws";
+  import.meta.env.VITE_BRIDGE_WS_URL ?? "ws://localhost:9101/ws";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function isBridgeMessage(value: unknown): value is BridgeMessage {
-  if (!isRecord(value) || !("type" in value)) {
-    return false;
-  }
+function isBridgeEvent(value: unknown): value is BridgeEvent {
+  if (!isRecord(value)) return false;
 
-  switch (value.type) {
-    case "connected":
-      return typeof value.service === "string";
-    case "ack":
-    case "pong":
-      return typeof value.id === "string" && typeof value.status === "string";
-    case "error":
-      return typeof value.error === "string";
+  if ("event" in value && value.event === "pong") {
+    return typeof value.status === "string";
+  }
+  if ("event" in value && value.event === "printer_status") {
+    return typeof value.status === "string";
+  }
+  return typeof value.success === "boolean" && typeof value.status === "string";
+}
+
+function failureResponse(
+  status: string,
+  message: string,
+  orderId?: string,
+): BridgePrintResponse {
+  return { success: false, orderId, status, message };
+}
+
+function normalizePrinterStatus(status: string): BridgePrinterStatus {
+  switch (status.trim().toUpperCase()) {
+    case "PRINTER_READY":
+    case "READY":
+      return "PRINTER_READY";
+    case "PRINTER_OFFLINE":
+    case "OFFLINE":
+    case "DISCONNECTED":
+      return "PRINTER_OFFLINE";
+    case "PAPER_OUT":
+      return "PAPER_OUT";
+    case "COVER_OPEN":
+      return "COVER_OPEN";
+    case "PRINTING":
+    case "SPOOLED":
+      return "PRINTING";
+    case "PRINT_ERROR":
+    case "ERROR":
+      return "PRINT_ERROR";
     default:
-      return false;
+      return "UNKNOWN";
   }
 }
 
@@ -49,16 +150,30 @@ export function isTauriRuntime(): boolean {
 export class BridgeWebSocketClient {
   private socket: WebSocket | null = null;
   private connectPromise: Promise<void> | null = null;
-  private messageId = 0;
-  private listeners = new Set<(message: BridgeMessage) => void>();
-  private statusListeners = new Set<
-    (status: BridgeConnectionStatus) => void
-  >();
+  private listeners = new Set<StateListener>();
   private readonly url: string;
-  private status: BridgeConnectionStatus = "disconnected";
-  private heartbeatIntervalId: number | null = null;
-  private heartbeatTimeoutId: number | null = null;
-  private pendingHeartbeatId: string | null = null;
+  private state: BridgeState = {
+    status: "DISCONNECTED",
+    isOnline: false,
+    printerStatus: null,
+    latencyMs: 0,
+    lastHeartbeat: null,
+    reconnectAttempts: 0,
+    lastMessage: "",
+  };
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
+  private lastPingSentAt: number | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private isExplicitlyClosed = false;
+  private pendingPrints = new Map<
+    string,
+    {
+      resolve: (response: BridgePrintResponse) => void;
+      timeout: ReturnType<typeof setTimeout>;
+      dispatchLatencyMs: number;
+    }
+  >();
 
   constructor(url = bridgeUrl) {
     this.url = url;
@@ -72,42 +187,74 @@ export class BridgeWebSocketClient {
       return this.connectPromise;
     }
 
-    this.setStatus("connecting");
-    const socket = new WebSocket(this.url);
+    this.isExplicitlyClosed = false;
+    this.setState({
+      status: "CONNECTING",
+      isOnline: false,
+      printerStatus: null,
+    });
+
+    let socket: WebSocket;
+    try {
+      socket = new WebSocket(this.url);
+    } catch (error) {
+      this.setState({
+        status: "ERROR",
+        isOnline: false,
+        printerStatus: null,
+        lastMessage:
+          error instanceof Error ? error.message : "Could not create WebSocket",
+      });
+      this.scheduleReconnect();
+      return Promise.reject(error);
+    }
     this.socket = socket;
-    const helloId = this.nextId("hello");
 
     this.connectPromise = new Promise<void>((resolve, reject) => {
       let settled = false;
-      const timeoutId = window.setTimeout(() => {
-        finish(new Error("Timed out waiting for the URQR Bridge handshake"));
-      }, 5000);
-
       const finish = (error?: Error) => {
-        if (settled) {
-          return;
-        }
+        if (settled) return;
         settled = true;
-        window.clearTimeout(timeoutId);
-        if (this.socket === socket) {
-          this.connectPromise = null;
-        }
+        clearTimeout(timeout);
+        this.connectPromise = null;
         if (error) {
-          this.setStatus("disconnected");
-          if (this.socket === socket) {
-            this.socket = null;
-          }
+          this.setState(
+            this.isExplicitlyClosed
+              ? { status: "DISCONNECTED", isOnline: false }
+              : {
+                  status: "ERROR",
+                  isOnline: false,
+                  printerStatus: null,
+                  lastMessage: error.message,
+                },
+          );
           socket.close();
           reject(error);
-        } else {
-          this.setStatus("connected");
-          this.startHeartbeat(socket);
-          resolve();
+          return;
         }
+
+        this.setState({
+          status: "CONNECTED",
+          isOnline: true,
+          printerStatus: null,
+          reconnectAttempts: 0,
+          lastMessage: `Connected to URQR-Bridge (${this.url})`,
+        });
+        this.startHeartbeat(socket);
+        resolve();
       };
 
+      const timeout = setTimeout(
+        () => finish(new Error("Timed out connecting to URQR-Bridge")),
+        5000,
+      );
+
       socket.addEventListener("open", () => {
-        socket.send(JSON.stringify({ type: "hello", id: helloId }));
+        if (this.socket !== socket) {
+          socket.close();
+          return;
+        }
+        finish();
       });
 
       socket.addEventListener("message", (event: MessageEvent<string>) => {
@@ -118,29 +265,48 @@ export class BridgeWebSocketClient {
           console.error("URQR Bridge sent invalid JSON", error);
           return;
         }
-
-        if (!isBridgeMessage(value)) {
+        if (!isBridgeEvent(value)) {
           console.error("URQR Bridge sent an unsupported message", value);
           return;
         }
 
-        for (const listener of this.listeners) {
-          listener(value);
+        if ("event" in value && value.event === "pong") {
+          this.state.lastHeartbeat = Date.now();
+          if (this.lastPingSentAt !== null) {
+            this.state.latencyMs = Math.max(
+              1,
+              Date.now() - this.lastPingSentAt,
+            );
+          }
+          this.lastPingSentAt = null;
+          if (this.heartbeatTimeout !== null) {
+            clearTimeout(this.heartbeatTimeout);
+            this.heartbeatTimeout = null;
+          }
+          this.notify();
+          return;
+        }
+        if ("event" in value && value.event === "printer_status") {
+          this.setState({
+            printerStatus: normalizePrinterStatus(value.status),
+            lastMessage: value.message ?? value.status,
+          });
+          return;
         }
 
-        if (value.type === "ack" && value.id === helloId) {
-          finish();
-        } else if (
-          value.type === "pong" &&
-          value.id === this.pendingHeartbeatId
-        ) {
-          this.pendingHeartbeatId = null;
-          if (this.heartbeatTimeoutId !== null) {
-            window.clearTimeout(this.heartbeatTimeoutId);
-            this.heartbeatTimeoutId = null;
-          }
-        } else if (value.type === "error" && value.id === helloId) {
-          finish(new Error(`URQR Bridge rejected handshake: ${value.error}`));
+        if (!("success" in value)) return;
+        const pending = value.orderId
+          ? this.pendingPrints.get(value.orderId)
+          : undefined;
+        if (pending && value.orderId) {
+          clearTimeout(pending.timeout);
+          this.pendingPrints.delete(value.orderId);
+          pending.resolve({
+            ...value,
+            dispatchLatencyMs: pending.dispatchLatencyMs,
+          });
+        } else {
+          this.setState({ lastMessage: value.message ?? value.status });
         }
       });
 
@@ -151,8 +317,12 @@ export class BridgeWebSocketClient {
         if (!settled) {
           finish(error);
         } else {
-          console.error(error.message);
-          this.setStatus("disconnected");
+          this.setState({
+            status: "ERROR",
+            isOnline: false,
+            printerStatus: null,
+            lastMessage: error.message,
+          });
           socket.close();
         }
       });
@@ -161,10 +331,19 @@ export class BridgeWebSocketClient {
         if (this.socket === socket) {
           this.socket = null;
           this.stopHeartbeat();
-          this.setStatus("disconnected");
+          this.setState({
+            status: "DISCONNECTED",
+            isOnline: false,
+            printerStatus: null,
+            lastMessage: "Connection to URQR-Bridge closed",
+          });
+          this.failPendingPrints("DISCONNECTED", "URQR-Bridge disconnected");
+          this.scheduleReconnect();
         }
         if (!settled) {
-          finish(new Error("URQR Bridge closed the WebSocket before handshake"));
+          finish(
+            new Error("URQR-Bridge closed the WebSocket before connecting"),
+          );
         }
       });
     });
@@ -172,98 +351,205 @@ export class BridgeWebSocketClient {
     return this.connectPromise;
   }
 
-  send(command: BridgeCommand): void {
-    if (this.socket?.readyState !== WebSocket.OPEN) {
-      throw new Error("URQR Bridge WebSocket is not connected");
+  disconnect(): void {
+    this.isExplicitlyClosed = true;
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
-    this.socket.send(JSON.stringify(command));
+    this.stopHeartbeat();
+    const socket = this.socket;
+    this.socket = null;
+    this.connectPromise = null;
+    this.failPendingPrints("DISCONNECTED", "URQR-Bridge disconnected");
+    this.setState({
+      status: "DISCONNECTED",
+      isOnline: false,
+      printerStatus: null,
+      lastMessage: "Disconnected from URQR-Bridge",
+    });
+    socket?.close();
   }
 
-  subscribe(listener: (message: BridgeMessage) => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+  getState(): BridgeState {
+    return { ...this.state };
   }
 
   getStatus(): BridgeConnectionStatus {
-    return this.status;
+    return this.state.status;
+  }
+
+  subscribe(listener: StateListener): () => void {
+    this.listeners.add(listener);
+    listener(this.getState());
+    return () => this.listeners.delete(listener);
   }
 
   subscribeStatus(
     listener: (status: BridgeConnectionStatus) => void,
   ): () => void {
-    this.statusListeners.add(listener);
-    listener(this.status);
-    return () => this.statusListeners.delete(listener);
+    listener(this.state.status);
+    return this.subscribe((state) => listener(state.status));
   }
 
-  disconnect(): void {
+  sendPing(): void {
     const socket = this.socket;
-    this.socket = null;
-    this.connectPromise = null;
-    this.stopHeartbeat();
-    this.setStatus("disconnected");
-    socket?.close();
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      throw new Error("URQR-Bridge WebSocket is not connected");
+    }
+    this.lastPingSentAt = Date.now();
+    socket.send(JSON.stringify({ action: "ping" }));
+  }
+
+  printReceipt(
+    request: BridgePrintRequest,
+    checkoutStartedAt = performance.now(),
+  ): Promise<BridgePrintResponse> {
+    const socket = this.socket;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      return Promise.resolve(
+        failureResponse(
+          "OFFLINE",
+          "URQR-Bridge is offline; the receipt was not dispatched.",
+          request.orderId,
+        ),
+      );
+    }
+    if (this.pendingPrints.has(request.orderId)) {
+      return Promise.resolve(
+        failureResponse(
+          "DUPLICATE_REQUEST",
+          `A print request for order ${request.orderId} is already pending.`,
+          request.orderId,
+        ),
+      );
+    }
+
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        this.pendingPrints.delete(request.orderId);
+        resolve({
+          ...failureResponse(
+            "TIMEOUT",
+            "Print request timed out after 5 seconds.",
+            request.orderId,
+          ),
+          dispatchLatencyMs: pending.dispatchLatencyMs,
+        });
+      }, PRINT_TIMEOUT_MS);
+      const pending = {
+        resolve,
+        timeout,
+        dispatchLatencyMs: 0,
+      };
+      this.pendingPrints.set(request.orderId, pending);
+
+      try {
+        socket.send(JSON.stringify(request));
+        pending.dispatchLatencyMs = Math.max(
+          0,
+          performance.now() - checkoutStartedAt,
+        );
+      } catch (error) {
+        clearTimeout(timeout);
+        this.pendingPrints.delete(request.orderId);
+        pending.dispatchLatencyMs = Math.max(
+          0,
+          performance.now() - checkoutStartedAt,
+        );
+        resolve({
+          ...failureResponse(
+            "SEND_FAILED",
+            error instanceof Error
+              ? error.message
+              : "Could not dispatch the print request.",
+            request.orderId,
+          ),
+          dispatchLatencyMs: pending.dispatchLatencyMs,
+        });
+      }
+    });
   }
 
   private startHeartbeat(socket: WebSocket): void {
     this.stopHeartbeat();
-    this.heartbeatIntervalId = window.setInterval(() => {
+    const ping = () => {
       if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) {
         this.stopHeartbeat();
         return;
       }
-      if (this.pendingHeartbeatId !== null) {
-        return;
-      }
+      if (this.lastPingSentAt !== null) return;
 
-      const id = this.nextId("ping");
-      this.pendingHeartbeatId = id;
       try {
-        socket.send(JSON.stringify({ type: "ping", id }));
+        this.sendPing();
       } catch (error) {
-        console.error("Could not send URQR Bridge heartbeat", error);
-        this.setStatus("disconnected");
+        console.error("Could not send URQR-Bridge heartbeat", error);
         socket.close();
         return;
       }
 
-      this.heartbeatTimeoutId = window.setTimeout(() => {
-        if (this.pendingHeartbeatId !== id) {
-          return;
-        }
-        this.pendingHeartbeatId = null;
-        this.heartbeatTimeoutId = null;
-        this.setStatus("disconnected");
+      this.heartbeatTimeout = setTimeout(() => {
+        this.heartbeatTimeout = null;
+        this.lastPingSentAt = null;
+        this.setState({
+          status: "ERROR",
+          isOnline: false,
+          printerStatus: null,
+          lastMessage: "URQR-Bridge heartbeat timed out",
+        });
         socket.close();
       }, HEARTBEAT_TIMEOUT_MS);
-    }, HEARTBEAT_INTERVAL_MS);
+    };
+
+    ping();
+    this.heartbeatInterval = setInterval(ping, HEARTBEAT_INTERVAL_MS);
   }
 
   private stopHeartbeat(): void {
-    if (this.heartbeatIntervalId !== null) {
-      window.clearInterval(this.heartbeatIntervalId);
-      this.heartbeatIntervalId = null;
+    if (this.heartbeatInterval !== null) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
-    if (this.heartbeatTimeoutId !== null) {
-      window.clearTimeout(this.heartbeatTimeoutId);
-      this.heartbeatTimeoutId = null;
+    if (this.heartbeatTimeout !== null) {
+      clearTimeout(this.heartbeatTimeout);
+      this.heartbeatTimeout = null;
     }
-    this.pendingHeartbeatId = null;
+    this.lastPingSentAt = null;
   }
 
-  private setStatus(status: BridgeConnectionStatus): void {
-    if (this.status === status) {
-      return;
-    }
-    this.status = status;
-    for (const listener of this.statusListeners) {
-      listener(status);
-    }
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer !== null || this.isExplicitlyClosed) return;
+    this.state.reconnectAttempts += 1;
+    this.notify();
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connect().catch((error: unknown) => {
+        console.error("Could not reconnect to URQR-Bridge", error);
+      });
+    }, RECONNECT_DELAY_MS);
   }
 
-  private nextId(prefix: string): string {
-    this.messageId += 1;
-    return `${prefix}-${Date.now()}-${this.messageId}`;
+  private failPendingPrints(status: string, message: string): void {
+    for (const [orderId, pending] of this.pendingPrints) {
+      clearTimeout(pending.timeout);
+      pending.resolve({
+        ...failureResponse(status, message, orderId),
+        dispatchLatencyMs: pending.dispatchLatencyMs,
+      });
+    }
+    this.pendingPrints.clear();
+  }
+
+  private setState(partial: Partial<BridgeState>): void {
+    this.state = { ...this.state, ...partial };
+    this.notify();
+  }
+
+  private notify(): void {
+    const state = this.getState();
+    for (const listener of this.listeners) {
+      listener(state);
+    }
   }
 }
 

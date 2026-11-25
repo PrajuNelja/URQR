@@ -4,13 +4,16 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   bridgeClient,
   isTauriRuntime,
-  type BridgeConnectionStatus,
 } from "../../lib/bridge/bridgeClient";
+import { getPrinterStatusPresentation } from "../Header/printerStatus";
 
 function WindowControls() {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [bridgeStatus, setBridgeStatus] = useState<BridgeConnectionStatus>(
-    bridgeClient.getStatus(),
+  const [bridgeState, setBridgeState] = useState(bridgeClient.getState());
+  const printerPresentation = getPrinterStatusPresentation(
+    bridgeState.status,
+    bridgeState.isOnline,
+    bridgeState.printerStatus,
   );
 
   useEffect(() => {
@@ -18,7 +21,7 @@ function WindowControls() {
       return;
     }
 
-    const unsubscribeStatus = bridgeClient.subscribeStatus(setBridgeStatus);
+    const unsubscribeStatus = bridgeClient.subscribe(setBridgeState);
     void getCurrentWindow()
       .isFullscreen()
       .then(setIsFullscreen)
@@ -68,6 +71,22 @@ function WindowControls() {
         </span>
         <span
           aria-live="polite"
+          className={`flex items-center gap-2 text-xs ${
+            printerPresentation.tone === "ready"
+              ? "text-emerald-300"
+              : printerPresentation.tone === "disconnected"
+                ? "text-red-300"
+                : "text-amber-300"
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 rounded-full ${
+              printerPresentation.tone === "ready"
+                ? "bg-emerald-400"
+                : printerPresentation.tone === "disconnected"
+                  ? "bg-red-400"
+                  : "bg-amber-400"
           className="flex items-center gap-2 text-xs font-medium text-on-primary/80"
         >
           <span
@@ -80,11 +99,7 @@ function WindowControls() {
                   : "bg-error"
             }`}
           />
-          {bridgeStatus === "connected"
-            ? "Bridge connected"
-            : bridgeStatus === "connecting"
-              ? "Bridge connecting"
-              : "Bridge offline"}
+          Printer {printerPresentation.label.toLowerCase()}
         </span>
       </div>
       
