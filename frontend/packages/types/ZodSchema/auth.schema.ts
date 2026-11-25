@@ -32,3 +32,17 @@ export const LoginResponseSchema = z
   .strict();
 
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+
+export const AuthResponseSchema = z
+  .object({
+    accessToken: z.string().min(1, "Access token is required"),
+    user: z
+      .object({
+        id: z.string().min(1, "User ID is required"),
+        email: z.string().email("Invalid email address"),
+      })
+      .strict(),
+  })
+  .strict();
+
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
