@@ -1,27 +1,31 @@
 
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * URQR Platform — Phase 1 Standalone Manager POS
+ * Bharath | QA Automation & Hardware Lead
+ * Playwright E2E & Cross-Browser Configuration
+ */
 export default defineConfig({
   testDir: './tests',
-
   fullyParallel: true,
-
   forbidOnly: !!process.env.CI,
-
   retries: process.env.CI ? 2 : 0,
-
   workers: process.env.CI ? 1 : undefined,
-
-  reporter: 'html',
+  reporter: [
+    ['html', { open: 'never' }],
+    ['list']
+  ],
 
   use: {
-  trace: 'retain-on-failure',
-  screenshot: 'only-on-failure',
-  video: 'retain-on-failure',
-},
+    baseURL: process.env.FRONTEND_BASE_URL || 'http://localhost:5173',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+  },
 
   projects: [
-    // Existing browser configurations
+    // Standard Desktop Cross-Browser Profiles
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
@@ -35,7 +39,7 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
 
-    // POS Counter Terminal
+    // POS Counter Terminal — Touch Display (1366x768 standard cashier counter)
     {
       name: 'POS-Counter-1366x768',
       use: {
@@ -46,7 +50,7 @@ export default defineConfig({
       },
     },
 
-    // POS Standard Display
+    // POS Standard Display — Touch Display (1600x900 widescreen terminal)
     {
       name: 'POS-Standard-1600x900',
       use: {
@@ -57,7 +61,7 @@ export default defineConfig({
       },
     },
 
-    // POS Desktop Display
+    // POS Full Desktop Display — Touch Display (1920x1080 high-res counter display)
     {
       name: 'POS-Desktop-1920x1080',
       use: {

@@ -27,14 +27,10 @@ import DataTable from "../DataTable/DataTable";
 import PopupModal from "../PopupModal/PopupModal";
 import Receipt from "../PopupModal/Receipt";
 import Icon from "../DataCard/Icon";
+import { Clock, Download, IndianRupeeIcon, LogOut, Save, Trash2 } from "lucide-react";
+import { SessionTimeoutModal } from "../PopupModal/SessionTimeoutModal";
 
-import {
-  Download,
-  IndianRupeeIcon,
-  LogOut,
-  Save,
-  Trash2,
-} from "lucide-react";
+
 
 // ==========================================
 // MY BILLING REUSABLE COMPONENT IMPORTS
@@ -126,6 +122,8 @@ export default function Showcase() {
 
   const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [isReceiptOpen, setReceiptOpen] = useState(false);
+   // ── NEW: Timeout Modal State ──
+  const [isTimeoutOpen, setIsTimeoutOpen] = useState(false);
 
   const [notif, setNotif] = useState({
     isOpen: false,
@@ -746,6 +744,117 @@ export default function Showcase() {
             striped
           />
         </section>
+
+{/* 12. MODALS + RECEIPT */}
+<section>
+  <h2 className="font-serif text-xl text-primary border-b border-border-subtle pb-2 mb-4">
+    12. Modals & Receipt
+  </h2>
+
+  <div className="flex flex-wrap gap-3">
+    <Button
+      variant="danger"
+      leftIcon={<Trash2 size={14} />}
+      onClick={() => setDeleteOpen(true)}
+    >
+      Delete Modal
+    </Button>
+
+    <Button
+      variant="outline"
+      onClick={() => setReceiptOpen(true)}
+    >
+      View Receipt
+    </Button>
+
+    <Button
+      variant="primary"
+      leftIcon={<Clock size={14} />}
+      onClick={() => setIsTimeoutOpen(true)}
+    >
+      Launch Session Timeout Dialog
+    </Button>
+  </div>
+
+  {/* Delete Modal */}
+  <PopupModal
+    isOpen={isDeleteOpen}
+    onClose={() => setDeleteOpen(false)}
+    title="Delete Record"
+    confirmText="Delete"
+    isDanger
+    onConfirm={() => {
+      showNotif("success", "Record deleted!");
+      setDeleteOpen(false);
+    }}
+  >
+    Are you sure you want to delete this record?
+  </PopupModal>
+
+  {/* Receipt Modal */}
+  <PopupModal
+    isOpen={isReceiptOpen}
+    onClose={() => setReceiptOpen(false)}
+    title="Receipt"
+    size="lg"
+    hideCloseButton={false}
+    footer={
+      <>
+        <Button
+          variant="ghost"
+          onClick={() => setReceiptOpen(false)}
+        >
+          Close
+        </Button>
+
+        <Button
+          variant="primary"
+          onClick={() => window.print()}
+        >
+          Print receipt
+        </Button>
+      </>
+    }
+  >
+    <Receipt
+      business={{
+        name: "Grand Horizon",
+        address: "18 Harbour View Road",
+        phone: "+91 98765 43210",
+        email: "dining@grandhorizon.example",
+      }}
+      orderId="ABC20261118001"
+      date="18 Nov 2026"
+      time="12:05 PM"
+      items={[
+        { name: "Veg Burger", price: 220, quantity: 2 },
+        { name: "Chicken Pizza", price: 380, quantity: 1 },
+      ]}
+      subtotal={820}
+      taxRate={5}
+      tax={41}
+      total={861}
+      paymentMethod="Cash"
+      cashCollected={900}
+      change={39}
+    />
+  </PopupModal>
+
+  {/* Session Timeout Modal - IMPORTANT: OUTSIDE PopupModal */}
+  <SessionTimeoutModal
+    isOpen={isTimeoutOpen}
+    onClose={() => setIsTimeoutOpen(false)}
+    initialSeconds={60}
+    onExtend={() => {
+      showNotif("success", "Session extended successfully!");
+      setIsTimeoutOpen(false);
+    }}
+    onLogout={() => {
+      showNotif("info", "Logged out.");
+      setIsTimeoutOpen(false);
+    }}
+  />
+</section>
 
         {/* ==================================
             12. MODALS & RECEIPT

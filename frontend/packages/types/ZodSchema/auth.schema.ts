@@ -23,16 +23,12 @@ export const LoginRequestSchema = z
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
-export const AuthResponseSchema = z
+export const LoginResponseSchema = z
   .object({
-    accessToken: z.string().min(1),
-    user: z
-      .object({
-        id: z.string().min(1),
-        email: z.string().email(),
-      })
-      .strict(),
+    token: z.string().min(1, "Token is required"),
+    hotelId: z.string().uuid("Invalid hotel ID"),
+    role: z.string().min(1, "Role is required"),
   })
   .strict();
 
-export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;

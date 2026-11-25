@@ -1,20 +1,7 @@
 // src/components/Header/Tabs.tsx
-
 import type { TabsProps } from "./Header.types";
 import { tabsConfig } from "./Header.config";
 
-/**
- * Tabs — category pills (Menu Catalog: All / Starters / Main Course / …)
- *
- * <Tabs
- *   items={[
- *     { key: "all", label: "All" },
- *     { key: "starters", label: "Starters" },
- *   ]}
- *   value={cat}
- *   onChange={setCat}
- * />
- */
 export const Tabs = ({
   items,
   value,

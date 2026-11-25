@@ -1,47 +1,112 @@
-# Backend architecture and implementation review
+# URQR backend runbook
 
-## Project state
+## What the backend does
 
-The repository uses Java 21, Maven, PostgreSQL, and the `com.nelja.urqr` package. The current backend targets Spring Boot 3.5.16. PostgreSQL is the only configured database. No executable schema artifact exists elsewhere in the workspace, so local Hibernate update is used to bootstrap development and the entity mappings are the schema source for this phase.
+This service runs the standalone hotel manager POS. In MVC terms, REST controllers receive JSON, services apply billing rules, JPA entities and repositories store rows, and DTO records form JSON responses. Spring Modulith checks that the top-level `auth`, `billing`, and `analytics` areas do not depend on each other in a cycle.
 
-Implemented modules are authentication, tenant setup, hotel configuration, hotel roles/users, menu categories/items, orders/order items, payments, saved receipts, daily sales, audit, API error handling, correlation IDs, OpenAPI, and Actuator health.
+The installed Java/Maven stack is Java 21, Spring Boot 4.1.2, Spring Modulith 2.1.2, Spring Data JPA 4.1.2, Hibernate ORM 7.4.13.Final, PostgreSQL JDBC 42.7.14, Flyway 12.4.0, JUnit from the Spring Boot dependency management, and Testcontainers 2.0.5. Compose uses PostgreSQL 18.7, Redis 8.2.11, and Centrifugo 6.10.3.
 
-## Structure and workflow
+## Folder map
 
-Feature packages keep persistence and HTTP code together: `hotel`, `access/user`, `access/role`, `menu/category`, `menu/item`, `order`, `payment`, `receipt`, `report`, and `audit`. Shared packages contain JWT/security configuration, API errors, request correlation, and OpenAPI configuration. Controllers return DTO records rather than entities.
+```text
+src/main/java/com/nelja/urqr/
+  auth/        login, roles, hotel/tenant provisioning, security, audit, OpenAPI
+  billing/     catalog, orders, payments, receipts, and outbox delivery
+  analytics/   daily sales reports
+  common/      API errors, correlation IDs, shared persistence, and response types
+  UrqrServerApplication.java
+src/main/resources/
+  application*.properties
+  db/migration/   immutable, ordered Flyway schema changes V1-V8
+  db/dev-seed.sql local-only sample catalog script; Flyway never runs this file
+src/test/java/
+  auth/ billing/ persistence/ integration and unit checks
+```
 
-Authentication uses a hotel ID only to select the username namespace at login. The server checks `(hotel_id, username)` and BCrypt password hash, then signs `uid` and `hotel_id` claims. Every request verifies the signature and reloads current active hotel, user, and role from the database. `CurrentTenant` extracts IDs from that verified token. Tenant IDs are not accepted in domain request payloads.
+## Main request flow
 
-Order creation loads requested menu item IDs, verifies each belongs to the authenticated hotel and is available, snapshots item name and price, and computes line/order totals using `BigDecimal`. Order mutation and payment operations are transactional. Full payment completes the order and saves the receipt JSON snapshot in the same transaction. Receipt reads return the saved snapshot. Daily sales computes `[hotel-local cutoff, next hotel-local cutoff)` instants and aggregates payments for that interval.
+1. The security filter checks a signed RS256 JWT. `CurrentTenant` reads the hotel ID from that verified token; callers do not submit tenant IDs in request bodies.
+2. The transaction aspect sets PostgreSQL `app.tenant_id` with transaction-local `set_config(..., true)`. PostgreSQL Row-Level Security then filters tenant-owned rows. `urqr_app` is a non-owner role without superuser or `BYPASSRLS` privileges.
+3. Hibernate's `@TenantId` fills the tenant column on the normalized billing entities. `BaseTenantEntity` supplies UUID tenant ownership and audit timestamps.
+4. The service writes order, items, payments, audit, receipt snapshot, and its custom outbox row inside the same PostgreSQL transaction.
+5. A bounded poller claims due events with `FOR UPDATE SKIP LOCKED`, commits that claim, publishes a batch to Centrifugo, then acknowledges success or schedules a retry. The event UUID is the downstream idempotency key.
 
-## Data ownership and query patterns
+The custom outbox table is the single delivery source. It is used instead of Spring Modulith's event publication registry because the required worker needs a PostgreSQL `SKIP LOCKED` claim, explicit retry counters, leases, and a dead-letter state. The order transaction records an event row; the poller is the delivery worker. This is like writing a kitchen ticket before it goes to the pass: the ticket cannot disappear just because the network was down.
 
-Hotel-owned rows carry `hotel_id`; tenant-specific unique constraints cover usernames, role names, order numbers, and receipt numbers. Services reject cross-hotel links, and composite JPA foreign keys cover user-role, category-item, order-item, payment-order, receipt-order, and audit-user associations. Verify these constraints against existing data and apply them in the controlled production schema rollout.
+## Tenant and schema rules
 
-Order history is filtered by hotel, optional status/time range, and pageable ordering. The current page's items are loaded in one batched query to avoid per-order N+1 queries. Menu lookup batches IDs for order construction. The daily report uses aggregate queries and does not load orders or payment entities into memory. Indexes currently cover `(hotel_id, created_at)` for orders/audit, hotel/category/availability for menu, and hotel/order/payment lookups.
+- V1 defines tenants, users, credentials, roles, permissions, and immutable `created_at` triggers.
+- V2 defines the tenant-based billing catalog, orders, items, payments, NUMERIC money columns, indexes, and forced RLS policies.
+- V3 adds child-table audit timestamps. V4 adds the existing hotel POS tables and custom outbox. V5-V7 are additive Hibernate/outbox fixes.
+- Never edit an applied migration. Add a new `V<n>__description.sql` file for schema changes.
+- Hibernate uses `ddl-auto=validate`; Flyway is the schema writer. `application-local.properties` also validates rather than silently updating tables.
+- Testcontainers applies V1-V8 to clean PostgreSQL 18.7. Check the local Docker database separately with the command below before relying on its state.
+- The earlier POS API uses `hotel_id` tables (`menu_category`, `menu_item`, `pos_order`); V2 also defines normalized `tenant_id` catalog and order tables. The current manager POS endpoints use the former for compatibility. Keep these schemas aligned during future catalog migrations; do not assume they are automatically synchronized.
 
-No production data, query plans, query counts, or latency measurements were available. The additional three identity-state reads per authenticated request are deliberate so deactivation and role changes apply immediately. Benchmark their impact before considering a short-lived cache.
+## Money and taxes
 
-## Domain rules
+All prices, discounts, tax amounts, and totals use `BigDecimal` in Java and `NUMERIC(12,2)` (or a precision-appropriate NUMERIC rate) in PostgreSQL. The calculation order is gross line amount, line discount, then tax on the discounted amount. Each CGST, SGST, and VAT component rounds to cents per line with `RoundingMode.HALF_UP`.
 
-- Money is stored as `numeric(12,2)` using `BigDecimal`, with a two-decimal scale policy. Menu price is non-negative; recorded payments must be positive.
-- Order state transitions: `OPEN` can remain open, become `COMPLETED` once fully paid, or become `CANCELLED` before any payment. Only unpaid open orders are editable.
-- Payment status transitions: `UNPAID -> PARTIAL -> PAID`. Split Cash/UPI payments are supported; overpayment is rejected. UPI receipt is manually verified by a Manager or Cashier before recording; there is no gateway verification.
-- Zero-total orders are completed and receipted directly. Receipt snapshots keep hotel receipt details and sale-time item values.
-- Menu item deletion is a soft deactivation. Roles have no permission mapping: Manager manages the hotel, staff, and menu; Manager/Cashier use billing and payment routes; Cook/Waiter can only read menu categories and items.
+Example: a ₹100.00 item with a 10% discount has ₹90.00 taxable value. At 9% CGST and 9% SGST, each component is ₹8.10, so the total is ₹106.20. The local seed's 9% + 9% figures are demo data only; verify each real product's tax classification before using it for sales.
 
-## API and operations
+## Local setup and verification
 
-Business routes are under `/api/v1`; generated OpenAPI JSON and Swagger UI are `/v3/api-docs` and `/swagger-ui.html`. `/actuator/health` reports health without detailed diagnostics. Error responses share `timestamp`, `status`, `code`, `message`, `path`, `correlationId`, and validation `fieldErrors`. `X-Correlation-ID` is returned and inserted into log MDC.
+Run commands from `backend/urqr-server` in PowerShell. Docker Desktop must be running, Java must report 21, and Maven must be available. The repository uses Maven directly:
 
-`POST /api/v1/setup/first-hotel` uses `SETUP_SECRET` once for the first tenant. `POST /api/v1/platform/hotels` provisions later tenants with `PLATFORM_ADMIN_SECRET`. Those keys must be held in a secret manager and restricted to trusted operators. Hotel manager staff can be provisioned through `/api/v1/users`.
+```powershell
+java -version
+mvn -version
+docker version
+docker compose --env-file .env -f docker-compose.yaml up -d postgres redis
+docker compose --env-file .env -f docker-compose.yaml up --build -d api
+```
 
-## Production gaps and assumptions
+The API listens on container port 8080; Compose maps it to `http://localhost:8081`. Liveness is `GET /actuator/health/liveness`; readiness is `GET /actuator/health/readiness`.
 
-- Hibernate `update` is used during the current development phase. It provides no ordered migrations, review, rollback, or safe multi-instance coordination; switch to `validate` with a deliberate schema deployment process before production. Flyway was not added.
-- Tenant isolation is applied in repositories/services, JWT resolution, and composite foreign keys. PostgreSQL row-level security remains an optional defense in depth to evaluate with production operations.
-- OpenAPI is generated from the running controllers; endpoint behavior and common errors are summarized in `README.md`.
-- Platform hotel provisioning uses a static environment secret; protect it with TLS, restricted network access, secret rotation, and rate limiting.
-- `JWT_SECRET` must be at least 32 bytes. Rotate/roll tokens when changing it. JWT expiry defaults to 60 minutes.
-- Currency minor-unit rules differ internationally; this product currently applies a fixed two-decimal policy. Confirm supported currencies before accepting zero- or three-decimal currencies.
-- No test suite was run or added. Build/runtime verification requires Maven artifacts and a PostgreSQL instance.
+Run the complete checks:
+
+```powershell
+mvn -B test
+```
+
+The suite starts temporary PostgreSQL 18.7, Redis 8.2.11, and Centrifugo 6.10.3 containers. It verifies Modulith boundaries, Flyway schema creation, JPA CRUD, RLS tenant isolation, rollback, Redis cache behavior, tax arithmetic, catalog filtering/pagination, API documentation, and Centrifugo delivery. Performance is printed from the same test run. `-Dperformance.enforce=true` turns the measured catalog, order-list, and steady outbox targets into assertions; burst load is reported separately because host/Docker scheduling affects it.
+
+Check the Flyway history in the local Docker PostgreSQL database:
+
+```powershell
+docker compose --env-file .env -f docker-compose.yaml exec postgres psql -U urqr -d urqr -c "SELECT version, script, checksum, installed_on FROM flyway_schema_history ORDER BY installed_rank;"
+```
+
+To seed demo menu data, use an existing hotel/tenant UUID only in a disposable local database. The script is idempotent and outside Flyway's migration folder. This simple command runs as the local database owner, so it bypasses RLS; use the non-owner `urqr_app` role when you specifically want to exercise the policies:
+
+```powershell
+$tenantId = "<existing hotel and tenant UUID>"
+Get-Content -Raw -Encoding utf8 .\src\main\resources\db\dev-seed.sql |
+  docker compose --env-file .env -f docker-compose.yaml exec -T postgres psql -U urqr -d urqr -v "tenant_id=$tenantId"
+```
+
+The script requires both `tenants.id` and `hotel.id` to equal the supplied UUID. Keep local database credentials in `.env`; do not put them in source control.
+
+## API contract
+
+The generated OpenAPI 3.1 JSON is `GET /v3/api-docs`; Swagger UI is `GET /swagger-ui.html`. Catalog endpoints are tenant-scoped and paginated:
+
+- `GET /api/v1/catalog/products?page=0&size=20&available=true`
+- `GET /api/v1/catalog/categories?page=0&size=20&activeOnly=true`
+- `POST /api/v1/orders` creates an order and accepts line items plus optional payments.
+- `GET /api/v1/orders/{orderId}/receipt` reprints the stored receipt snapshot.
+- `GET /api/v1/orders?status=OPEN&from=2026-11-01T00:00:00Z&to=2026-12-01T00:00:00Z&page=0&size=20` searches tenant orders.
+
+See [API_CONTRACT.md](API_CONTRACT.md) for JSON examples.
+
+## Performance and operations
+
+The warmed catalog path uses the exact Redis key `tenant:{tenantId}:catalog`; committed product changes evict that tenant's key. Order search uses tenant/status/date/id indexes and fetches all page item rows in one batched query. The outbox claim is bounded to 50 rows and performs no HTTP call while holding a database transaction.
+
+Record actual output from `mvn -B test` before declaring a target met. Targets are warm catalog p95 below 15 ms, order list p95 below 50 ms, and commit-to-Centrifugo p95 below 150 ms. A burst result above target remains a reported miss even if steady-state traffic passes.
+
+## Needs from the lead
+
+- The PDF refers to “Section 11 Mandatory Compatibility Verification” but does not include Section 11. Only the named gates 2 (Modulith), 4 (Hibernate 7), and 5 (Flyway 12) can be verified from the available instructions.
+- Joint checkout-to-print testing with the named team members and delivery/sign-off by the PM and CTO require their participation.
+- GitHub Actions can only be confirmed after a push or a connected CI run. Local Maven success is not a remote CI result.

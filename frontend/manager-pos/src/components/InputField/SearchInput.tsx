@@ -1,3 +1,4 @@
+// src/components/InputField/SearchInput.tsx
 
 import { forwardRef } from "react";
 import { Search, X } from "lucide-react";
@@ -6,14 +7,7 @@ import type { SearchInputProps } from "./InputField.types";
 import { SEARCH_CLEAR_BUTTON } from "./InputField.config";
 import { InputField } from "./InputField";
 
-interface ThemedSearchInputProps extends SearchInputProps {
-  shortcutHint?: string;
-}
-
-export const SearchInput = forwardRef<
-  HTMLInputElement,
-  ThemedSearchInputProps
->(
+export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   (
     {
       placeholder = "Search items",
@@ -27,8 +21,17 @@ export const SearchInput = forwardRef<
     },
     ref
   ) => {
-    const hasValue =
-      typeof value === "string" && value.length > 0;
+    const hasValue = typeof value === "string" && value.length > 0;
+
+    const handleClear = () => {
+      onClear?.();
+      if (onChange) {
+        const event = {
+          target: { value: "" },
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(event);
+      }
+    };
 
     return (
       <div className="pos-search-shell">

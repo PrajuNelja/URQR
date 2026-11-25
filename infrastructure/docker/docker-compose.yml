@@ -118,9 +118,8 @@ services:
 
   # ---------------------------------------------------------------------------
   # Centrifugo 6.10.3 — Real-time messaging / WebSocket hub
-  # HTTP API  → 8000  (health probe, backend publish)
-  # WebSocket → 8001  (frontend client connections)
-  # Metrics   → 9000  (Prometheus scrape)
+  # External  → 8000  (WebSocket clients at /connection/websocket, HTTP API at /api)
+  # Internal  → 9000  (health probe, admin UI, Prometheus /metrics)
   # ---------------------------------------------------------------------------
   centrifugo:
     image: centrifugo/centrifugo:v6.10.3
@@ -130,21 +129,20 @@ services:
     volumes:
       - ./centrifugo/config.json:/centrifugo/config.json:ro
     ports:
-      - "8000:8000"    # HTTP API (task spec port)
-      - "8001:8001"    # WebSocket
-      - "9000:9000"    # Prometheus metrics
+      - "8000:8000"    # WebSocket + HTTP API (task spec port)
+      - "9000:9000"    # health, admin UI, Prometheus metrics
     networks:
       - urqr_net
     environment:
-      CENTRIFUGO_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_TOKEN_SECRET:?CENTRIFUGO_TOKEN_SECRET is required}
-      CENTRIFUGO_API_KEY:               ${CENTRIFUGO_API_KEY:?CENTRIFUGO_API_KEY is required}
+      CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY: ${CENTRIFUGO_TOKEN_SECRET:?CENTRIFUGO_TOKEN_SECRET is required}
+      CENTRIFUGO_HTTP_API_KEY:                ${CENTRIFUGO_API_KEY:?CENTRIFUGO_API_KEY is required}
       CENTRIFUGO_ADMIN_PASSWORD:        ${CENTRIFUGO_ADMIN_PASSWORD:-NeljaTech2026}
       CENTRIFUGO_ADMIN_SECRET:          ${CENTRIFUGO_ADMIN_SECRET:-urqr_centrifugo_admin_secret}
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
