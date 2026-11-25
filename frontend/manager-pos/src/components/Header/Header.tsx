@@ -1,10 +1,5 @@
-
+import { HEADER_VARIANTS, headerConfig } from "./Header.config";
 import type { HeaderProps } from "./Header.types";
-
-import {
-  headerConfig,
-  HEADER_VARIANTS,
-} from "./Header.config";
 
 export const Header = ({
   variant = "dashboard",

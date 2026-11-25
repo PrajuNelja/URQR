@@ -1,7 +1,11 @@
+
+import { createPortal } from "react-dom";
 import { useEffect, useId, useRef } from "react";
 import type { MouseEvent } from "react";
 import { X } from "lucide-react";
+
 import type { PopupModalProps } from "./PopupModal.types";
+
 import {
   MODAL_BACKDROP,
   MODAL_PANEL_BASE,
@@ -12,19 +16,10 @@ import {
   MODAL_BODY,
   MODAL_FOOTER,
 } from "./PopupModal.config";
+
 import { Button } from "../Buttons/Button";
 
-const FOCUSABLE = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",");
-
-/** Same public API as existing modal, with focus trap + focus restoration. */
-export function PopupModal({
+export const PopupModal = ({
   isOpen,
   onClose,
   title,
@@ -41,87 +36,91 @@ export function PopupModal({
   closeOnEscape = true,
   className = "",
   hideCloseButton = false,
-}: PopupModalProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const titleId = useId();
+}: PopupModalProps) => {
 
+  // Escape key handler
   useEffect(() => {
-    if (!isOpen) return;
-    const panel = panelRef.current;
-    const previous = document.activeElement instanceof HTMLElement
-      ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!isOpen || !closeOnEscape) return;
 
-    const getFocusable = () => Array.from(
-      panel?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []
-    ).filter((el) => el.getClientRects().length > 0);
-
-    const animationFrame = window.requestAnimationFrame(() => {
-      (getFocusable()[0] ?? panel)?.focus();
-    });
-
-    const handleKeys = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && closeOnEscape) {
-        event.preventDefault();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         onClose();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusables = getFocusable();
-      if (focusables.length === 0) {
-        event.preventDefault();
-        panel?.focus();
-        return;
-      }
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = document.activeElement;
-      if (event.shiftKey && (active === first || !panel?.contains(active))) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (active === last || !panel?.contains(active))) {
-        event.preventDefault();
-        first.focus();
       }
     };
 
-    document.addEventListener("keydown", handleKeys);
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      window.cancelAnimationFrame(animationFrame);
-      document.removeEventListener("keydown", handleKeys);
-      document.body.style.overflow = previousOverflow;
-      previous?.focus();
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, closeOnEscape, onClose]);
 
+  // Lock body scroll when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+
+  }, [isOpen, closeOnEscape, onClose]);
+
+  // Don't render when closed
   if (!isOpen) return null;
 
-  const handleBackdrop = (event: MouseEvent<HTMLDivElement>) => {
-    if (closeOnBackdrop && event.target === event.currentTarget) onClose();
+  // Backdrop click handler
+  const handleBackdrop = (e: MouseEvent<HTMLDivElement>) => {
+    if (
+      e.target === e.currentTarget &&
+      closeOnBackdrop
+    ) {
+      onClose();
+    }
   };
 
+  // Cancel handler
   const handleCancel = () => {
-    if (onCancel) onCancel();
-    else onClose();
+    if (onCancel) {
+      onCancel();
+    } else {
+      onClose();
+    }
   };
 
-  const showFooter = footer !== undefined || onConfirm !== undefined;
+  const showFooter =
+    footer !== undefined || onConfirm !== undefined;
 
-  return (
-    <div className={MODAL_BACKDROP} onClick={handleBackdrop} role="presentation">
+  const modalContent = (
+    <div
+      className={MODAL_BACKDROP}
+      onClick={handleBackdrop}
+      role="presentation"
+    >
       <div
-        ref={panelRef}
+        // ref={panelRef}
         tabIndex={-1}
         className={`${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
+        aria-labelledby={title ? title : undefined}
         aria-label={title ? undefined : "Dialog"}
       >
+        {/* Modal Header */}
         {(title || !hideCloseButton) && (
           <div className={MODAL_HEADER}>
-            {title && <h2 id={titleId} className={MODAL_TITLE}>{title}</h2>}
+            {title && (
+              <h2
+                id="modal-title"
+                className={MODAL_TITLE}
+              >
+                {title}
+              </h2>
+            )}
+
             {!hideCloseButton && (
               <button
                 type="button"
@@ -135,14 +134,25 @@ export function PopupModal({
             )}
           </div>
         )}
-        <div className={MODAL_BODY}>{children}</div>
+
+        {/* Modal Body */}
+        <div className={MODAL_BODY}>
+          {children}
+        </div>
+
+        {/* Modal Footer */}
         {showFooter && (
           <div className={MODAL_FOOTER}>
             {footer ?? (
               <>
-                <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                >
                   {cancelText}
                 </Button>
+
                 {onConfirm && (
                   <Button
                     variant={isDanger ? "danger" : "primary"}
@@ -159,6 +169,12 @@ export function PopupModal({
       </div>
     </div>
   );
-}
+
+  // Render modal outside parent stacking contexts
+  return createPortal(
+    modalContent,
+    document.body
+  );
+};
 
 export default PopupModal;

@@ -25,8 +25,8 @@
     "type": "git",
     "url": "git+https://github.com/PrajuNelja/URQR.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["urqr", "hotel", "pos"],
+  "author": "NELJA TECH",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {

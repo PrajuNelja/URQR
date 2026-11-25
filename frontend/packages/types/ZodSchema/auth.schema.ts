@@ -2,36 +2,33 @@ import { z } from "zod";
 
 export const LoginRequestSchema = z
   .object({
-    // 1. Tenant Slug (e.g., "grand-horizon") - lowercase, numbers, hyphens only
+    // 1. Tenant Slug (optional, for backward-compatible test fixtures; not required for POS login)
     tenantSlug: z
       .string()
-      .min(1, "Tenant slug is required")
-      .regex(
-        /^[a-z0-9-]+$/,
-        "Slug can only contain lowercase letters, numbers, and hyphens",
-      ),
+      .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens")
+      .optional(),
 
     // 2. Sanitized Username - trims whitespace to prevent accidental spaces
-    username: z.string().min(1, "Username is required").trim(),
+    username: z
+      .string()
+      .min(1, "Username is required")
+      .trim(),
 
-    // 3. Password: Minimum 8 chars, strictly alphanumeric (no symbols), no max limit
+    // 3. Password: Minimum 4 characters
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        /^[a-zA-Z0-9]+$/,
-        "Password must be strictly alphanumeric (letters and numbers only)",
-      ),
+      .min(4, "Password must be at least 4 characters"),
   })
   .strict();
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
-// Optional: If your backend still returns a token for auth response
-export const AuthResponseSchema = z
+export const LoginResponseSchema = z
   .object({
-    accessToken: z.string().min(1),
+    token: z.string().min(1, "Token is required"),
+    hotelId: z.string().uuid("Invalid hotel ID"),
+    role: z.string().min(1, "Role is required"),
   })
   .strict();
 
-export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;

@@ -34,19 +34,19 @@ export const QuantityStepper = ({
     setLocalInput(String(value));
   }
 
-  const canDecrement = !disabled && value > min;
-  const canIncrement = !disabled && (max === undefined || value < max);
+  const canDecrease = !disabled && value > min;
+  const canIncrease = !disabled && (max === undefined || value < max);
 
-  const handleDecrement = () => {
-    if (canDecrement) {
+  const handleDecrease = () => {
+    if (canDecrease) {
       const next = value - 1;
       onChange(next);
       setLocalInput(String(next));
     }
   };
 
-  const handleIncrement = () => {
-    if (canIncrement) {
+  const handleIncrease = () => {
+    if (canIncrease) {
       const next = value + 1;
       onChange(next);
       setLocalInput(String(next));
@@ -55,7 +55,6 @@ export const QuantityStepper = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
-    // Allow empty string while typing
     if (raw === "") {
       setLocalInput("");
       return;
@@ -63,7 +62,6 @@ export const QuantityStepper = ({
 
     const parsed = parseInt(raw, 10);
     if (!isNaN(parsed)) {
-      // Enforce maximum safety limit immediately
       const clamped = Math.max(min, Math.min(parsed, max));
       setLocalInput(String(clamped));
       onChange(clamped);
@@ -87,10 +85,10 @@ export const QuantityStepper = ({
       (e.target as HTMLInputElement).blur();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      handleIncrement();
+      handleIncrease();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      handleDecrement();
+      handleDecrease();
     }
   };
 
@@ -99,9 +97,9 @@ export const QuantityStepper = ({
       role="group"
       aria-label="Quantity"
       className={[
-        "pos-quantity-stepper",
+        "pos-quantity-stepper flex items-center gap-1",
         `pos-quantity-stepper--${size}`,
-        disabled ? "pos-quantity-stepper--disabled" : "",
+        disabled ? "pos-quantity-stepper--disabled opacity-50" : "",
         className,
       ]
         .filter(Boolean)
@@ -109,10 +107,10 @@ export const QuantityStepper = ({
     >
       <button
         type="button"
-        className="pos-quantity-stepper__button"
+        className="pos-quantity-stepper__button flex items-center justify-center rounded p-1 hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none"
         aria-label="Decrease quantity"
-        onClick={handleDecrement}
-        disabled={!canDecrement}
+        onClick={handleDecrease}
+        disabled={!canDecrease}
       >
         <Minus size={14} strokeWidth={2.5} />
       </button>
@@ -127,16 +125,16 @@ export const QuantityStepper = ({
         onKeyDown={handleKeyDown}
         onFocus={(e) => e.target.select()}
         disabled={disabled}
-        className={`${quantityStepperConfig.value} ${sizeStyles.value} w-10 text-center rounded border border-transparent bg-transparent font-bold text-[#2d241b] focus:border-[#a46714] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#a46714] transition-all`}
+        className={`${quantityStepperConfig?.value || ""} ${sizeStyles.value} w-10 text-center rounded border border-transparent bg-transparent font-bold text-[#2d241b] focus:border-[#a46714] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#a46714] transition-all`}
         aria-label="Item quantity"
       />
 
       <button
         type="button"
-        className="pos-quantity-stepper__button"
+        className="pos-quantity-stepper__button flex items-center justify-center rounded p-1 hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none"
         aria-label="Increase quantity"
-        onClick={handleIncrement}
-        disabled={!canIncrement}
+        onClick={handleIncrease}
+        disabled={!canIncrease}
       >
         <Plus size={14} strokeWidth={2.5} />
       </button>

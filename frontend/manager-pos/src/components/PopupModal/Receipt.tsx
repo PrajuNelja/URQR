@@ -1,5 +1,4 @@
 // src/components/PopupModal/Receipt.tsx
-
 import type { ReceiptProps } from "./PopupModal.types";
 import { RECEIPT_WRAPPER, receiptConfig } from "./PopupModal.config";
 
@@ -31,10 +30,8 @@ export const Receipt = ({
   const isCash = paymentMethod.toLowerCase() === "cash";
 
   return (
-    // Added flex justify-center here so the paper sits perfectly in the middle
     <div className={`${RECEIPT_WRAPPER} ${className}`.trim()}>
       <div className={receiptConfig.paper}>
-        
         <h2 className={receiptConfig.businessName}>{business.name}</h2>
         <div className={receiptConfig.businessMeta}>
           {business.address && (

@@ -47,8 +47,6 @@ export interface DataTableProps<T> {
   striped?: boolean;
   /** Compact padding (default: false) */
   compact?: boolean;
-  /** Minimum table width for horizontal scroll (default: '720px') */
-  minWidth?: string;
 }
 
 // ═══════════════════════════════════════════
