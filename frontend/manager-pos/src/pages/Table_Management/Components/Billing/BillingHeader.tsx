@@ -8,12 +8,12 @@ import { SearchInput } from "../../../../components/InputField/SearchInput";
 import { NetworkStatusPill } from "../../../../components/Header/NetworkStatusPill";
 import { CurrentDatePill } from "../../../../components/Header/CurrentDatePill";
 
-interface BillingHeaderProps {
+interface Props {
   searchText: string;
   onSearchChange: (value: string) => void;
   searchInputRef: RefObject<HTMLInputElement | null>;
   onMenuClick: () => void;
-  isMenuOpen: boolean;
+  menuOpen: boolean;
 }
 
 export function BillingHeader({
@@ -21,37 +21,36 @@ export function BillingHeader({
   onSearchChange,
   searchInputRef,
   onMenuClick,
-  isMenuOpen,
-}: BillingHeaderProps) {
+  menuOpen,
+}: Props) {
   return (
     <Header
       variant="billing"
       title="GRAND HORIZON"
       subtitle="Billing POS"
-      titleClassName="!font-sans !text-[17px] !font-semibold !text-text"
-      className="!mb-0 !min-h-16 !w-full !rounded-none !border-b !border-border !bg-surface !px-4 !py-2 lg:!px-6"
+      className="urqr-billing-header"
+      titleClassName="urqr-billing-brand-name"
       logo={
         <>
           <IconButton
             label="Open navigation"
             icon={<Menu size={22} />}
             variant="ghost"
-            size="md"
             onClick={onMenuClick}
-            aria-controls="billing-navigation"
-            aria-expanded={isMenuOpen}
+            aria-expanded={menuOpen}
+            aria-controls="urqr-billing-drawer"
           />
 
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-primary-dark !text-white"
-            aria-label="Hotel"
+            className="urqr-billing-hotel-icon"
+            aria-hidden="true"
           >
-            <Hotel size={21} aria-hidden="true" />
+            <Hotel size={21} />
           </span>
         </>
       }
       center={
-        <div className="billing-header-search w-full max-w-[440px]">
+        <div className="urqr-billing-search">
           <SearchInput
             id="billing-search-input"
             ref={searchInputRef}
@@ -61,14 +60,14 @@ export function BillingHeader({
             }
             onClear={() => onSearchChange("")}
             placeholder="Search items"
-            aria-label="Search catalog products"
             shortcutHint="F2"
+            aria-label="Search catalog products"
             fieldSize="sm"
           />
         </div>
       }
       actions={
-        <div className="flex items-center gap-2.5">
+        <div className="urqr-billing-header-actions">
           <NetworkStatusPill />
           <CurrentDatePill />
         </div>

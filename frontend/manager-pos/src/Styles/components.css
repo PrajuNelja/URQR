@@ -822,3 +822,749 @@
   }
 }
 
+
+/* ================================================
+   URQR BILLING POS
+   Reference: code.html
+   Scoped to Billing only
+   ================================================ */
+
+@layer components {
+
+  /* 1. MAIN BILLING SCREEN */
+
+  .urqr-billing-screen {
+    --bill-bg: #F4EFE6;
+    --bill-surface: var(--color-surface, #FFFDF8);
+    --bill-card: #FCFAF7;
+    --bill-alt: var(--color-surface-alt, #FAF3E6);
+    --bill-border: #E3D9CB;
+    --bill-soft-border: #EFE8DE;
+    --bill-primary: #80583B;
+    --bill-dark: #49382E;
+    --bill-muted: #81776E;
+    --bill-success: var(--color-success, #3F6B3A);
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--bill-bg);
+    color: var(--bill-dark);
+    font-family: var(--font-sans, Inter, sans-serif);
+  }
+
+  /* 2. FULL-WIDTH HEADER */
+
+  .urqr-billing-screen .urqr-billing-header {
+    display: grid !important;
+    grid-template-columns: auto minmax(180px, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    min-height: 64px;
+    padding: 8px 24px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--bill-border) !important;
+    border-radius: 0 !important;
+    background: #F8F5EE !important;
+  }
+
+  .urqr-billing-header > :first-child {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .urqr-billing-header > :nth-child(2) {
+    grid-column: 2;
+    order: initial !important;
+    min-width: 0;
+    width: 100% !important;
+  }
+
+  .urqr-billing-header > :last-child {
+    grid-column: 3;
+    justify-self: end;
+  }
+
+  .urqr-billing-header .urqr-billing-brand-name {
+    font: 700 17px/1.2 var(--font-sans, Inter, sans-serif) !important;
+    color: var(--bill-dark) !important;
+    white-space: nowrap;
+  }
+
+  .urqr-billing-header .urqr-billing-hotel-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--bill-dark);
+    color: #fff;
+  }
+
+  /* 3. HEADER SEARCH BAR */
+
+  .urqr-billing-header .urqr-billing-search {
+    width: 100%;
+    max-width: 600px;
+    min-width: 0;
+  }
+
+  .urqr-billing-header .pos-search-shell {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .urqr-billing-header .pos-search-input {
+    width: 100%;
+    min-height: 40px !important;
+    height: 40px !important;
+    border: 1px solid var(--bill-border) !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    color: var(--bill-dark) !important;
+    box-shadow: none !important;
+  }
+
+  .urqr-billing-header .pos-search-input:focus {
+    border-color: var(--bill-primary) !important;
+    box-shadow: 0 0 0 2px rgb(128 88 59 / 18%) !important;
+  }
+
+  .urqr-billing-header .urqr-billing-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+  }
+
+  /* 4. FULL-SCREEN 60/40 LAYOUT */
+
+  .urqr-billing-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* 5. CATALOG */
+
+  .urqr-billing-screen .urqr-billing-catalog {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #F3EFE7 !important;
+  }
+
+  .urqr-billing-catalog-head {
+    flex: none;
+    padding: 20px 24px 14px;
+  }
+
+  .urqr-billing-category-scroll {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .urqr-billing-category-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 6. CATEGORY TABS */
+
+  .urqr-billing-screen .urqr-billing-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px;
+    margin: 0 !important;
+    padding: 0 0 8px !important;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .urqr-billing-screen .urqr-billing-tabs [role="tab"] {
+    flex: none;
+    height: 34px;
+    padding: 0 15px;
+    border: 1px solid var(--bill-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: var(--bill-dark) !important;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .urqr-billing-screen
+  .urqr-billing-tabs [aria-selected="true"] {
+    border-color: var(--bill-primary) !important;
+    background: var(--bill-primary) !important;
+    color: white !important;
+  }
+
+  .urqr-billing-catalog-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-top: 8px;
+  }
+
+  .urqr-billing-catalog-heading h2 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--bill-dark);
+  }
+
+  .urqr-billing-catalog-heading span {
+    font-size: 12px;
+    color: var(--bill-muted);
+  }
+
+  /* 7. PRODUCT GRID */
+
+  .urqr-billing-product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    align-content: start;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 24px 24px;
+  }
+
+  .urqr-billing-no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 0;
+    color: var(--bill-muted);
+    font-size: 13px;
+  }
+
+  /* 8. REUSABLE PRODUCT CARD */
+
+  .urqr-billing-screen .pos-product-card {
+    width: 100%;
+    min-width: 0;
+    height: 210px;
+    min-height: 210px !important;
+    padding: 14px !important;
+    border: 1px solid var(--bill-border) !important;
+    border-radius: 16px !important;
+    background: var(--bill-card) !important;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 3%) !important;
+  }
+
+  .urqr-billing-screen .pos-product-card--active {
+    border: 2px solid var(--bill-primary) !important;
+    background: #F4E7D4 !important;
+  }
+
+  .urqr-billing-screen .pos-product-card--default:hover {
+    border-color: var(--bill-primary) !important;
+    background: #F3ECE0 !important;
+  }
+
+  .urqr-billing-screen .pos-product-card--sold-out {
+    background: #ECE5D8 !important;
+    opacity: .75;
+  }
+
+  .urqr-billing-screen .pos-product-card__image {
+    height: 80px;
+    flex: none;
+    border-radius: 12px;
+    background: #F0EAE1;
+    color: #B5A898;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .09em;
+  }
+
+  .urqr-billing-screen .pos-product-card__name-row {
+    margin-top: 9px;
+  }
+
+  .urqr-billing-screen .pos-product-card__name {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--bill-dark);
+  }
+
+  .urqr-billing-screen .pos-product-card__price-row {
+    margin: 2px 0 9px;
+  }
+
+  .urqr-billing-screen .pos-product-card__price {
+    font-size: 12px;
+  }
+
+  .urqr-billing-screen .pos-product-card__status {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+
+  .urqr-billing-screen .pos-product-card__action {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 8px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .urqr-billing-screen
+  .pos-product-card--active
+  .pos-product-card__action {
+    background: var(--bill-primary) !important;
+    border-color: var(--bill-primary) !important;
+    color: white !important;
+  }
+
+  .urqr-billing-screen
+  .pos-product-card--sold-out
+  .pos-product-card__action {
+    background: #DDD3C2 !important;
+    border-color: #DDD3C2 !important;
+    color: #8E7F6C !important;
+  }
+
+  .urqr-billing-screen .pos-product-card__check,
+  .urqr-billing-screen .pos-product-card__count {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  /* 9. ORDER SUMMARY PANEL */
+
+  .urqr-billing-summary {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-left: 1px solid var(--bill-border);
+    background: #fff;
+  }
+
+  .urqr-billing-screen .urqr-billing-cart {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .urqr-billing-cart-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 24px;
+    padding: 22px 0 16px;
+    border-bottom: 1px solid var(--bill-soft-border);
+  }
+
+  .urqr-billing-cart-heading h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bill-dark);
+  }
+
+  .urqr-billing-cart-heading p {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--bill-muted);
+  }
+
+  .urqr-billing-draft-badge {
+    padding: 6px 10px;
+    border-radius: 8px;
+    flex: none;
+    border: 1px solid var(--bill-border);
+    background: #F5F2EB;
+    color: var(--bill-dark);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* 10. CART ITEMS */
+
+  .urqr-billing-cart-items {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 24px;
+  }
+
+  .urqr-billing-summary .pos-cart-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--bill-soft-border);
+  }
+
+  .urqr-billing-summary .pos-cart-row__thumbnail {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #F7F4EE;
+    border: 1px solid var(--bill-soft-border);
+  }
+
+  .urqr-billing-summary .pos-cart-row__info h4 {
+    font-size: 12px;
+  }
+
+  .urqr-billing-summary .pos-cart-row__info span {
+    font-size: 11px;
+  }
+
+  .urqr-billing-summary .pos-cart-row__controls {
+    gap: 4px;
+  }
+
+  .urqr-billing-summary .pos-quantity-stepper__button {
+    width: 22px;
+    height: 22px;
+  }
+
+  .urqr-billing-summary .pos-quantity-stepper input {
+    width: 24px !important;
+    padding: 0;
+  }
+
+  /* 11. ORDER NOTE */
+
+  .urqr-billing-cart-extras {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 24px;
+    font-size: 12px;
+    color: var(--bill-muted);
+  }
+
+  .urqr-billing-cart-extras details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .urqr-billing-cart-extras summary {
+    cursor: pointer;
+  }
+
+  .urqr-billing-cart-extras textarea {
+    margin-top: 8px;
+  }
+
+  /* 12. TOTALS AND PAYMENT */
+
+  .urqr-billing-summary-footer {
+    flex: none;
+    padding: 22px 24px;
+    background: var(--bill-card);
+    border-top: 1px solid var(--bill-border);
+  }
+
+  .urqr-billing-summary-footer .pos-order-totals {
+    gap: 10px;
+  }
+
+  .urqr-billing-summary-footer
+  .pos-order-totals__details {
+    border: 0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .urqr-billing-summary-footer
+  .pos-order-totals__tax-rows {
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--bill-bg);
+    border: 1px solid var(--bill-border);
+    border-radius: 10px;
+  }
+
+  .urqr-billing-summary-footer
+  .pos-total-row--grand strong {
+    font-size: 26px;
+    color: var(--bill-dark);
+  }
+
+  .urqr-billing-preview-button,
+  .urqr-billing-pay-button {
+    width: 100%;
+    height: 48px;
+    margin-top: 12px;
+    border-radius: 12px !important;
+    font-weight: 700;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .urqr-billing-preview-button {
+    background: #EFECE4 !important;
+    color: var(--bill-dark) !important;
+    border: 1px solid #DED5C9 !important;
+  }
+
+  .urqr-billing-pay-button {
+    background: var(--bill-primary) !important;
+    color: white !important;
+    border-color: var(--bill-primary) !important;
+    font-size: 12px;
+    letter-spacing: .06em;
+  }
+
+  .urqr-billing-pay-button:disabled {
+    background: #D9CDB8 !important;
+    border-color: #D9CDB8 !important;
+  }
+
+  .urqr-billing-pay-hint {
+    margin-top: 9px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--bill-muted);
+  }
+
+  /* 13. ORDER PREVIEW */
+
+  .urqr-billing-order-preview > p {
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--bill-muted);
+  }
+
+  .urqr-billing-preview-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--bill-soft-border);
+    font-size: 13px;
+  }
+
+  .urqr-billing-preview-line strong {
+    white-space: nowrap;
+  }
+
+  .urqr-billing-order-preview .pos-order-totals {
+    margin-top: 18px;
+  }
+
+  /* 14. HAMBURGER NAVIGATION DRAWER */
+
+  .urqr-billing-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+  }
+
+  .urqr-billing-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: rgb(40 30 25 / 48%);
+  }
+
+  .urqr-billing-drawer-panel {
+    position: absolute;
+    inset: 0 auto 0 0;
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+    max-width: 86vw;
+    padding: 20px 16px;
+    background: #F5F2EB;
+    box-shadow: 8px 0 30px rgb(45 30 20 / 22%);
+  }
+
+  .urqr-billing-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--bill-border);
+  }
+
+  .urqr-billing-drawer-links {
+    display: grid;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .urqr-billing-drawer-bottom {
+    display: grid;
+    gap: 8px;
+    margin-top: auto;
+    border-top: 1px solid var(--bill-border);
+    padding-top: 16px;
+  }
+
+  .urqr-billing-drawer-links a,
+  .urqr-billing-drawer-bottom > a,
+  .urqr-billing-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bill-dark);
+    text-decoration: none;
+  }
+
+  .urqr-billing-drawer-links a[aria-current="page"] {
+    color: #fff;
+    background: var(--bill-primary);
+  }
+
+  .urqr-billing-drawer-links a:hover,
+  .urqr-billing-drawer-bottom > a:hover {
+    background: #EAE4D7;
+  }
+
+  .urqr-billing-profile {
+    background: #EDE7DC;
+  }
+
+  /* KEYBOARD FOCUS */
+
+  .urqr-billing-screen :is(button, a, input):focus-visible {
+    outline: 2px solid var(--bill-primary);
+    outline-offset: 2px;
+  }
+
+  /* 15. RESPONSIVE DESIGN */
+
+  @media (max-width: 1350px) {
+    .urqr-billing-product-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 1050px) {
+    .urqr-billing-product-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .urqr-billing-screen {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
+
+    .urqr-billing-workspace {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .urqr-billing-screen .urqr-billing-catalog {
+      min-height: 420px;
+    }
+
+    .urqr-billing-product-grid,
+    .urqr-billing-cart-items {
+      overflow: visible;
+    }
+
+    .urqr-billing-summary {
+      min-height: 460px;
+      border-left: 0;
+      border-top: 1px solid var(--bill-border);
+    }
+
+    .urqr-billing-screen .urqr-billing-header {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .urqr-billing-header > :nth-child(2) {
+      grid-row: 2;
+      grid-column: 1 / -1;
+    }
+
+    .urqr-billing-header > :last-child {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .urqr-billing-header .urqr-billing-search {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .urqr-billing-screen .urqr-billing-header {
+      padding: 12px !important;
+    }
+
+    .urqr-billing-header > :last-child {
+      grid-row: 3;
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    .urqr-billing-product-grid {
+      grid-template-columns: minmax(0, 1fr);
+      padding-inline: 12px;
+    }
+
+    .urqr-billing-catalog-head {
+      padding-inline: 12px;
+    }
+
+    .urqr-billing-cart-heading {
+      margin-inline: 14px;
+    }
+
+    .urqr-billing-cart-items,
+    .urqr-billing-summary-footer {
+      padding-inline: 14px;
+    }
+
+    .urqr-billing-summary .pos-cart-row {
+      grid-template-columns: 36px minmax(0, 1fr);
+    }
+
+    .urqr-billing-summary .pos-cart-row__controls {
+      grid-column: 2;
+      justify-content: flex-start;
+    }
+  }
+}
+
