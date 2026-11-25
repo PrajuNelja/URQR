@@ -1,4 +1,3 @@
-
 import { Button } from "../Buttons/Button";
 import { StatusBadge } from "../StatusBadge/StatusBadge";
 import { Card } from "./Card";
@@ -11,6 +10,7 @@ interface ProductCardProps {
   pricePaise: number;
   imageUrl?: string;
   stockState?: StockState;
+  stock?: number;
   inCartQuantity?: number;
   maxQuantity?: number;
   onAdd: () => void;
@@ -20,9 +20,17 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
-  name, pricePaise, imageUrl, stockState,
-  inCartQuantity = 0, maxQuantity = 15, onAdd,
-  previewHover = false, compact = false, className = "",
+  name,
+  pricePaise,
+  imageUrl,
+  stockState,
+  stock,
+  inCartQuantity = 0,
+  maxQuantity = 15,
+  onAdd,
+  previewHover = false,
+  compact = false,
+  className = "",
 }: ProductCardProps) {
   const soldOut = stockState === "sold-out";
   const inOrder = inCartQuantity > 0;
@@ -33,19 +41,39 @@ export function ProductCard({
   const indicator = inOrder ? (
     <div className="pos-product-card__indicators" aria-label={`${inCartQuantity} in order`}>
       <span className="pos-product-card__check" aria-hidden="true">✓</span>
-      <span className="pos-product-card__count" aria-hidden="true">{qtyLabel}</span>
+      <span className="pos-product-card__count" aria-hidden="true">×{qtyLabel}</span>
     </div>
   ) : null;
 
-  const stockLabel = stockState === "in-stock" ? "In stock"
-    : stockState === "low-stock" ? "Low stock" : "Sold out";
-  const stockVariant = stockState === "in-stock" ? "neutral"
-    : stockState === "low-stock" ? "warning" : "error";
+  const stockLabel =
+    stockState === "in-stock"
+      ? stock !== undefined
+        ? `${stock} in stock`
+        : "In stock"
+      : stockState === "low-stock"
+        ? stock !== undefined
+          ? `Only ${stock} left`
+          : "Low stock"
+        : "Sold Out";
+
+  const stockVariant =
+    stockState === "in-stock"
+      ? "neutral"
+      : stockState === "low-stock"
+        ? "warning"
+        : "error";
 
   return (
     <Card
       padding="none"
-      className={`pos-product-card pos-product-card--${state} ${compact ? "pos-product-card--compact" : ""} ${className}`}
+      role="button"
+      tabIndex={soldOut ? -1 : 0}
+      onClick={() => {
+        if (!soldOut && !maxed) {
+          onAdd();
+        }
+      }}
+      className={`pos-product-card pos-product-card--${state} ${compact ? "pos-product-card--compact" : ""} cursor-pointer ${className}`}
     >
       {!compact && (
         <div className="pos-product-card__image">
@@ -82,7 +110,10 @@ export function ProductCard({
           fullWidth
           variant={inOrder ? "primary" : "outline"}
           disabled={soldOut || maxed}
-          onClick={onAdd}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd();
+          }}
           aria-pressed={inOrder}
           className="pos-product-card__action"
         >

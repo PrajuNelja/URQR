@@ -21,7 +21,6 @@ export const Tabs = ({
           <button
             key={item.key}
             type="button"
-            role="tab"
             aria-selected={isActive}
             className={isActive ? tabsConfig.itemActive : tabsConfig.item}
             onClick={() => onChange(item.key)}
