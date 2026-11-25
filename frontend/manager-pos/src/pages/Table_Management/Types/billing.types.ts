@@ -1,6 +1,10 @@
 import type { ProductItem } from "@urqr/types";
 
-export type Dish = ProductItem;
+export interface Dish extends ProductItem {
+  stock?: number;
+  lowStockThreshold?: number;
+  imageUrl?: string;
+}
 
 export interface CartItem {
   dish: Dish;
