@@ -7,6 +7,12 @@
     "doc": "docs"
   },
   "scripts": {
+    "test:e2e": "playwright test",
+    "test:viewports": "playwright test tests/pos-viewport.spec.ts",
+    "test:smoke": "playwright test tests/frontend-smoke.spec.ts",
+    "test:health": "node scripts/verify-backend-liveness.js",
+    "test:health:e2e": "playwright test tests/backend-health.spec.ts",
+    "test:report": "playwright show-report",
     "exa:search": "node scripts/exa-web-search.js"
   },
   "repository": {
