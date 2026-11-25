@@ -1,0 +1,24 @@
+{
+  "metrics": {
+    "http_reqs": {
+      "count": 500
+    },
+    "http_req_failed": {
+      "rate": 0
+    },
+    "http_req_duration": {
+      "p95": 0.94,
+      "p99": 1.83,
+      "avg": 0.48,
+      "min": 0.22,
+      "max": 15.9
+    }
+  },
+  "thresholds": {
+    "p(95)<200": true,
+    "rate<0.01": true
+  },
+  "timestamp": "2026-11-25T03:10:15.220Z",
+  "status": "PASSED",
+  "assignee": "Bharath | QA Automation & Hardware Lead"
+}

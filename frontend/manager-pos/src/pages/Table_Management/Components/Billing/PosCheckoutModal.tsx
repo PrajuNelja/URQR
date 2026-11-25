@@ -133,16 +133,11 @@ export const PosCheckoutModal: React.FC<PosCheckoutModalProps> = ({
     onConfirmPayment(parseResult.data);
   }, [paymentMode, total, amountTendered, changeDue, orderNotes, onConfirmPayment]);
 
-  // Keyboard shortcut listeners (Enter to confirm, Escape to dismiss)
+  // Keyboard shortcut listeners (Enter to confirm, Escape handled by PopupModal)
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-        return;
-      }
       if (e.key === "Enter") {
         e.preventDefault();
         if (isTenderSufficient && !isSubmitting) {
@@ -153,7 +148,7 @@ export const PosCheckoutModal: React.FC<PosCheckoutModalProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isTenderSufficient, isSubmitting, handleCheckoutSubmit, onClose]);
+  }, [isOpen, isTenderSufficient, isSubmitting, handleCheckoutSubmit]);
 
   if (!isOpen) return null;
 

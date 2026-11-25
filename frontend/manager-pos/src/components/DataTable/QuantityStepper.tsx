@@ -11,6 +11,9 @@ import { quantityStepperConfig } from "./DataTable.config";
  * - Direct editable numeric input for fast cashier bulk entry.
  * - Maximum limit safety enforcement (default max: 99).
  * - Minimum limit safety enforcement (default min: 1).
+ *
+ * <QuantityStepper value={2} onChange={(v) => setQty(v)} />
+ * <QuantityStepper value={qty} onChange={...} min={1} max={99} size="sm" />
  */
 export const QuantityStepper = ({
   value,

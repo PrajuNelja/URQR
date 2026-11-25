@@ -19,6 +19,7 @@ export const SessionTimeoutModal = ({
   initialSeconds = 60,
 }: Props) => {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+<<<<<<< HEAD
 
   // Reset countdown whenever modal opens
   useEffect(() => {
@@ -26,6 +27,8 @@ export const SessionTimeoutModal = ({
       setSecondsLeft(initialSeconds);
     }
   }, [isOpen, initialSeconds]);
+=======
+>>>>>>> 3fbcc22e156a93a92f4761e97d5e65843b891c05
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
   if (isOpen !== prevIsOpen) {
