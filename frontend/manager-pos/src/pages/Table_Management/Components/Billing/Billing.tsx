@@ -5,6 +5,7 @@ import { BillingCatalog } from "./BillingCatalog";
 import { BillingCart } from "./BillingCart";
 import { BillingPayment } from "./BillingPayment";
 import { BillingReceiptModal } from "./BillingReceiptModal";
+import { PosCheckoutModal } from "./PosCheckoutModal";
 
 // --------------------------------------------------
 // HEADER - Grand Horizon POS Branding
@@ -82,6 +83,12 @@ export default function Billing() {
   } = useBilling();
 
   const [orderNote, setOrderNote] = useState<string>("");
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState<boolean>(false);
+
+  const handleCheckoutModalConfirm = () => {
+    setIsCheckoutModalOpen(false);
+    handleCompletePayment();
+  };
 
   return (
     <main className="flex min-h-dvh w-full flex-col bg-[#f5efe6] lg:h-dvh lg:overflow-hidden text-[#30261d]">
@@ -117,11 +124,21 @@ export default function Billing() {
             cashCollected={cashCollected}
             setCashCollected={setCashCollected}
             change={change}
-            handleCompletePayment={handleCompletePayment}
+            handleCompletePayment={() => setIsCheckoutModalOpen(true)}
             itemsCount={totals.items.length}
           />
         </div>
       </div>
+
+      <PosCheckoutModal
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        subtotal={totals.subtotal}
+        tax={totals.tax}
+        total={totals.total}
+        onConfirmPayment={handleCheckoutModalConfirm}
+        initialMode={paymentMethod === "Cash" ? "Cash" : paymentMethod === "UPI" ? "UPI" : "Card"}
+      />
 
       <BillingReceiptModal
         isOpen={isReceiptOpen}

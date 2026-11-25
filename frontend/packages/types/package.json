@@ -16,6 +16,10 @@
     "./catalog": {
       "types": "./ZodSchema/catalog.schema.ts",
       "import": "./ZodSchema/catalog.schema.ts"
+    },
+    "./checkout": {
+      "types": "./ZodSchema/checkout.schema.ts",
+      "import": "./ZodSchema/checkout.schema.ts"
     }
   },
   "dependencies": {
