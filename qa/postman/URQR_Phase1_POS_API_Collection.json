@@ -1,0 +1,419 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+		"name": "URQR Phase 1 POS - API Regression Collection",
+		"description": "Comprehensive Postman test collection for URQR Standalone Manager POS Phase 1 (Auth, Health, Catalog, Multi-Tenant Security Tests) based on Vishal's Zod schemas, authored by Nayana (QA Lead).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01 - Health & Liveness Probe",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response latency is acceptable (<300ms)', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(300);",
+							"});",
+							"",
+							"pm.test('Service reports UP status', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql('UP');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/actuator/health/liveness",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"actuator",
+						"health",
+						"liveness"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "02 - Manager Login (Zero-Tenant Happy Path)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Login response latency is < 300ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(300);",
+							"});",
+							"",
+							"// Schema Contract: AuthResponseSchema { token: string, user: { username, role } }",
+							"pm.test('Response matches AuthResponseSchema contract', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('token');",
+							"    pm.expect(jsonData.token).to.be.a('string');",
+							"    pm.expect(jsonData.token.length).to.be.above(20);",
+							"    pm.environment.set('authToken', jsonData.token);",
+							"",
+							"    pm.expect(jsonData).to.have.property('user');",
+							"    pm.expect(jsonData.user).to.have.property('username');",
+							"    pm.expect(jsonData.user).to.have.property('role');",
+							"    pm.expect(jsonData.user.username).to.eql(pm.environment.get('posUsername') || 'pos_manager_1');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{posUsername}}\",\n    \"password\": \"{{posPassword}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "03 - Manager Login (Invalid Password - Security)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 401 Unauthorized', function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"pm.test('Error payload contains descriptive rejection', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('error');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{posUsername}}\",\n    \"password\": \"WrongSecurityPassword@999\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "04 - Manager Login (Missing Credentials - Validation)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 400 Bad Request', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"password\": \"Manager@123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "05 - Catalog Products (Contract Schema Validation)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Schema Contract: ProductItemSchema { id, name, price, category, inStock }",
+							"pm.test('Products conform to ProductItemSchema contract', function () {",
+							"    const jsonData = pm.response.json();",
+							"    const products = Array.isArray(jsonData) ? jsonData : (jsonData.products || jsonData.items);",
+							"    pm.expect(Array.isArray(products)).to.be.true;",
+							"    pm.expect(products.length).to.be.above(0);",
+							"",
+							"    const item = products[0];",
+							"    pm.expect(item).to.have.property('id');",
+							"    pm.expect(item).to.have.property('name');",
+							"    pm.expect(item).to.have.property('price');",
+							"    pm.expect(typeof item.name).to.eql('string');",
+							"    pm.expect(typeof item.price).to.eql('number');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/products",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "06 - Catalog Categories (Contract Schema Validation)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Schema Contract: CategorySchema { id, name, slug }",
+							"pm.test('Categories conform to CategorySchema contract', function () {",
+							"    const jsonData = pm.response.json();",
+							"    const categories = Array.isArray(jsonData) ? jsonData : jsonData.categories;",
+							"    pm.expect(Array.isArray(categories)).to.be.true;",
+							"    pm.expect(categories.length).to.be.above(0);",
+							"",
+							"    const cat = categories[0];",
+							"    pm.expect(cat).to.have.property('id');",
+							"    pm.expect(cat).to.have.property('name');",
+							"    pm.expect(cat).to.have.property('slug');",
+							"    pm.expect(typeof cat.name).to.eql('string');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/catalog/categories",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"catalog",
+						"categories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "07 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 403 Forbidden or 404 Not Found for cross-tenant breach', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([403, 404, 401]);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "X-Tenant-ID",
+						"value": "{{tenantB_Id}}"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/tenant/{{tenantB_Id}}/orders",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"tenant",
+						"{{tenantB_Id}}",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "08 - Super-Manager Cross-Tenant Metrics Query",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for Super-Manager query', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test('Returns aggregated platform tenant metrics', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('totalTenants');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "X-Super-Manager",
+						"value": "true"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/platform/tenants/metrics",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"platform",
+						"tenants",
+						"metrics"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,47 @@
+name: URQR QA API Newman Pipeline
+
+# =============================================================================
+# URQR Platform — Phase 1 Standalone Manager POS
+# Assignee: Nayana | Role: Functional & API QA Lead
+# Job: Postman API Regression & Multi-Tenant Contract Verification via Newman
+# =============================================================================
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "qa/postman/**"
+      - ".github/workflows/qa-newman.yml"
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: qa-newman-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  newman-contract-tests:
+    name: "QA — Newman API Contract & Multi-Tenant Regression"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Newman Smoke & Contract Verification
+        run: node scripts/run-newman-smoke.js

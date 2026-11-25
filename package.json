@@ -13,6 +13,8 @@
     "test:smoke": "playwright test tests/frontend-smoke.spec.ts",
     "test:health": "node scripts/verify-backend-liveness.js",
     "test:health:e2e": "playwright test tests/backend-health.spec.ts",
+    "test:newman": "node scripts/run-newman-smoke.js",
+    "test:newman:cli": "newman run qa/postman/URQR_Phase1_POS_API_Collection.json -e qa/postman/environments/Local_Docker.postman_environment.json",
     "test:printer": "python qa/printer-simulator/Test_printer.py",
     "test:k6": "node scripts/run-k6-benchmark.js",
     "test:k6:native": "k6 run qa/k6-tests/baseline.js",
@@ -33,7 +35,8 @@
   "homepage": "https://github.com/PrajuNelja/URQR#readme",
   "devDependencies": {
     "@playwright/test": "^1.65.1",
-    "@types/node": "^26.6.6"
+    "@types/node": "^26.6.6",
+    "newman": "^6.2.3"
   },
   "dependencies": {
     "exa-js": "2.29.0"
