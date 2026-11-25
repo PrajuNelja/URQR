@@ -157,7 +157,14 @@ importers:
         specifier: ^7.4.1
         version: 7.4.1
 
-  manager-pos: {}
+  manager-pos:
+    dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.108.2
+        version: 5.108.2(@types/react@19.3.0)(react@19.3.1)
+      zustand:
+        specifier: ^5.1.0
+        version: 5.1.0(@types/react@19.3.0)(immer@11.2.10)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
 
   packages/types:
     dependencies:

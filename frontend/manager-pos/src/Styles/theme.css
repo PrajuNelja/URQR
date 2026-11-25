@@ -62,4 +62,26 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+
+
+
+/* POS Header Specification */
+--color-pos-header-border: #E4D8C3;
+--color-pos-header-surface: #FFFDF8;
+--color-pos-header-text: #3B2A1E;
+
+--color-pos-online: #3F6B3A;
+--color-pos-online-bg: #FAF3E6;
+
+--color-pos-offline: #B91C1C;
+--color-pos-offline-bg: #FFF0EE;
+
+ --color-pos-surface: #FFFDF8;
+  --color-pos-surface-alt: #FAF3E6;
+  --color-pos-border: #E4D8C3;
+  --color-pos-primary: #8B5E3C;
+  --color-pos-text: #3B2A1E;
+  --color-pos-text-secondary: #7A6A5A;
+
 }
+

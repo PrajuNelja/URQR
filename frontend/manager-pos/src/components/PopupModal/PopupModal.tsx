@@ -1,6 +1,5 @@
-// src/components/PopupModal/PopupModal.tsx
-
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
+import type { MouseEvent } from "react";
 import { X } from "lucide-react";
 import type { PopupModalProps } from "./PopupModal.types";
 import {
@@ -15,21 +14,17 @@ import {
 } from "./PopupModal.config";
 import { Button } from "../Buttons/Button";
 
-/**
- * PopupModal — accessible dialog with optional confirm/cancel footer.
- *
- * <PopupModal
- *   isOpen={open}
- *   onClose={() => setOpen(false)}
- *   title="Delete Record"
- *   confirmText="Delete"
- *   isDanger
- *   onConfirm={handleDelete}
- * >
- *   Are you sure?
- * </PopupModal>
- */
-export const PopupModal = ({
+const FOCUSABLE = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+/** Same public API as existing modal, with focus trap + focus restoration. */
+export function PopupModal({
   isOpen,
   onClose,
   title,
@@ -46,31 +41,64 @@ export const PopupModal = ({
   closeOnEscape = true,
   className = "",
   hideCloseButton = false,
-}: PopupModalProps) => {
-  // ── Escape key handler ──
-  useEffect(() => {
-    if (!isOpen || !closeOnEscape) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, closeOnEscape, onClose]);
+}: PopupModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
-  // ── Lock body scroll while open ──
   useEffect(() => {
     if (!isOpen) return;
-    const original = document.body.style.overflow;
+    const panel = panelRef.current;
+    const previous = document.activeElement instanceof HTMLElement
+      ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = original;
+
+    const getFocusable = () => Array.from(
+      panel?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []
+    ).filter((el) => el.getClientRects().length > 0);
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      (getFocusable()[0] ?? panel)?.focus();
+    });
+
+    const handleKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && closeOnEscape) {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusables = getFocusable();
+      if (focusables.length === 0) {
+        event.preventDefault();
+        panel?.focus();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !panel?.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !panel?.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-  }, [isOpen]);
+
+    document.addEventListener("keydown", handleKeys);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      document.removeEventListener("keydown", handleKeys);
+      document.body.style.overflow = previousOverflow;
+      previous?.focus();
+    };
+  }, [isOpen, closeOnEscape, onClose]);
 
   if (!isOpen) return null;
 
-  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && closeOnBackdrop) onClose();
+  const handleBackdrop = (event: MouseEvent<HTMLDivElement>) => {
+    if (closeOnBackdrop && event.target === event.currentTarget) onClose();
   };
 
   const handleCancel = () => {
@@ -78,30 +106,22 @@ export const PopupModal = ({
     else onClose();
   };
 
-  const showFooter =
-    footer !== undefined ||
-    onConfirm !== undefined;
+  const showFooter = footer !== undefined || onConfirm !== undefined;
 
   return (
-    <div
-      className={MODAL_BACKDROP}
-      onClick={handleBackdrop}
-      role="presentation"
-    >
+    <div className={MODAL_BACKDROP} onClick={handleBackdrop} role="presentation">
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className={`${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? "modal-title" : undefined}
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : "Dialog"}
       >
-        {/* Header */}
         {(title || !hideCloseButton) && (
           <div className={MODAL_HEADER}>
-            {title && (
-              <h2 id="modal-title" className={MODAL_TITLE}>
-                {title}
-              </h2>
-            )}
+            {title && <h2 id={titleId} className={MODAL_TITLE}>{title}</h2>}
             {!hideCloseButton && (
               <button
                 type="button"
@@ -115,11 +135,7 @@ export const PopupModal = ({
             )}
           </div>
         )}
-
-        {/* Body */}
         <div className={MODAL_BODY}>{children}</div>
-
-        {/* Footer */}
         {showFooter && (
           <div className={MODAL_FOOTER}>
             {footer ?? (
@@ -143,6 +159,6 @@ export const PopupModal = ({
       </div>
     </div>
   );
-};
+}
 
 export default PopupModal;

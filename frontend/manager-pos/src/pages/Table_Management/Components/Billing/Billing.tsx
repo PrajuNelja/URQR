@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { useBilling } from "../../Hooks/useBilling";
 import { BillingCatalog } from "./BillingCatalog";
@@ -7,6 +7,8 @@ import { BillingPayment } from "./BillingPayment";
 import { BillingReceiptModal } from "./BillingReceiptModal";
 import { PosCheckoutModal } from "./PosCheckoutModal";
 import { DesktopWindowControls } from "../../../../components/Header/DesktopWindowControls";
+import { usePosKeyboardShortcuts } from "../../Hooks/usePosKeyboardShortcuts";
+import type { PosFunctionKey } from "../../Hooks/posShortcutKeys";
 
 // --------------------------------------------------
 // HEADER - Grand Horizon POS Branding
@@ -86,6 +88,28 @@ export default function Billing() {
 
   const [orderNote, setOrderNote] = useState<string>("");
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleShortcut = useCallback(
+    (key: PosFunctionKey) => {
+      if (key === "F2") {
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (key === "F4") {
+        if (totals.items.length > 0) {
+          setIsCheckoutModalOpen(true);
+        }
+        return;
+      }
+      console.info(`[POS] ${key} detected`);
+    },
+    [totals.items.length]
+  );
+
+  usePosKeyboardShortcuts({
+    onShortcut: handleShortcut,
+  });
 
   const handleCheckoutModalConfirm = () => {
     setIsCheckoutModalOpen(false);

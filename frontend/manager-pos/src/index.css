@@ -1,11 +1,95 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+/* src/index.css */
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 
 @import "./styles/theme.css";
 @import "./styles/typography.css";
 @import "./styles/base.css";
 @import "./styles/components.css";
 
+@theme {
+  /* ═══════════════════════════════════════════
+     1. COLORS — New Spec (URQR Theme)
+     ═══════════════════════════════════════════ */
+  --color-bg: #F5EEE0;
+  --color-surface: #FFFDF8;
+  --color-surface-alt: #FAF3E6;
+  --color-border: #E4D8C3;
+  
+  --color-primary: #8B5E3C;
+  --color-primary-dark: #5C3D26;
+  --color-text: #3B2A1E;
+  --color-text-muted: #7A6A5A;
+  
+  --color-success: #3F6B3A;
+  --color-success-bg: #EEF3E8;
+  --color-warning: #B45309;
+  --color-warning-bg: #FDF1E1;
+  --color-error: #B91C1C;
+  
+  --color-disabled: #D9CDB8;
+  --color-disabled-text: #8E7F6C;
+  --color-on-primary: #FFFFFF;
+  --color-input-bg: #FFFFFF;
+
+  /* ═══════════════════════════════════════════
+     2. TYPOGRAPHY (Inter)
+     ═══════════════════════════════════════════ */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  
+  /* Page Title: 28px / Semi Bold */
+  --text-page-title: 28px;
+  --text-page-title--line-height: 1.2;
+  --text-page-title--font-weight: 600;
+
+  /* Modal Heading: 24px / Semi Bold */
+  --text-modal-heading: 24px;
+  --text-modal-heading--line-height: 1.2;
+  --text-modal-heading--font-weight: 600;
+
+  /* Amount to Pay: 32px / Bold */
+  --text-amount: 32px;
+  --text-amount--line-height: 1.2;
+  --text-amount--font-weight: 700;
+
+  /* Change/Remaining: 28px / Bold */
+  --text-change: 28px;
+  --text-change--line-height: 1.2;
+  --text-change--font-weight: 700;
+
+  /* Card Title: 15px / Semi Bold */
+  --text-card-title: 15px;
+  --text-card-title--line-height: 1.4;
+  --text-card-title--font-weight: 600;
+
+  /* Field Label/Buttons: 14px / Medium */
+  --text-label: 14px;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 500;
+
+  /* ═══════════════════════════════════════════
+     3. SPACING (8px Grid)
+     ═══════════════════════════════════════════ */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+
+  /* ═══════════════════════════════════════════
+     4. RADIUS & ELEVATION
+     ═══════════════════════════════════════════ */
+  --radius-input: 8px;
+  --radius-modal: 16px;
+  --radius-btn: 8px;
+  --radius-pill: 9999px;
+
+  /* Modal shadow: 0 8px 24px rgba(59,42,30,0.20) */
+  --shadow-modal: 0 8px 24px rgba(59, 42, 30, 0.20);
+  --shadow-none: none;
+}
+
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(-12px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -17,14 +101,13 @@
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-
-@keyframes toastIn {
-  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+/* Base resets */
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
 }
