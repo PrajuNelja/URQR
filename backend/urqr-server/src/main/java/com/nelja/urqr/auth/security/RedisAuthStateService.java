@@ -1,8 +1,5 @@
 package com.nelja.urqr.auth.security;
 
-import com.nelja.urqr.auth.access.role.RoleRepository;
-import com.nelja.urqr.auth.access.user.StaffUserRepository;
-import com.nelja.urqr.auth.hotel.HotelRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
@@ -24,21 +21,16 @@ public class RedisAuthStateService {
     private static final Duration INDEX_TTL = Duration.ofDays(8);
 
     private final StringRedisTemplate redis;
-    private final HotelRepository hotels;
-    private final StaffUserRepository users;
-    private final RoleRepository roles;
+    private final StaffAuthorizationLookup authorizationLookup;
     private final Duration authorizationTtl;
 
-    public RedisAuthStateService(StringRedisTemplate redis, HotelRepository hotels, StaffUserRepository users,
-            RoleRepository roles,
+    public RedisAuthStateService(StringRedisTemplate redis, StaffAuthorizationLookup authorizationLookup,
             @Value("${app.security.authorization-cache-ttl-seconds:15}") long authorizationTtlSeconds) {
         if (authorizationTtlSeconds < 1 || authorizationTtlSeconds > 300) {
             throw new IllegalArgumentException("AUTHORIZATION_CACHE_TTL_SECONDS must be from 1 to 300");
         }
         this.redis = redis;
-        this.hotels = hotels;
-        this.users = users;
-        this.roles = roles;
+        this.authorizationLookup = authorizationLookup;
         this.authorizationTtl = Duration.ofSeconds(authorizationTtlSeconds);
     }
 
@@ -77,19 +69,12 @@ public class RedisAuthStateService {
         String cachedRole = redis.opsForValue().get(cacheKey);
         if (cachedRole != null) return cachedRole;
 
-        if (hotels.findByIdAndStatus(hotelId, "ACTIVE").isEmpty()) {
-            throw new org.springframework.security.authentication.BadCredentialsException("Inactive tenant");
-        }
-        var user = users.findByIdAndHotelId(userId, hotelId).filter(account -> account.isActive())
-                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Inactive user"));
-        var role = roles.findByIdAndHotelId(user.getRoleId(), hotelId)
-                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Invalid role"));
-
-        redis.opsForValue().set(cacheKey, role.getName(), authorizationTtl);
+        String role = authorizationLookup.findActiveRole(hotelId, userId);
+        redis.opsForValue().set(cacheKey, role, authorizationTtl);
         String index = hotelStaffIndexKey(hotelId);
         redis.opsForSet().add(index, userId.toString());
         redis.expire(index, INDEX_TTL);
-        return role.getName();
+        return role;
     }
 
     public void invalidateStaffAuthorization(UUID hotelId, UUID userId) {

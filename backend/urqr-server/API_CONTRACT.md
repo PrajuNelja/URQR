@@ -49,9 +49,9 @@ The date range is inclusive at `from` and exclusive at `to`. Results are scoped 
 ## Local checks
 
 ```powershell
-Invoke-RestMethod http://localhost:8081/actuator/health/liveness
-Invoke-RestMethod http://localhost:8081/actuator/health/readiness
-Invoke-WebRequest http://localhost:8081/v3/api-docs | Select-Object -ExpandProperty Content
+Invoke-RestMethod http://localhost:8080/actuator/health/liveness
+Invoke-RestMethod http://localhost:8080/actuator/health/readiness
+Invoke-WebRequest http://localhost:8080/v3/api-docs | Select-Object -ExpandProperty Content
 ```
 
 Expected: liveness and readiness return `{"status":"UP"}`; OpenAPI JSON contains `"openapi":"3.1.0"` and the catalog/order paths. Use Swagger UI to obtain a token and exercise the protected requests.

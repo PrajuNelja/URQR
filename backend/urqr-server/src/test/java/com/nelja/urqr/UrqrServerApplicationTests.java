@@ -25,14 +25,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -46,6 +54,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -53,6 +62,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,6 +120,15 @@ class UrqrServerApplicationTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Value("${app.platform-admin.username}")
+    private String platformAdminUsername;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
     @Autowired
     private PlatformTransactionManager transactionManager;
 
@@ -145,7 +164,108 @@ class UrqrServerApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openapi").value("3.1.0"))
                 .andExpect(jsonPath("$.paths['/api/v1/catalog/products']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/catalog/categories']").exists());
+                .andExpect(jsonPath("$.paths['/api/v1/catalog/categories']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/categories'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/categories'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/categories/{id}'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/categories/{id}'].patch").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/categories/{id}'].delete").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/items'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/items'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/items/all'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/items/{id}'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/items/{id}'].patch").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/menu/items/{id}'].delete").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/platform/hotels/{hotelId}/users'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/users'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/users'].post").exists());
+    }
+
+    @Test
+    void everyUrqrControllerRouteAndMethodAppearsInSwagger() throws Exception {
+        JsonNode paths = objectMapper.readTree(mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).path("paths");
+
+        requestMappingHandlerMapping.getHandlerMethods().forEach((mapping, handler) -> {
+            if (!handler.getBeanType().getPackageName().startsWith("com.nelja.urqr")) return;
+            mapping.getPatternValues().forEach(path -> {
+                assertTrue(paths.has(path), "Swagger is missing route " + path);
+                for (RequestMethod method : mapping.getMethodsCondition().getMethods()) {
+                    assertTrue(paths.path(path).has(method.name().toLowerCase(Locale.ROOT)),
+                            "Swagger is missing " + method + " " + path);
+                }
+            });
+        });
+    }
+
+    @Test
+    void platformAdminCanAddManagerAndCashierAccountsAndStaffCanReadCategories() throws Exception {
+        UUID hotelId = UUID.randomUUID();
+        insertHotelWithStaffRoles(hotelId);
+        MvcResult platformLogin = mockMvc.perform(post("/api/v1/platform/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", platformAdminUsername,
+                                "password", "test-only-platform-admin-password"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        String platformToken = objectMapper.readTree(platformLogin.getResponse().getContentAsString())
+                .path("accessToken").asText();
+
+        // The reported 401 is expected without a staff token; platform admin is also not a POS staff role.
+        mockMvc.perform(get("/api/v1/menu/categories"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/menu/categories")
+                        .header("Authorization", "Bearer " + platformToken))
+                .andExpect(status().isForbidden());
+
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String managerUsername = "platform-manager-" + suffix;
+        String cashierUsername = "platform-cashier-" + suffix;
+        String managerPassword = "ManagerPassword@123";
+        String cashierPassword = "CashierPassword@123";
+
+        mockMvc.perform(post("/api/v1/platform/hotels/{hotelId}/users", hotelId)
+                        .header("Authorization", "Bearer " + platformToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", managerUsername,
+                                "password", managerPassword, "role", "MANAGER"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username").value(managerUsername))
+                .andExpect(jsonPath("$.role").value("MANAGER"))
+                .andExpect(jsonPath("$.hotelId").value(hotelId.toString()));
+
+        mockMvc.perform(post("/api/v1/platform/hotels/{hotelId}/users", hotelId)
+                        .header("Authorization", "Bearer " + platformToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", cashierUsername,
+                                "password", cashierPassword, "role", "CASHIER"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username").value(cashierUsername))
+                .andExpect(jsonPath("$.role").value("CASHIER"));
+
+        String managerToken = loginStaff(managerUsername, managerPassword);
+        String cashierToken = loginStaff(cashierUsername, cashierPassword);
+        mockMvc.perform(get("/api/v1/menu/categories")
+                        .header("Authorization", "Bearer " + cashierToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/menu/categories")
+                        .header("Authorization", "Bearer " + managerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/platform/hotels/{hotelId}/users", hotelId)
+                        .header("Authorization", "Bearer " + managerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", "not-platform-admin",
+                                "password", "ManagerPassword@123", "role", "CASHIER"))))
+                .andExpect(status().isForbidden());
+    }
+
+    private String loginStaff(String username, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", username, "password", password))))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).path("accessToken").asText();
     }
 
     @Test
@@ -451,6 +571,35 @@ class UrqrServerApplicationTests {
             tenant.setString(2, "Tenant " + tenantId);
             tenant.setString(3, "tenant-" + tenantId);
             tenant.executeUpdate();
+        }
+    }
+
+    private static void insertHotelWithStaffRoles(UUID hotelId) throws Exception {
+        try (Connection owner = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            owner.setAutoCommit(false);
+            try (PreparedStatement tenant = owner.prepareStatement(
+                    "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)");
+                    PreparedStatement hotel = owner.prepareStatement("""
+                    INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
+                    VALUES (?, 'Platform staff test hotel', 'INR', 'Asia/Kolkata', '06:00', 'ACTIVE', now())
+                    """);
+                    PreparedStatement role = owner.prepareStatement(
+                            "INSERT INTO hotel_role(id,hotel_id,name) VALUES (?,?,?)")) {
+                tenant.setObject(1, hotelId);
+                tenant.setString(2, "Platform staff tenant " + hotelId);
+                tenant.setString(3, "platform-staff-" + hotelId);
+                tenant.executeUpdate();
+                hotel.setObject(1, hotelId);
+                hotel.executeUpdate();
+                for (String roleName : List.of("MANAGER", "CASHIER")) {
+                    role.setObject(1, UUID.randomUUID());
+                    role.setObject(2, hotelId);
+                    role.setString(3, roleName);
+                    role.executeUpdate();
+                }
+            }
+            owner.commit();
         }
     }
 

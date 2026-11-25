@@ -63,8 +63,8 @@ Run the full enforced suite from `backend/urqr-server`:
 & 'C:\Users\CMIT\Downloads\apache-maven-3.9.16-bin\apache-maven-3.9.16\bin\mvn.cmd' -B '-Dperformance.enforce=true' test
 ```
 
-Swagger UI: `http://localhost:8081/swagger-ui/index.html`  
-OpenAPI JSON: `http://localhost:8081/v3/api-docs`
+Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 After the Docker CLI is available, inspect Compose Flyway history from `backend/urqr-server`:
 

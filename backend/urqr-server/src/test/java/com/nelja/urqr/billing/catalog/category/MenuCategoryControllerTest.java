@@ -90,6 +90,37 @@ class MenuCategoryControllerTest {
     }
 
     @Test
+    void getReadsOneCategoryOnlyWithinTheCurrentHotel() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        UUID categoryId = UUID.randomUUID();
+        MenuCategory category = new MenuCategory(HOTEL_ID, "Desserts");
+        when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
+
+        MenuCategoryController.CategoryDto result = controller.get(jwt, categoryId);
+
+        assertEquals("Desserts", result.name());
+        verify(categories).findByIdAndHotelId(categoryId, HOTEL_ID);
+    }
+
+    @Test
+    void updateRenamesCategoryAndEvictsTheHotelCatalog() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        when(tenant.userId(jwt)).thenReturn(USER_ID);
+        UUID categoryId = UUID.randomUUID();
+        MenuCategory category = new MenuCategory(HOTEL_ID, "Old name");
+        when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
+
+        MenuCategoryController.CategoryDto result = controller.update(jwt, categoryId,
+                new MenuCategoryController.CategoryRequest(" New name "));
+
+        assertEquals("New name", result.name());
+        verify(categories).save(category);
+        verify(audit).record(HOTEL_ID, USER_ID, "CATEGORY_RENAMED", "MenuCategory", categoryId.toString(),
+                "Old name", "New name");
+        verify(catalog).evictAfterCommit(HOTEL_ID);
+    }
+
+    @Test
     void statusEndpointDeactivatesCategoryAndRecordsAuditEvent() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
@@ -104,5 +135,22 @@ class MenuCategoryControllerTest {
         verify(categories).save(category);
         verify(audit).record(HOTEL_ID, USER_ID, "CATEGORY_STATUS_CHANGED", "MenuCategory", categoryId.toString(),
                 null, "false");
+    }
+
+    @Test
+    void deleteSoftDeactivatesCategoryAndEvictsTheHotelCatalog() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        when(tenant.userId(jwt)).thenReturn(USER_ID);
+        UUID categoryId = UUID.randomUUID();
+        MenuCategory category = new MenuCategory(HOTEL_ID, "Seasonal");
+        when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
+
+        controller.deactivate(jwt, categoryId);
+
+        assertFalse(category.isActive());
+        verify(categories).save(category);
+        verify(audit).record(HOTEL_ID, USER_ID, "CATEGORY_STATUS_CHANGED", "MenuCategory", categoryId.toString(),
+                "true", "false");
+        verify(catalog).evictAfterCommit(HOTEL_ID);
     }
 }

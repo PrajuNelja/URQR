@@ -3,6 +3,7 @@ package com.nelja.urqr.billing.catalog.category;
 import com.nelja.urqr.billing.catalog.item.MenuCatalogCache;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.security.CurrentTenant;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -56,6 +57,13 @@ public class MenuCategoryController {
         return rows.stream().map(MenuCategoryController::dto).toList();
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')")
+    @Operation(summary = "Get one menu category for the authenticated hotel")
+    public CategoryDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return dto(find(id, tenant.hotelId(jwt)));
+    }
+
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
     public CategoryDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
@@ -83,6 +91,20 @@ public class MenuCategoryController {
                 id.toString(), null, Boolean.toString(request.active()));
         catalog.evictAfterCommit(hotelId);
         return dto(category);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('MANAGER')")
+    @Operation(summary = "Deactivate a menu category without removing historical references")
+    public void deactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        UUID hotelId = tenant.hotelId(jwt);
+        MenuCategory category = find(id, hotelId);
+        category.setActive(false);
+        categories.save(category);
+        audit.record(hotelId, tenant.userId(jwt), "CATEGORY_STATUS_CHANGED", "MenuCategory",
+                id.toString(), "true", "false");
+        catalog.evictAfterCommit(hotelId);
     }
 
     private MenuCategory find(UUID id, UUID hotelId) {

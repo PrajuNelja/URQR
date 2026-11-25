@@ -119,4 +119,103 @@ class MenuItemControllerTest {
         assertTrue(result.getFirst().available());
         verify(catalog).get(HOTEL_ID);
     }
+
+    @Test
+    void listAllReturnsItemsAcrossCategoriesIncludingUnavailableItems() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        MenuItem chai = mock(MenuItem.class);
+        when(chai.getId()).thenReturn(UUID.randomUUID());
+        when(chai.getCategoryId()).thenReturn(CATEGORY_ID);
+        when(chai.getCategoryName()).thenReturn("Beverages");
+        when(chai.getName()).thenReturn("Masala Chai");
+        when(chai.getPrice()).thenReturn(new BigDecimal("80.00"));
+        when(chai.isAvailable()).thenReturn(true);
+        when(chai.getDiscountPercent()).thenReturn(BigDecimal.ZERO);
+        when(chai.getCgstRate()).thenReturn(BigDecimal.ZERO);
+        when(chai.getSgstRate()).thenReturn(BigDecimal.ZERO);
+        when(chai.getVatRate()).thenReturn(BigDecimal.ZERO);
+
+        MenuItem dosa = mock(MenuItem.class);
+        UUID dosaCategoryId = UUID.randomUUID();
+        when(dosa.getId()).thenReturn(UUID.randomUUID());
+        when(dosa.getCategoryId()).thenReturn(dosaCategoryId);
+        when(dosa.getCategoryName()).thenReturn("South Meals");
+        when(dosa.getName()).thenReturn("Masala Dosa");
+        when(dosa.getPrice()).thenReturn(new BigDecimal("120.00"));
+        when(dosa.isAvailable()).thenReturn(false);
+        when(dosa.getDiscountPercent()).thenReturn(BigDecimal.ZERO);
+        when(dosa.getCgstRate()).thenReturn(BigDecimal.ZERO);
+        when(dosa.getSgstRate()).thenReturn(BigDecimal.ZERO);
+        when(dosa.getVatRate()).thenReturn(BigDecimal.ZERO);
+        when(items.findAllActiveWithCategory(HOTEL_ID)).thenReturn(List.of(chai, dosa));
+
+        List<MenuItemController.AllItemDto> result = controller.listAll(jwt);
+
+        assertEquals(2, result.size());
+        assertEquals("Beverages", result.get(0).categoryName());
+        assertEquals("Masala Chai", result.get(0).name());
+        assertTrue(result.get(0).available());
+        assertEquals("South Meals", result.get(1).categoryName());
+        assertEquals("Masala Dosa", result.get(1).name());
+        assertEquals(false, result.get(1).available());
+        verify(items).findAllActiveWithCategory(HOTEL_ID);
+    }
+
+    @Test
+    void getReturnsOnlyAnActiveItemFromTheCurrentHotel() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        UUID itemId = UUID.randomUUID();
+        MenuItem item = new MenuItem(HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
+        when(items.findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID)).thenReturn(Optional.of(item));
+
+        MenuItemController.ItemDto result = controller.get(jwt, itemId);
+
+        assertEquals("Coffee", result.name());
+        assertEquals(new BigDecimal("3.50"), result.price());
+        verify(items).findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID);
+    }
+
+    @Test
+    void updateChangesTheItemAndEvictsTheCatalog() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        when(tenant.userId(jwt)).thenReturn(USER_ID);
+        UUID itemId = UUID.randomUUID();
+        MenuCategory activeCategory = mock(MenuCategory.class);
+        when(activeCategory.isActive()).thenReturn(true);
+        when(categories.findByIdAndHotelId(CATEGORY_ID, HOTEL_ID)).thenReturn(Optional.of(activeCategory));
+        MenuItem item = new MenuItem(HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
+        when(items.findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID)).thenReturn(Optional.of(item));
+
+        MenuItemController.ItemDto result = controller.update(jwt, itemId,
+                new MenuItemController.ItemRequest(CATEGORY_ID, "Filter Coffee", new BigDecimal("4.00")));
+
+        assertEquals("Filter Coffee", result.name());
+        assertEquals(new BigDecimal("4.00"), result.price());
+        verify(items).save(item);
+        verify(audit).record(HOTEL_ID, USER_ID, "MENU_ITEM_CHANGED", "MenuItem", itemId.toString(),
+                "Coffee 3.50", "Filter Coffee 4.00");
+        verify(catalog).evictAfterCommit(HOTEL_ID);
+    }
+
+    @Test
+    void availabilityCanBeChangedAndItemDeleteIsADeactivation() {
+        when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
+        when(tenant.userId(jwt)).thenReturn(USER_ID);
+        UUID itemId = UUID.randomUUID();
+        MenuItem item = new MenuItem(HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
+        when(items.findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID)).thenReturn(Optional.of(item));
+
+        MenuItemController.ItemDto result = controller.availability(jwt, itemId,
+                new MenuItemController.AvailabilityRequest(false));
+        assertEquals(false, result.available());
+        controller.deactivate(jwt, itemId);
+
+        assertEquals(false, item.isAvailable());
+        verify(items, org.mockito.Mockito.times(2)).save(item);
+        verify(audit).record(HOTEL_ID, USER_ID, "MENU_ITEM_AVAILABILITY_CHANGED", "MenuItem", itemId.toString(),
+                null, "false");
+        verify(audit).record(HOTEL_ID, USER_ID, "MENU_ITEM_DEACTIVATED", "MenuItem", itemId.toString(), null,
+                "Coffee");
+        verify(catalog, org.mockito.Mockito.times(2)).evictAfterCommit(HOTEL_ID);
+    }
 }

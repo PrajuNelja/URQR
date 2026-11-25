@@ -40,7 +40,7 @@ Pop-Location
 docker compose --env-file backend/urqr-server/.env -f backend/urqr-server/docker-compose.yaml up --build -d
 ```
 
-The API is available at `http://localhost:8081`; PostgreSQL and Redis are published on localhost only. Compose persists their data in named volumes. Start just Redis with `docker compose --env-file backend/urqr-server/.env -f backend/urqr-server/docker-compose.yaml up -d redis`. Stop the stack with `docker compose --env-file backend/urqr-server/.env -f backend/urqr-server/docker-compose.yaml down`; add `-v` only when you also want to delete the database and Redis data.
+The API is available at `http://localhost:8080`; PostgreSQL and Redis are published on localhost only. Compose persists their data in named volumes. Start just Redis with `docker compose --env-file backend/urqr-server/.env -f backend/urqr-server/docker-compose.yaml up -d redis`. Stop the stack with `docker compose --env-file backend/urqr-server/.env -f backend/urqr-server/docker-compose.yaml down`; add `-v` only when you also want to delete the database and Redis data.
 
 Redis stores access and refresh token sessions and short-lived authorization state for hotel staff. Refresh tokens are single use. Disabling a hotel or staff account revokes its registered tokens, and account or role changes clear cached authorization state. Authentication fails closed if Redis is unavailable. Set `REDIS_URL` when Redis is not available at `redis://localhost:6379/0`.
 

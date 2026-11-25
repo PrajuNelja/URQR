@@ -61,7 +61,7 @@ docker compose --env-file .env -f docker-compose.yaml up -d postgres redis
 docker compose --env-file .env -f docker-compose.yaml up --build -d api
 ```
 
-The API listens on container port 8080; Compose maps it to `http://localhost:8081`. Liveness is `GET /actuator/health/liveness`; readiness is `GET /actuator/health/readiness`.
+The API listens on container port 8080 by default; Compose maps it to `http://localhost:8080`. Set `API_PORT` to change the app and host port. Liveness is `GET /actuator/health/liveness`; readiness is `GET /actuator/health/readiness`.
 
 Run the complete checks:
 

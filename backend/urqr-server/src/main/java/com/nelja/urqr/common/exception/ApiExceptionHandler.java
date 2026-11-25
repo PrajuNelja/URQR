@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -60,6 +61,12 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiError> invalidDateTime(DateTimeException exception, HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, "INVALID_DATE_TIME",
                 "A date, time, or timezone value is invalid", List.of(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ApiError> forbidden(AccessDeniedException exception, HttpServletRequest request) {
+        return response(HttpStatus.FORBIDDEN, "FORBIDDEN", "You do not have permission to perform this action",
+                List.of(), request);
     }
 
     @ExceptionHandler(Exception.class)
