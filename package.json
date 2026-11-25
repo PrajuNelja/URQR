@@ -9,6 +9,7 @@
   "scripts": {
     "test:e2e": "playwright test",
     "test:viewports": "playwright test tests/pos-viewport.spec.ts",
+    "test:primitives": "playwright test tests/ui-primitives.spec.ts",
     "test:smoke": "playwright test tests/frontend-smoke.spec.ts",
     "test:health": "node scripts/verify-backend-liveness.js",
     "test:health:e2e": "playwright test tests/backend-health.spec.ts",
