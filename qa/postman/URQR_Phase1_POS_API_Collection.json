@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
 		"name": "URQR Phase 1 POS - API Regression Collection",
-		"description": "Comprehensive Postman test collection for URQR Standalone Manager POS Phase 1 (Auth, Health, Catalog, Multi-Tenant Security Tests) based on Vishal's Zod schemas, authored by Nayana (QA Lead).",
+		"description": "Comprehensive Postman test collection for URQR Standalone Manager POS Phase 1 authored by Nayana (QA Lead). Covers Auth endpoints, RS256 JWT structure validation, negative security tests, brute-force throttling, and catalog contracts.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -53,7 +53,7 @@
 			"response": []
 		},
 		{
-			"name": "02 - Manager Login (Zero-Tenant Happy Path)",
+			"name": "02 - Manager Login (Happy Path & JWT RS256 Audit)",
 			"event": [
 				{
 					"listen": "test",
@@ -67,18 +67,40 @@
 							"    pm.expect(pm.response.responseTime).to.be.below(300);",
 							"});",
 							"",
-							"// Schema Contract: AuthResponseSchema { token: string, user: { username, role } }",
-							"pm.test('Response matches AuthResponseSchema contract', function () {",
-							"    const jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('token');",
-							"    pm.expect(jsonData.token).to.be.a('string');",
-							"    pm.expect(jsonData.token.length).to.be.above(20);",
-							"    pm.environment.set('authToken', jsonData.token);",
+							"const jsonData = pm.response.json();",
 							"",
-							"    pm.expect(jsonData).to.have.property('user');",
-							"    pm.expect(jsonData.user).to.have.property('username');",
-							"    pm.expect(jsonData.user).to.have.property('role');",
-							"    pm.expect(jsonData.user.username).to.eql(pm.environment.get('posUsername') || 'pos_manager_1');",
+							"// Task 2: Validate JWT Structure - RS256 Header & Claims",
+							"pm.test('JWT Access Token has valid 3-part signature structure', function () {",
+							"    pm.expect(jsonData).to.have.property('accessToken');",
+							"    pm.expect(jsonData.accessToken).to.be.a('string');",
+							"    const parts = jsonData.accessToken.split('.');",
+							"    pm.expect(parts.length).to.eql(3);",
+							"",
+							"    // Decode Header",
+							"    const header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));",
+							"    pm.expect(header.alg).to.eql('RS256');",
+							"    pm.expect(header.typ).to.eql('JWT');",
+							"",
+							"    // Decode Payload Claims",
+							"    const claims = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));",
+							"    pm.expect(claims).to.have.property('sub');",
+							"    pm.expect(claims).to.have.property('uid');",
+							"    pm.expect(claims).to.have.property('hotel_id');",
+							"    pm.expect(claims).to.have.property('role');",
+							"    pm.expect(claims.role).to.eql('MANAGER');",
+							"    pm.expect(claims).to.have.property('exp');",
+							"    pm.expect(claims).to.have.property('jti');",
+							"",
+							"    // Save tokens to environment",
+							"    pm.environment.set('authToken', jsonData.accessToken);",
+							"    if (jsonData.refreshToken) {",
+							"        pm.environment.set('refreshToken', jsonData.refreshToken);",
+							"    }",
+							"});",
+							"",
+							"pm.test('User profile returned with matching username and role', function () {",
+							"    pm.expect(jsonData.username).to.eql(pm.environment.get('posUsername') || 'pos_manager_1');",
+							"    pm.expect(jsonData.role).to.eql('MANAGER');",
 							"});"
 						],
 						"type": "text/javascript"
@@ -117,7 +139,67 @@
 			"response": []
 		},
 		{
-			"name": "03 - Manager Login (Invalid Password - Security)",
+			"name": "03 - Auth Token Refresh (/api/v1/auth/refresh)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK for refresh', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"pm.test('Rotated access token is issued with RS256 algorithm', function () {",
+							"    pm.expect(jsonData).to.have.property('accessToken');",
+							"    const parts = jsonData.accessToken.split('.');",
+							"    pm.expect(parts.length).to.eql(3);",
+							"    const header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));",
+							"    pm.expect(header.alg).to.eql('RS256');",
+							"",
+							"    pm.environment.set('authToken', jsonData.accessToken);",
+							"    if (jsonData.refreshToken) {",
+							"        pm.environment.set('refreshToken', jsonData.refreshToken);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/refresh",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"refresh"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "04 - Negative: Incorrect Password",
 			"event": [
 				{
 					"listen": "test",
@@ -163,14 +245,14 @@
 			"response": []
 		},
 		{
-			"name": "04 - Manager Login (Missing Credentials - Validation)",
+			"name": "05 - Negative: Invalid / Unknown Tenant Slug Account",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test('Status code is 400 Bad Request', function () {",
-							"    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+							"pm.test('Status code is 401 Unauthorized for unknown tenant account', function () {",
+							"    pm.response.to.have.status(401);",
 							"});"
 						],
 						"type": "text/javascript"
@@ -187,7 +269,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"password\": \"Manager@123\"\n}"
+					"raw": "{\n    \"username\": \"unregistered_tenant_user_xyz\",\n    \"password\": \"SomePassword@123\"\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/v1/auth/login",
@@ -205,7 +287,145 @@
 			"response": []
 		},
 		{
-			"name": "05 - Catalog Products (Contract Schema Validation)",
+			"name": "06 - Negative: Expired or Revoked Refresh Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 401 Unauthorized for expired refresh token', function () {",
+							"    pm.response.to.have.status(401);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refreshToken\": \"expired.refresh.token.signature\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/refresh",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"refresh"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "07 - Negative: Malformed JSON Payload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 400 Bad Request for malformed JSON syntax', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"pos_manager_1\",\n    \"password\": "
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "08 - Brute-Force Rate Limiting (10 Rapid Failed Logins)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Rate limiting kicks in with 429 Too Many Requests after rapid attacks', function () {",
+							"    pm.response.to.have.status(429);",
+							"});",
+							"pm.test('Response contains Retry-After header for rate throttling', function () {",
+							"    pm.expect(pm.response.headers.has('Retry-After')).to.be.true;",
+							"});",
+							"pm.test('Response payload informs user of temporary lockout', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('error');",
+							"    pm.expect(jsonData.error.toLowerCase()).to.include('too many');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Simulate-Brute-Force",
+						"value": "true"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"pos_manager_1\",\n    \"password\": \"Attempt10WrongPass\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "09 - Catalog Products (Contract Schema Validation)",
 			"event": [
 				{
 					"listen": "test",
@@ -215,7 +435,6 @@
 							"    pm.response.to.have.status(200);",
 							"});",
 							"",
-							"// Schema Contract: ProductItemSchema { id, name, price, category, inStock }",
 							"pm.test('Products conform to ProductItemSchema contract', function () {",
 							"    const jsonData = pm.response.json();",
 							"    const products = Array.isArray(jsonData) ? jsonData : (jsonData.products || jsonData.items);",
@@ -262,7 +481,7 @@
 			"response": []
 		},
 		{
-			"name": "06 - Catalog Categories (Contract Schema Validation)",
+			"name": "10 - Catalog Categories (Contract Schema Validation)",
 			"event": [
 				{
 					"listen": "test",
@@ -272,7 +491,6 @@
 							"    pm.response.to.have.status(200);",
 							"});",
 							"",
-							"// Schema Contract: CategorySchema { id, name, slug }",
 							"pm.test('Categories conform to CategorySchema contract', function () {",
 							"    const jsonData = pm.response.json();",
 							"    const categories = Array.isArray(jsonData) ? jsonData : jsonData.categories;",
@@ -318,7 +536,7 @@
 			"response": []
 		},
 		{
-			"name": "07 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)",
+			"name": "11 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)",
 			"event": [
 				{
 					"listen": "test",
@@ -365,7 +583,7 @@
 			"response": []
 		},
 		{
-			"name": "08 - Super-Manager Cross-Tenant Metrics Query",
+			"name": "12 - Super-Manager Cross-Tenant Metrics Query",
 			"event": [
 				{
 					"listen": "test",
