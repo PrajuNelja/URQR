@@ -1,8 +1,11 @@
-// src/components/PopupModal/PopupModal.tsx
 
-import { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useId, useRef } from "react";
+import type { MouseEvent } from "react";
 import { X } from "lucide-react";
+
 import type { PopupModalProps } from "./PopupModal.types";
+
 import {
   MODAL_BACKDROP,
   MODAL_PANEL_BASE,
@@ -13,22 +16,9 @@ import {
   MODAL_BODY,
   MODAL_FOOTER,
 } from "./PopupModal.config";
+
 import { Button } from "../Buttons/Button";
 
-/**
- * PopupModal — accessible dialog with optional confirm/cancel footer.
- *
- * <PopupModal
- *   isOpen={open}
- *   onClose={() => setOpen(false)}
- *   title="Delete Record"
- *   confirmText="Delete"
- *   isDanger
- *   onConfirm={handleDelete}
- * >
- *   Are you sure?
- * </PopupModal>
- */
 export const PopupModal = ({
   isOpen,
   onClose,
@@ -47,61 +37,90 @@ export const PopupModal = ({
   className = "",
   hideCloseButton = false,
 }: PopupModalProps) => {
-  // ── Escape key handler ──
+
+  // Escape key handler
   useEffect(() => {
     if (!isOpen || !closeOnEscape) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, closeOnEscape, onClose]);
 
-  // ── Lock body scroll while open ──
+  // Lock body scroll when modal opens
   useEffect(() => {
     if (!isOpen) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = original;
-    };
-  }, [isOpen]);
 
+    const originalOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+
+  }, [isOpen, closeOnEscape, onClose]);
+
+  // Don't render when closed
   if (!isOpen) return null;
 
-  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && closeOnBackdrop) onClose();
+  // Backdrop click handler
+  const handleBackdrop = (e: MouseEvent<HTMLDivElement>) => {
+    if (
+      e.target === e.currentTarget &&
+      closeOnBackdrop
+    ) {
+      onClose();
+    }
   };
 
+  // Cancel handler
   const handleCancel = () => {
-    if (onCancel) onCancel();
-    else onClose();
+    if (onCancel) {
+      onCancel();
+    } else {
+      onClose();
+    }
   };
 
   const showFooter =
-    footer !== undefined ||
-    onConfirm !== undefined;
+    footer !== undefined || onConfirm !== undefined;
 
-  return (
+  const modalContent = (
     <div
       className={MODAL_BACKDROP}
       onClick={handleBackdrop}
       role="presentation"
     >
       <div
+        // ref={panelRef}
+        tabIndex={-1}
         className={`${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? "modal-title" : undefined}
+        aria-labelledby={title ? title : undefined}
+        aria-label={title ? undefined : "Dialog"}
       >
-        {/* Header */}
+        {/* Modal Header */}
         {(title || !hideCloseButton) && (
           <div className={MODAL_HEADER}>
             {title && (
-              <h2 id="modal-title" className={MODAL_TITLE}>
+              <h2
+                id="modal-title"
+                className={MODAL_TITLE}
+              >
                 {title}
               </h2>
             )}
+
             {!hideCloseButton && (
               <button
                 type="button"
@@ -116,17 +135,24 @@ export const PopupModal = ({
           </div>
         )}
 
-        {/* Body */}
-        <div className={MODAL_BODY}>{children}</div>
+        {/* Modal Body */}
+        <div className={MODAL_BODY}>
+          {children}
+        </div>
 
-        {/* Footer */}
+        {/* Modal Footer */}
         {showFooter && (
           <div className={MODAL_FOOTER}>
             {footer ?? (
               <>
-                <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                >
                   {cancelText}
                 </Button>
+
                 {onConfirm && (
                   <Button
                     variant={isDanger ? "danger" : "primary"}
@@ -142,6 +168,12 @@ export const PopupModal = ({
         )}
       </div>
     </div>
+  );
+
+  // Render modal outside parent stacking contexts
+  return createPortal(
+    modalContent,
+    document.body
   );
 };
 

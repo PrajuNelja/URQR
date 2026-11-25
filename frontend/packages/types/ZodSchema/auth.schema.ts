@@ -2,25 +2,33 @@ import { z } from "zod";
 
 export const LoginRequestSchema = z
   .object({
-    username: z.string().min(1, "Username is required").trim(),
-    password: z.string().min(4, "Password / PIN must be at least 4 characters"),
+    // 1. Tenant Slug (optional, for backward-compatible test fixtures; not required for POS login)
+    tenantSlug: z
+      .string()
+      .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens")
+      .optional(),
+
+    // 2. Sanitized Username - trims whitespace to prevent accidental spaces
+    username: z
+      .string()
+      .min(1, "Username is required")
+      .trim(),
+
+    // 3. Password: Minimum 4 characters
+    password: z
+      .string()
+      .min(4, "Password must be at least 4 characters"),
   })
   .strict();
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
-export const AuthResponseSchema = z
+export const LoginResponseSchema = z
   .object({
-    accessToken: z.string().min(1),
-    tokenType: z.string().default("Bearer"),
-    expiresAt: z.string().optional(),
-    refreshToken: z.string().nullable().optional(),
-    refreshExpiresAt: z.string().nullable().optional(),
-    userId: z.string().uuid(),
-    hotelId: z.string().uuid(),
-    username: z.string(),
-    role: z.string(),
+    token: z.string().min(1, "Token is required"),
+    hotelId: z.string().uuid("Invalid hotel ID"),
+    role: z.string().min(1, "Role is required"),
   })
   .strict();
 
-export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;

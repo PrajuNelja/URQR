@@ -9,13 +9,13 @@
 | `postgres` | `postgres:18.7-alpine` | 5432 | **5433** | Primary database (direct admin access) |
 | `pgbouncer` | `bitnami/pgbouncer:1.24.0` | 6432 | **5432** | Connection pool — app connects here |
 | `redis` | `redis:8.2.11-alpine` | 6379 | **6379** | Cache / session / rate-limit |
-| `centrifugo` | `centrifugo/centrifugo:v6.10.3` | 8000/8001/9000 | **8000/8001/9000** | Real-time WebSocket hub |
+| `centrifugo` | `centrifugo/centrifugo:v6.10.3` | 8000/9000 | **8000/9000** | Real-time WebSocket hub |
 
 ## Prerequisites
 
 - Docker Desktop ≥ 4.28 (Compose V2 built in)
 - 4 GB free RAM
-- Ports 5432, 5433, 6379, 8000, 8001, 9000 free on the host
+- Ports 5432, 5433, 6379, 8000, 9000 free on the host
 
 ## Quick start
 
@@ -49,9 +49,8 @@ docker compose -f infrastructure/docker/docker-compose.yml --env-file .env down 
 | **5432** | PgBouncer (pool) | Spring Boot app / backend services |
 | **5433** | PostgreSQL (direct) | DBA tools, `psql`, pgAdmin, schema migrations |
 | **6379** | Redis | Spring Boot app |
-| **8000** | Centrifugo HTTP API | Backend publishes events, health probe |
-| **8001** | Centrifugo WebSocket | Frontend clients |
-| **9000** | Centrifugo Prometheus | Metrics scraping |
+| **8000** | Centrifugo external (WebSocket + HTTP API) | Frontend clients (`/connection/websocket`), backend publishes (`/api`) |
+| **9000** | Centrifugo internal (health, admin, Prometheus) | Health probe `/health`, admin UI, metrics `/metrics` |
 
 ## Health checks
 
@@ -62,7 +61,7 @@ All four containers expose Docker health checks. `docker compose ps` shows `(hea
 | `urqr_postgres` | `pg_isready -U <user> -d <db>` |
 | `urqr_pgbouncer` | `pg_isready -h 127.0.0.1 -p 6432` |
 | `urqr_redis` | `redis-cli -a <pass> ping` → `PONG` |
-| `urqr_centrifugo` | `GET http://127.0.0.1:8000/health` |
+| `urqr_centrifugo` | `GET http://127.0.0.1:9000/health` |
 
 ## PgBouncer connection pool settings
 
@@ -126,5 +125,6 @@ The CI workflow `.github/workflows/stack-compliance.yml` enforces this on every 
 | `pgbouncer` exits immediately | Ensure `postgres` is healthy first; check `POSTGRES_PASSWORD` is set |
 | `Error: prepared statement` from JPA | Add `?prepareThreshold=0` to JDBC URL |
 | Redis `NOAUTH` error | Verify `REDIS_PASSWORD` matches in `.env` |
-| Centrifugo `token_hmac_secret_key` warning | `CENTRIFUGO_TOKEN_SECRET` must be ≥ 32 characters |
+| Centrifugo `client.token.hmac_secret_key` warning | `CENTRIFUGO_TOKEN_SECRET` must be ≥ 32 characters |
+| Centrifugo restarts with `error unmarshalling config` | The config must follow the v6 schema (`http_server`, `client`, `http_api`, `channel`) — v5 top-level keys are ignored in v6 |
 | Port already in use | Check `netstat -ano \| findstr :<port>` on Windows |

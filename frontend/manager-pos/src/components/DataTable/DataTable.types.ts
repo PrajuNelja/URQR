@@ -52,10 +52,6 @@ export interface DataTableProps<T> {
   striped?: boolean;
   /** Compact padding (default: false) */
   compact?: boolean;
-  /** Number of skeleton rows shown while loading (default: 5) */
-  loadingRows?: number;
-  /** Minimum table width for horizontal scroll (default: '980px') */
-  minWidth?: string;
 }
 
 // ═══════════════════════════════════════════

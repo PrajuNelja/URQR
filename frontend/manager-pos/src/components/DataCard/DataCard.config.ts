@@ -76,7 +76,7 @@ export const dataCardConfig = {
   /** Summary variant (big value + trend) */
   summary: {
     value: "font-serif text-3xl font-bold text-primary leading-tight",
-    trend: "inline-block text-xs font-semibold text-success-text mt-1",
+    trend: "inline-block text-xs font-semibold text-success mt-1",
   },
 } as const;
 
@@ -93,14 +93,14 @@ export const kpiStatConfig = {
 
   textCol: "flex flex-col leading-tight",
 
-  label: "text-[13px] font-medium text-text-muted",
+  label: "text-[13px] font-medium text-text-secondary",
 
   value: "font-serif text-3xl font-bold text-primary mt-0.5",
 
   trend: {
-    up: "inline-flex w-fit items-center rounded-md bg-success-bg px-2 py-0.5 text-xs font-semibold text-success-text mt-1",
-    down: "inline-flex w-fit items-center rounded-md bg-error-bg px-2 py-0.5 text-xs font-semibold text-error-text mt-1",
-    neutral: "inline-flex w-fit items-center rounded-md bg-neutral-bg px-2 py-0.5 text-xs font-semibold text-neutral-text mt-1",
+    up: "inline-flex w-fit items-center rounded-md bg-success-bg px-2 py-0.5 text-xs font-semibold text-success mt-1",
+    down: "inline-flex w-fit items-center rounded-md bg-error-bg px-2 py-0.5 text-xs font-semibold text-error mt-1",
+    neutral: "inline-flex w-fit items-center rounded-md bg-surface-alt px-2 py-0.5 text-xs font-semibold text-text-secondary mt-1",
   },
 } as const;
 
@@ -110,24 +110,24 @@ export const kpiStatConfig = {
 
 /** Chart palette (Recharts expects actual color strings or CSS vars) */
 export const CHART_COLORS = [
-  "var(--color-chart-1)",
-  "var(--color-chart-2)",
-  "var(--color-chart-4)",
-  "var(--color-chart-3)",
-  "var(--color-chart-5)",
+  "var(--color-primary)",
+  "var(--color-primary-dark)",
+  "var(--color-warning)",
+  "var(--color-success)",
+  "var(--color-error)",
 ] as const;
 
 export const CHART_WRAPPER = "w-full";
 
-export const CHART_AXIS_TEXT = "#8B857D";
-export const CHART_GRID_COLOR = "#eadfcd";
+export const CHART_AXIS_TEXT = "var(--color-text-secondary)";
+export const CHART_GRID_COLOR = "var(--color-border)";
 
 export const CHART_TOOLTIP_STYLE = {
-  backgroundColor: "#fffaf1",
-  border: "1px solid #e8d9bf",
+  backgroundColor: "var(--color-surface)",
+  border: "1px solid var(--color-border)",
   borderRadius: "8px",
   fontSize: "12px",
-  color: "#2A2118",
+  color: "var(--color-text)",
   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)",
 } as const;
 
@@ -137,14 +137,14 @@ export const CHART_TOOLTIP_STYLE = {
 
 export const dividerConfig = {
   horizontal: {
-    solid: "w-full border-t border-border-subtle",
-    dashed: "w-full border-t border-dashed border-border-subtle",
+    solid: "w-full border-t border-border",
+    dashed: "w-full border-t border-dashed border-border",
   },
   vertical: {
-    solid: "h-full border-l border-border-subtle",
-    dashed: "h-full border-l border-dashed border-border-subtle",
+    solid: "h-full border-l border-border",
+    dashed: "h-full border-l border-dashed border-border",
   },
-  label: "px-3 text-xs font-semibold text-text-muted uppercase tracking-wider",
+  label: "px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider",
 } as const;
 
 // ═══════════════════════════════════════════
@@ -153,9 +153,9 @@ export const dividerConfig = {
 
 export const emptyStateConfig = {
   wrapper: "flex flex-col items-center justify-center py-8 px-4 text-center gap-2",
-  icon: "text-text-muted opacity-60 mb-1",
+  icon: "text-text-secondary opacity-60 mb-1",
   message: "text-sm font-semibold text-primary",
-  description: "text-xs text-text-muted",
+  description: "text-xs text-text-secondary",
 } as const;
 
 // ═══════════════════════════════════════════
@@ -169,4 +169,4 @@ export const AVATAR_SIZES: Record<AvatarSize, string> = {
 };
 
 export const AVATAR_BASE =
-  "rounded-full bg-primary text-button-text flex items-center justify-center font-semibold flex-none overflow-hidden";
+  "rounded-full bg-primary text-on-primary flex items-center justify-center font-semibold flex-none overflow-hidden";

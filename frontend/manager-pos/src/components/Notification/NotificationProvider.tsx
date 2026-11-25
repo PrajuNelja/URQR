@@ -1,34 +1,25 @@
 // src/components/Notification/NotificationProvider.tsx
-
 import { useCallback, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
 import type {
   NotificationProviderProps,
   NotificationContextValue,
   NotificationType,
   ToastItem,
 } from "./Notification.types";
-
-// Import the context from the new file
 import { NotificationContext } from "./NotificationContext";
-
 import {
   NOTIFICATION_BASE,
   NOTIFICATION_VARIANTS,
   NOTIFICATION_ICONS,
   NOTIFICATION_STACK_BASE,
-  NOTIFICATION_POSITIONS,
   NOTIFICATION_DEFAULT_DURATION,
-  NOTIFICATION_DEFAULT_POSITION,
   NOTIFICATION_DEFAULT_MAX_VISIBLE,
 } from "./Notification.config";
 
-/**
- * NotificationProvider — global toast system.
- */
 export const NotificationProvider = ({
   children,
   defaultDuration = NOTIFICATION_DEFAULT_DURATION,
-  position = NOTIFICATION_DEFAULT_POSITION,
   maxVisible = NOTIFICATION_DEFAULT_MAX_VISIBLE,
 }: NotificationProviderProps) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -44,17 +35,10 @@ export const NotificationProvider = ({
   }, []);
 
   const notify = useCallback(
-    (
-      message: string,
-      type: NotificationType = "success",
-      duration: number = defaultDuration
-    ) => {
+    (message: string, type: NotificationType = "success", duration: number = defaultDuration) => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const toast: ToastItem = { id, type, message, duration };
-
       setToasts((prev) => {
-        const next = [...prev, toast];
-        // Keep only the latest `maxVisible`
+        const next = [...prev, { id, type, message, duration }];
         return next.slice(-maxVisible);
       });
 
@@ -88,23 +72,27 @@ export const NotificationProvider = ({
   return (
     <NotificationContext.Provider value={value}>
       {children}
-
-      {/* Toast stack */}
-      <div
-        className={`${NOTIFICATION_STACK_BASE} ${NOTIFICATION_POSITIONS[position]}`}
-        aria-live="polite"
-        aria-atomic="false"
-      >
+      <div className={NOTIFICATION_STACK_BASE} aria-live="polite">
         {toasts.map((t) => {
           const IconComponent = NOTIFICATION_ICONS[t.type];
           return (
             <div
               key={t.id}
-              className={`${NOTIFICATION_BASE} ${NOTIFICATION_VARIANTS[t.type]} pointer-events-auto`}
+              className={`${NOTIFICATION_BASE} ${NOTIFICATION_VARIANTS[t.type]} animate-[toastIn_0.3s_ease-out]`}
               role="status"
             >
-              <IconComponent size={18} aria-hidden="true" />
-              <span>{t.message}</span>
+              <IconComponent size={18} className="shrink-0 mt-0.5" />
+              <div className="flex-1 flex flex-col justify-center min-h-[20px]">
+                <span className="font-semibold leading-tight">{t.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => dismiss(t.id)}
+                className="shrink-0 p-1 -mr-2 text-current opacity-70 hover:opacity-100"
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
             </div>
           );
         })}
