@@ -24,10 +24,11 @@ export const QuantityStepper = ({
   disabled = false,
   className = "",
 }: QuantityStepperProps) => {
-  const sizeStyles = quantityStepperConfig?.sizes?.[size] || { button: "h-7 w-7", value: "text-sm", icon: 14 };
+  const sizeStyles = quantityStepperConfig.sizes[size];
   const [prevValue, setPrevValue] = useState<number>(value);
   const [localInput, setLocalInput] = useState<string>(String(value));
 
+  // Sync local input when the controlled value changes externally
   if (prevValue !== value) {
     setPrevValue(value);
     setLocalInput(String(value));
@@ -140,5 +141,3 @@ export const QuantityStepper = ({
     </div>
   );
 };
-
-export default QuantityStepper;

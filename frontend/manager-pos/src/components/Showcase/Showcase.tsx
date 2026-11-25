@@ -19,7 +19,7 @@ import KPIStat from "../DataCard/KPIStat";
 import DataCard from "../DataCard/DataCard";
 import Card from "../DataCard/Card";
 import Chart from "../DataCard/Chart";
-import QuantityStepper from "../DataTable/QuantityStepper";
+
 import Divider from "../DataCard/Divider";
 import EmptyState from "../DataCard/EmptyState";
 import DateRangePicker from "../DataTable/DateRangePicker";
@@ -52,6 +52,7 @@ import {
 import { BillingPayment } from "../../pages/Table_Management/Components/Billing/BillingPayment";
 
 import type { PaymentMethod } from "../../pages/Table_Management/Types/billing.types";
+import { QuantityStepper } from "../DataTable/QuantityStepper";
 
 // ==========================================
 // EXISTING MOCK DATA — UNCHANGED
