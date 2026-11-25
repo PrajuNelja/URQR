@@ -1,0 +1,61 @@
+
+import { Button } from "../Buttons/Button";
+import { InputField } from "../InputField/InputField";
+import { parseINRToPaise } from "../../lib/money";
+
+interface CashAmountInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+const QUICK_AMOUNTS = [50, 100, 200] as const;
+
+export function CashAmountInput({
+  value, onChange, disabled = false,
+}: CashAmountInputProps) {
+  function addCash(rupees: number) {
+    const currentPaise = parseINRToPaise(value) ?? 0;
+    const nextPaise = currentPaise + rupees * 100;
+
+    if (Number.isSafeInteger(nextPaise)) {
+      onChange((nextPaise / 100).toFixed(2));
+    }
+  }
+
+  return (
+    <div className="pos-cash-input">
+      <InputField
+        label="CASH RECEIVED (₹)"
+        type="text"
+        inputMode="decimal"
+        autoComplete="off"
+        value={value}
+        disabled={disabled}
+        placeholder="Enter cash amount"
+        onChange={(event) => {
+          const next = event.target.value;
+          if (/^\d*(?:\.\d{0,2})?$/.test(next)) {
+            onChange(next);
+          }
+        }}
+        className="pos-cash-input__field"
+        wrapperClassName="pos-cash-input__wrapper"
+      />
+
+      <div className="pos-cash-input__quick">
+        {QUICK_AMOUNTS.map((amount) => (
+          <Button
+            key={amount}
+            variant="outline"
+            disabled={disabled}
+            className="pos-cash-input__button"
+            onClick={() => addCash(amount)}
+          >
+            +₹{amount}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}

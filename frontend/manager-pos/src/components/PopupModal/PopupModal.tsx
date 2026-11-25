@@ -1,6 +1,6 @@
 
-import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useEffect, useId, useRef } from "react";
 import type { MouseEvent } from "react";
 import { X } from "lucide-react";
 
@@ -66,7 +66,8 @@ export const PopupModal = ({
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isOpen]);
+
+  }, [isOpen, closeOnEscape, onClose]);
 
   // Don't render when closed
   if (!isOpen) return null;
@@ -100,10 +101,13 @@ export const PopupModal = ({
       role="presentation"
     >
       <div
+        // ref={panelRef}
+        tabIndex={-1}
         className={`${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? "modal-title" : undefined}
+        aria-labelledby={title ? title : undefined}
+        aria-label={title ? undefined : "Dialog"}
       >
         {/* Modal Header */}
         {(title || !hideCloseButton) && (

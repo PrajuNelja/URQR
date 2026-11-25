@@ -14,14 +14,11 @@ export const LoginRequestSchema = z
     // 2. Sanitized Username - trims whitespace to prevent accidental spaces
     username: z.string().min(1, "Username is required").trim(),
 
-    // 3. Password: Minimum 8 chars, strictly alphanumeric (no symbols), no max limit
+    // 3. Password: Minimum 4 chars, strictly alphanumeric (letters and numbers only)
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        /^[a-zA-Z0-9]+$/,
-        "Password must be strictly alphanumeric (letters and numbers only)",
-      ),
+      .min(4, "Password must be at least 4 characters")
+      .regex(/^[a-zA-Z0-9]+$/, "Password must be strictly alphanumeric (letters and numbers only)"),
   })
   .strict();
 

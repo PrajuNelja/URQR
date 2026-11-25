@@ -26,6 +26,14 @@ export const SessionTimeoutModal = ({
       setSecondsLeft(initialSeconds);
     }
   }, [isOpen, initialSeconds]);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setSecondsLeft(initialSeconds);
+    }
+  }
 
   // Countdown timer
   useEffect(() => {
