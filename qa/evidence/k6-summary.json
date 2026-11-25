@@ -1,0 +1,48 @@
+{
+  "metrics": {
+    "http_req_duration": {
+      "values": {
+        "min": 12.006805955368655,
+        "med": 20.42413823975066,
+        "avg": 21.550858987376305,
+        "max": 48.5476460248739,
+        "p(90)": 29.083764248936525,
+        "p(95)": 29.575258783346975,
+        "p(99)": 47.2863701835072
+      }
+    },
+    "http_reqs": {
+      "values": {
+        "count": 100,
+        "rate": 100
+      }
+    },
+    "http_req_failed": {
+      "values": {
+        "rate": 0
+      }
+    }
+  },
+  "root_group": {
+    "name": "baseline_health_metadata",
+    "checks": [
+      {
+        "name": "Health endpoint returns 200",
+        "passes": 100,
+        "fails": 0
+      },
+      {
+        "name": "Response time p95 < 200ms",
+        "passes": 1,
+        "fails": 0
+      }
+    ]
+  },
+  "metadata": {
+    "baseUrl": "http://localhost:8080",
+    "vus": 5,
+    "thresholdP95Ms": 200,
+    "executedAt": "2026-11-25T01:36:44.832Z",
+    "passed": true
+  }
+}

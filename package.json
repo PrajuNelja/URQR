@@ -12,6 +12,8 @@
     "test:smoke": "playwright test tests/frontend-smoke.spec.ts",
     "test:health": "node scripts/verify-backend-liveness.js",
     "test:health:e2e": "playwright test tests/backend-health.spec.ts",
+    "test:k6": "node scripts/run-k6-benchmark.js",
+    "test:k6:native": "k6 run qa/k6-tests/baseline.js",
     "test:report": "playwright show-report",
     "exa:search": "node scripts/exa-web-search.js"
   },
