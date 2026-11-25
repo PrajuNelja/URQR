@@ -30,3 +30,22 @@ export const queryClient = new QueryClient({
 
 queryClient.setQueryDefaults(POS_CATALOG_QUERY_KEY, posCatalogQueryDefaults);
 
+/**
+ * Screen 3 Dashboard Query Keys and caching defaults (Vishal Scope).
+ * - staleTime: 30 seconds for live operations dashboard metrics
+ * - gcTime: 10 minutes garbage collection retention
+ * - retry: 2
+ * - refetchOnWindowFocus: false
+ */
+export const DASHBOARD_QUERY_KEY = ["pos", "dashboard"] as const;
+
+export const dashboardQueryDefaults = {
+  staleTime: 30 * 1000,
+  gcTime: 10 * 60 * 1000,
+  retry: 2,
+  refetchOnWindowFocus: false,
+};
+
+queryClient.setQueryDefaults(DASHBOARD_QUERY_KEY, dashboardQueryDefaults);
+
+
