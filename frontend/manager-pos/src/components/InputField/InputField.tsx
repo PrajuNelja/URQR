@@ -1,4 +1,3 @@
-// src/components/InputField/InputField.tsx
 import { forwardRef, useId } from "react";
 import type { InputFieldProps } from "./InputField.types";
 import {
@@ -40,7 +39,8 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       INPUT_VARIANTS[error ? "error" : "default"],
       INPUT_SIZES[fieldSize],
       leftIcon ? "pl-10" : "",
-      rightIcon || suffix ? "pr-12" : "",
+      rightIcon ? "pr-12" : "",
+      suffix ? "pr-14" : "",
       fullWidth ? "w-full" : "",
       className,
     ]
@@ -49,7 +49,11 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
 
     return (
       <div
-        className={[FIELD_WRAPPER, fullWidth ? "w-full" : "", wrapperClassName]
+        className={[
+          FIELD_WRAPPER,
+          fullWidth ? "w-full" : "",
+          wrapperClassName,
+        ]
           .filter(Boolean)
           .join(" ")}
       >
@@ -59,8 +63,10 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           </label>
         )}
 
-        <div className="relative">
-          {leftIcon && <span className={INPUT_LEFT_ICON}>{leftIcon}</span>}
+        <div className="relative w-full">
+          {leftIcon && (
+            <span className={INPUT_LEFT_ICON}>{leftIcon}</span>
+          )}
 
           <input
             ref={ref}
@@ -69,14 +75,21 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             disabled={disabled}
             aria-invalid={!!error}
             aria-describedby={
-              error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+              error
+                ? `${inputId}-error`
+                : hint
+                  ? `${inputId}-hint`
+                  : undefined
             }
             {...rest}
           />
 
-          {rightIcon && <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>}
+          {rightIcon && (
+            <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>
+          )}
+
           {suffix && (
-            <span className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+            <span className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center">
               {suffix}
             </span>
           )}
@@ -97,5 +110,4 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
 );
 
 InputField.displayName = "InputField";
-
 export default InputField;

@@ -1,4 +1,3 @@
-
 import { formatINR } from "../../lib/money";
 
 interface ChangeSummaryProps {
@@ -15,6 +14,7 @@ export function ChangeSummary({
       <div
         className="pos-change-summary pos-change-summary--empty"
         role="status"
+        aria-live="polite"
       >
         Enter the received amount to see the balance.
       </div>
@@ -24,8 +24,10 @@ export function ChangeSummary({
   const balance = amountReceivedPaise - amountDuePaise;
 
   const label =
-    balance < 0 ? "Remaining Amount"
-      : balance === 0 ? "Exact Amount"
+    balance < 0
+      ? "Remaining Amount"
+      : balance === 0
+        ? "Exact Amount"
         : "Change to Return";
 
   const state = balance < 0 ? "warning" : "success";
@@ -38,9 +40,7 @@ export function ChangeSummary({
     >
       <div>
         <p>{label}</p>
-        {balance === 0 && (
-          <small>Payment is exact</small>
-        )}
+        {balance === 0 && <small>Payment is exact</small>}
       </div>
 
       <strong>{formatINR(Math.abs(balance))}</strong>

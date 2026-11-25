@@ -20,12 +20,6 @@ export interface PopupModalProps {
   closeOnEscape?: boolean;
   className?: string;
   hideCloseButton?: boolean;
-
-  // ── NEW: Session Timeout Props ──
-  variant?: "default" | "timeout";
-  onExtendSession?: () => void;
-  onLogout?: () => void;
-  timeoutSeconds?: number;
 }
 
 export interface ReceiptItem {
@@ -57,5 +51,4 @@ export interface ReceiptProps {
   reprintedAt?: string;
   currency?: string;
   className?: string;
-  variant?:string;
 }

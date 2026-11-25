@@ -1,5 +1,3 @@
-// src/pages/Table_Management/Hooks/useManagerLogin.ts
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,30 +7,36 @@ import { z } from "zod";
 
 import { apiClient } from "../../../lib/apiClient";
 import { useAuthStore } from "../../../lib/authStore";
+
 import type {
   LoginFeedback,
   BackendAuthResponse,
 } from "../Types/Login.types";
 
-// ═══════════════════════════════════════════
-// SCHEMA — matches Spring Boot @NotBlank String username
-// ═══════════════════════════════════════════
+// ---------------------------------------------
+// LOGIN VALIDATION
+// ---------------------------------------------
 
 const LoginFormSchema = z.object({
-  username: z.string().trim().min(1, "Username is required"),
+  username: z
+    .string()
+    .trim()
+    .min(1, "Enter your username."),
+
   password: z
     .string()
-    .min(4, "Password / PIN must be at least 4 characters"),
+    .min(1, "Enter your password."), // never trim
 });
 
 export type LoginFormValues = z.infer<typeof LoginFormSchema>;
 
-// ═══════════════════════════════════════════
-// HOOK
-// ═══════════════════════════════════════════
+// ---------------------------------------------
+// MANAGER LOGIN HOOK
+// ---------------------------------------------
 
 export const useManagerLogin = () => {
   const navigate = useNavigate();
+
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [feedback, setFeedback] = useState<LoginFeedback>({
@@ -40,62 +44,102 @@ export const useManagerLogin = () => {
     type: "error",
     message: "",
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
-    defaultValues: { username: "", password: "" },
-    mode: "onTouched",
+
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+
+    mode: "onSubmit",
   });
 
-  const dismissFeedback = () =>
-    setFeedback((prev) => ({ ...prev, isOpen: false }));
+  // -------------------------------------------
+  // DISMISS NOTIFICATION
+  // -------------------------------------------
 
-  const onSubmit = form.handleSubmit(async (data: LoginFormValues) => {
+  const dismissFeedback = () => {
+    setFeedback((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  // -------------------------------------------
+  // LOGIN SUBMISSION
+  // -------------------------------------------
+
+  const onSubmit = form.handleSubmit(async (data) => {
     setIsSubmitting(true);
     dismissFeedback();
 
     try {
-      // POST /api/v1/auth/login  (baseURL already includes /api/v1)
+      // API request
       const response = await apiClient.post<BackendAuthResponse>(
         "/auth/login",
         {
           username: data.username.trim(),
-          password: data.password, // never trim password
+          password: data.password,
         }
       );
 
-      const { accessToken, hotelId, userId, username, role } =
-        response.data;
+      const {
+        accessToken,
+        hotelId,
+        userId,
+        username,
+        role,
+      } = response.data;
 
-      // 1. Persist for axios request interceptor
+      // Store authentication token
       localStorage.setItem("access_token", accessToken);
+
+      // Preserve backend hotel context for authenticated requests
       localStorage.setItem("tenant_id", hotelId);
 
-      // 2. Update zustand store — matches your 3-arg signature:
-      //    setAuth(user, tenantId, accessToken)
+      // Update Zustand authentication store
       setAuth(
-        { id: userId, name: username, role },
+        {
+          id: userId,
+          name: username,
+          role,
+        },
         hotelId,
         accessToken
       );
 
-      // 3. Success toast + route
+      // Success notification
       setFeedback({
         isOpen: true,
         type: "success",
         message: `Welcome, ${username}. Opening register…`,
       });
 
+      // Navigate to billing page
       setTimeout(() => {
-        void navigate({ to: "/pos/billing" });
+        void navigate({
+          to: "/pos/billing",
+        });
       }, 350);
     } catch (err: unknown) {
-      let errorMessage = "Unable to connect to authentication server.";
+      let errorMessage =
+        "Unable to connect to authentication server.";
 
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {
-          errorMessage = "Invalid username or password.";
+          errorMessage =
+            "Unable to sign in. Check your credentials and try again.";
+
+          // Keep Manager ID, clear only password
+          form.setValue("password", "", {
+            shouldValidate: false,
+            shouldDirty: false,
+            shouldTouch: false,
+          });
         } else if (err.response?.data?.message) {
           errorMessage = String(err.response.data.message);
         } else if (err.code === "ECONNABORTED") {
@@ -115,5 +159,11 @@ export const useManagerLogin = () => {
     }
   });
 
-  return { form, feedback, isSubmitting, onSubmit, dismissFeedback };
+  return {
+    form,
+    feedback,
+    isSubmitting,
+    onSubmit,
+    dismissFeedback,
+  };
 };

@@ -1,4 +1,3 @@
-// src/pages/Table_Management/Types/Login.types.ts
 
 import type { NotificationType } from "../../../components/Notification/Notification.types";
 

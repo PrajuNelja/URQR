@@ -1,11 +1,9 @@
-
 import { createPortal } from "react-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { MouseEvent } from "react";
 import { X } from "lucide-react";
 
 import type { PopupModalProps } from "./PopupModal.types";
-
 import {
   MODAL_BACKDROP,
   MODAL_PANEL_BASE,
@@ -16,7 +14,6 @@ import {
   MODAL_BODY,
   MODAL_FOOTER,
 } from "./PopupModal.config";
-
 import { Button } from "../Buttons/Button";
 
 export const PopupModal = ({
@@ -37,122 +34,115 @@ export const PopupModal = ({
   className = "",
   hideCloseButton = false,
 }: PopupModalProps) => {
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Escape key handler
   useEffect(() => {
-    if (!isOpen || !closeOnEscape) return;
+    if (!isOpen) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const focusableElements = panel.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusableElements.length > 0) {
+      (focusableElements[0] as HTMLElement).focus();
+    } else {
+      panel.focus();
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && closeOnEscape) {
         onClose();
+      }
+
+      if (e.key === "Tab") {
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, closeOnEscape, onClose]);
 
-  // Lock body scroll when modal opens
   useEffect(() => {
     if (!isOpen) return;
-
     const originalOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = originalOverflow;
     };
+  }, [isOpen]);
 
-  }, [isOpen, closeOnEscape, onClose]);
-
-  // Don't render when closed
   if (!isOpen) return null;
 
-  // Backdrop click handler
   const handleBackdrop = (e: MouseEvent<HTMLDivElement>) => {
-    if (
-      e.target === e.currentTarget &&
-      closeOnBackdrop
-    ) {
+    if (e.target === e.currentTarget && closeOnBackdrop) {
       onClose();
     }
   };
 
-  // Cancel handler
   const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
-    } else {
-      onClose();
-    }
+    if (onCancel) onCancel();
+    else onClose();
   };
 
-  const showFooter =
-    footer !== undefined || onConfirm !== undefined;
+  const showFooter = footer !== undefined || onConfirm !== undefined;
 
   const modalContent = (
-    <div
-      className={MODAL_BACKDROP}
-      onClick={handleBackdrop}
-      role="presentation"
-    >
+    <div className={MODAL_BACKDROP} onClick={handleBackdrop} role="presentation">
       <div
-        // ref={panelRef}
+        ref={panelRef}
         tabIndex={-1}
-        className={`${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
+        className={`relative ${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? title : undefined}
+        aria-labelledby={title ? "modal-title" : undefined}
         aria-label={title ? undefined : "Dialog"}
       >
-        {/* Modal Header */}
-        {(title || !hideCloseButton) && (
+        {/* If there is a title, show the header */}
+        {title && (
           <div className={MODAL_HEADER}>
-            {title && (
-              <h2
-                id="modal-title"
-                className={MODAL_TITLE}
-              >
-                {title}
-              </h2>
-            )}
-
-            {!hideCloseButton && (
-              <button
-                type="button"
-                className={MODAL_CLOSE_BTN}
-                onClick={onClose}
-                aria-label="Close modal"
-                title="Close"
-              >
-                <X size={18} />
-              </button>
-            )}
+            <h2 id="modal-title" className={MODAL_TITLE}>
+              {title}
+            </h2>
           </div>
         )}
 
-        {/* Modal Body */}
-        <div className={MODAL_BODY}>
+        {/* Absolute positioned Close Button for all cases */}
+        {!hideCloseButton && (
+          <button
+            type="button"
+            className={`${MODAL_CLOSE_BTN} absolute right-4 top-4`}
+            onClick={onClose}
+            aria-label="Close modal"
+            title="Close"
+          >
+            <X size={24} strokeWidth={2} />
+          </button>
+        )}
+
+        {/* Add padding-top if no title, so content doesn't overlap the X */}
+        <div className={`${MODAL_BODY} ${!title ? "pt-12" : ""}`}>
           {children}
         </div>
 
-        {/* Modal Footer */}
         {showFooter && (
           <div className={MODAL_FOOTER}>
             {footer ?? (
               <>
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isLoading}
-                >
+                <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
                   {cancelText}
                 </Button>
-
                 {onConfirm && (
                   <Button
                     variant={isDanger ? "danger" : "primary"}
@@ -170,11 +160,7 @@ export const PopupModal = ({
     </div>
   );
 
-  // Render modal outside parent stacking contexts
-  return createPortal(
-    modalContent,
-    document.body
-  );
+  return createPortal(modalContent, document.body);
 };
 
 export default PopupModal;
