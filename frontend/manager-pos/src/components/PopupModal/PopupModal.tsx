@@ -1,6 +1,6 @@
 
 import { createPortal } from "react-dom";
-import { useEffect, useId, useRef } from "react";
+import { useEffect } from "react";
 import type { MouseEvent } from "react";
 import { X } from "lucide-react";
 

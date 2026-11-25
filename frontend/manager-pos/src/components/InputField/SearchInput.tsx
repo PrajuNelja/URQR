@@ -51,10 +51,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             />
           }
           rightIcon={
-            hasValue && onClear ? (
+            hasValue && (onClear || onChange) ? (
               <button
                 type="button"
-                onClick={onClear}
+                onClick={handleClear}
                 aria-label="Clear search"
                 title="Clear search"
                 className={`${SEARCH_CLEAR_BUTTON} pos-search-clear`}

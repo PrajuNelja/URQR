@@ -23,6 +23,22 @@ export const LoginRequestSchema = z
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
+// Auth Response Schema (JWT + user metadata for POS session)
+export const AuthResponseSchema = z
+  .object({
+    accessToken: z.string().min(1, "Access token is required"),
+    user: z
+      .object({
+        id: z.string().min(1, "User ID is required"),
+        email: z.string().email("Invalid email format"),
+      })
+      .strict(),
+  })
+  .strict();
+
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+
+// Login Response Schema (API contract format: token + hotelId + role)
 export const LoginResponseSchema = z
   .object({
     token: z.string().min(1, "Token is required"),
