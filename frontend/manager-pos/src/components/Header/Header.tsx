@@ -1,65 +1,99 @@
-// src/components/Header/Header.tsx
 
 import type { HeaderProps } from "./Header.types";
-import { headerConfig } from "./Header.config";
 
-/**
- * Header — top bar with logo, title, nav, and right actions.
- *
- * <Header
- *   variant="dashboard"
- *   title="Dashboard"
- *   subtitle="Business overview"
- *   logo={<Logo size="md" />}
- *   navItems={[{ key: "pos", label: "Billing POS" }, { key: "dash", label: "Dashboard" }]}
- *   activeNav="pos"
- *   onNavChange={(k) => setActive(k)}
- *   actions={<Button variant="ghost">Logout</Button>}
- * />
- */
+import {
+  headerConfig,
+  HEADER_VARIANTS,
+} from "./Header.config";
+
 export const Header = ({
   variant = "dashboard",
   title,
   subtitle,
   logo,
+  center,
+  titleClassName = "",
   navItems,
   activeNav,
   onNavChange,
   actions,
   className = "",
 }: HeaderProps) => {
+  const isBilling = variant === "billing";
+
   return (
     <header
-      className={`${headerConfig.base} ${className}`.trim()}
       data-variant={variant}
+      className={[
+        headerConfig.base,
+        HEADER_VARIANTS[variant],
+        className,
+      ].filter(Boolean).join(" ")}
     >
-      {/* Left: logo + title */}
-      <div className={headerConfig.left}>
+      {/* LEFT SIDE: TITLE */}
+      <div className={`${headerConfig.left} shrink-0`}>
         {logo}
+
         <div className={headerConfig.titleBlock}>
-          <span className={headerConfig.title}>{title}</span>
+          {isBilling ? (
+            <h1
+              className={`${headerConfig.title} ${titleClassName}`}
+            >
+              {title}
+            </h1>
+          ) : (
+            <span
+              className={`${headerConfig.title} ${titleClassName}`}
+            >
+              {title}
+            </span>
+          )}
+
           {subtitle && (
-            <span className={headerConfig.subtitle}>{subtitle}</span>
+            <span className={headerConfig.subtitle}>
+              {subtitle}
+            </span>
           )}
         </div>
       </div>
 
-      {/* Center: nav */}
+      {/* CENTER: OPTIONAL SEARCH OR CONTENT */}
+      {center && (
+        <div
+          className={
+            isBilling
+              ? "order-3 w-full min-w-0 flex-1 sm:order-none sm:w-auto"
+              : "min-w-0 flex-1"
+          }
+        >
+          {center}
+        </div>
+      )}
+
+      {/* EXISTING NAVIGATION */}
       {navItems && navItems.length > 0 && (
-        <nav className={headerConfig.nav} aria-label="Primary">
+        <nav
+          className={headerConfig.nav}
+          aria-label="Primary"
+        >
           {navItems.map((item) => {
-            const isActive = item.key === activeNav;
+            const selected = item.key === activeNav;
+
             return (
               <button
                 key={item.key}
                 type="button"
                 className={
-                  isActive
+                  selected
                     ? headerConfig.navItemActive
                     : headerConfig.navItem
                 }
-                onClick={() => onNavChange?.(item.key)}
-                aria-current={isActive ? "page" : undefined}
+                onClick={() =>
+                  onNavChange?.(item.key)
+                }
+                aria-current={
+                  selected ? "page" : undefined
+                }
               >
                 {item.label}
               </button>
@@ -68,8 +102,17 @@ export const Header = ({
         </nav>
       )}
 
-      {/* Right: actions */}
-      {actions && <div className={headerConfig.actions}>{actions}</div>}
+      {/* RIGHT SIDE: REUSABLE ACTIONS */}
+      {actions && (
+        <div
+          className={[
+            headerConfig.actions,
+            isBilling ? "ml-auto shrink-0" : "",
+          ].join(" ")}
+        >
+          {actions}
+        </div>
+      )}
     </header>
   );
 };

@@ -1,44 +1,49 @@
-import { Link } from "@tanstack/react-router";
 
-// Temporary Grand Horizon branding from the current Billing page.
-export function BillingHeader() {
+import type { RefObject } from "react";
+
+import { Header } from "../../../../components/Header/Header";
+import { SearchInput } from "../../../../components/InputField/SearchInput";
+import { NetworkStatusPill } from "../../../../components/Header/NetworkStatusPill";
+import { CurrentDatePill } from "../../../../components/Header/CurrentDatePill";
+
+interface BillingHeaderProps {
+  searchText: string;
+  onSearchChange: (value: string) => void;
+  searchInputRef: RefObject<HTMLInputElement | null>;
+}
+
+export function BillingHeader({
+  searchText,
+  onSearchChange,
+  searchInputRef,
+}: BillingHeaderProps) {
   return (
-    <header className="flex w-full shrink-0 flex-wrap items-center justify-between gap-4 bg-[#f5efe6] px-4 py-5 text-[#30261d] lg:px-7">
-      <div className="flex items-center gap-4">
-        <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-sm bg-[#2d241b] text-2xl text-white">
-          ✦
+    <Header
+      variant="billing"
+      title="Billing"
+      titleClassName="!font-sans !text-[28px] !font-semibold"
+      className="!mb-0 min-h-[72px] w-full border-b border-border-subtle bg-surface px-4 lg:px-7"
+      center={
+        <div className="billing-header-search w-full max-w-[555px]">
+          <SearchInput
+            ref={searchInputRef}
+            value={searchText}
+            onChange={(event) =>
+              onSearchChange(event.target.value)
+            }
+            onClear={() => onSearchChange("")}
+            placeholder="Search items"
+            aria-label="Search catalog products"
+            fieldSize="sm"
+          />
         </div>
-        <div>
-          <h1 className="font-serif text-xl font-bold leading-tight text-[#30261d] lg:text-2xl">
-            GRAND HORIZON
-          </h1>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-[#91816c]">
-            Operations Dashboard
-          </p>
+      }
+      actions={
+        <div className="flex items-center gap-6">
+          <NetworkStatusPill />
+          <CurrentDatePill />
         </div>
-      </div>
-
-      <nav aria-label="POS navigation" className="flex flex-wrap items-center gap-3">
-        <Link
-          to="/pos/billing"
-          aria-current="page"
-          className="rounded-sm bg-[#2d241b] px-5 py-3 text-sm font-semibold text-white"
-        >
-          Billing POS
-        </Link>
-        <Link
-          to="/dashboard"
-          className="rounded-sm px-5 py-3 text-sm font-semibold text-[#30261d] transition-colors hover:bg-[#e9ddcc]"
-        >
-          Dashboard
-        </Link>
-        <Link
-          to="/login"
-          className="rounded-sm border border-[#dfcdb4] px-5 py-3 text-sm font-semibold text-[#30261d] transition-colors hover:bg-[#e9ddcc]"
-        >
-          Logout
-        </Link>
-      </nav>
-    </header>
+      }
+    />
   );
 }
