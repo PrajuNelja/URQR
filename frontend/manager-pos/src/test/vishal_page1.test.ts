@@ -45,18 +45,17 @@ describe("Vishal Scope: Page 1 of 12 Verification", () => {
   });
 
   it("Task 3: Strict Zod schema contracts for Auth (LoginRequest, AuthResponse) and Catalog", () => {
-    // 1. Valid LoginRequest
+    // 1. Valid LoginRequest (direct login without tenant slug)
     const validLogin = {
-      tenantSlug: "grand-horizon",
       username: "cashier01",
       password: "pass",
     };
     const parsedLogin = LoginRequestSchema.safeParse(validLogin);
     expect(parsedLogin.success).toBe(true);
 
-    // Invalid slug (uppercase or special characters rejected)
+    // Rejected tenant slug (no tenantSlug allowed in cashier login)
     const invalidSlug = {
-      tenantSlug: "Grand_Horizon!",
+      tenantSlug: "grand-horizon",
       username: "cashier01",
       password: "pass",
     };
@@ -64,7 +63,6 @@ describe("Vishal Scope: Page 1 of 12 Verification", () => {
 
     // Invalid password length (< 4 characters rejected)
     const shortPassword = {
-      tenantSlug: "grand-horizon",
       username: "cashier01",
       password: "123",
     };

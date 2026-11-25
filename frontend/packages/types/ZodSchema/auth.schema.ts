@@ -2,49 +2,34 @@ import { z } from "zod";
 
 export const LoginRequestSchema = z
   .object({
-    // 1. Tenant Slug (optional, for backward-compatible test fixtures; not required for POS login)
-    tenantSlug: z
-      .string()
-      .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens")
-      .optional(),
-
-    // 2. Sanitized Username - trims whitespace to prevent accidental spaces
-    username: z
-      .string()
-      .min(1, "Username is required")
-      .trim(),
-
-    // 3. Password: Minimum 4 characters
-    password: z
-      .string()
-      .min(4, "Password must be at least 4 characters"),
+    username: z.string().min(1, "Username is required").trim(),
+    password: z.string().min(4, "Password / PIN must be at least 4 characters"),
   })
   .strict();
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
-// Auth Response Schema (JWT + user metadata for POS session)
 export const AuthResponseSchema = z
   .object({
     accessToken: z.string().min(1, "Access token is required"),
+    tokenType: z.string().default("Bearer").optional(),
+    expiresAt: z.string().optional(),
+    refreshToken: z.string().nullable().optional(),
+    refreshExpiresAt: z.string().nullable().optional(),
+    userId: z.string().uuid().optional(),
+    hotelId: z.string().uuid().optional(),
+    username: z.string().optional(),
+    role: z.string().optional(),
     user: z
       .object({
-        id: z.string().min(1, "User ID is required"),
-        email: z.string().email("Invalid email format"),
+        id: z.string().min(1),
+        email: z.string().email(),
       })
-      .strict(),
+      .optional(),
   })
   .strict();
 
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
-// Login Response Schema (API contract format: token + hotelId + role)
-export const LoginResponseSchema = z
-  .object({
-    token: z.string().min(1, "Token is required"),
-    hotelId: z.string().uuid("Invalid hotel ID"),
-    role: z.string().min(1, "Role is required"),
-  })
-  .strict();
-
-export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+export const LoginResponseSchema = AuthResponseSchema;
+export type LoginResponse = AuthResponse;
