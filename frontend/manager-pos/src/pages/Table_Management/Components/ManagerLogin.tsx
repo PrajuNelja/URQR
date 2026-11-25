@@ -1,30 +1,22 @@
-import { useState } from "react";
-import { Sparkles, Calculator as KeypadIcon } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Button from "../../../components/Buttons/Button";
 import InputField from "../../../components/InputField/InputField";
 import Logo from "../../../components/Logo/Logo";
 import Notification from "../../../components/Notification/Notification";
-import NumericKeypad from "../../../components/Keypad/NumericKeypad";
 import { LOGIN_COPY, LOGIN_HIGHLIGHTS } from "../Config/Login.config";
 import { useManagerLogin } from "../Hooks/useManagerLogin";
 import "../../../Styles/manager-login.css";
 
 const ManagerLogin = () => {
   const {
-    username,
+    userName,
     password,
     feedback,
-    isLoading,
-    onUsernameChange,
+    onUserNameChange,
     onPasswordChange,
-    onKeypadDigit,
-    onKeypadBackspace,
-    onKeypadClear,
     onSubmit,
     dismissFeedback,
   } = useManagerLogin();
-
-  const [showKeypad, setShowKeypad] = useState(false);
 
   return (
     <main className="manager-login">
@@ -68,62 +60,36 @@ const ManagerLogin = () => {
 
           <form className="manager-login__form" onSubmit={onSubmit}>
             <InputField
-              label={LOGIN_COPY.usernameLabel}
-              name="username"
-              id="username"
+              label={LOGIN_COPY.userNameLabel}
+              name="userName"
               type="text"
               autoComplete="username"
-              placeholder={LOGIN_COPY.usernamePlaceholder}
-              value={username}
-              onChange={onUsernameChange}
+              placeholder={LOGIN_COPY.userNamePlaceholder}
+              value={userName}
+              onChange={onUserNameChange}
               wrapperClassName="manager-login__field"
               className="manager-login__input"
               required
             />
-            <div className="relative">
-              <InputField
-                label={LOGIN_COPY.passwordLabel}
-                name="password"
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder={LOGIN_COPY.passwordPlaceholder}
-                value={password}
-                onChange={onPasswordChange}
-                onFocus={() => setShowKeypad(true)}
-                wrapperClassName="manager-login__field"
-                className="manager-login__input"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowKeypad(!showKeypad)}
-                className="absolute right-3 top-9 text-xs text-blue-600 font-medium hover:underline flex items-center gap-1"
-                aria-label="Toggle Numeric Keypad"
-              >
-                <KeypadIcon size={14} />
-                {showKeypad ? "Hide Keypad" : "Touch Keypad"}
-              </button>
-            </div>
-
-            {showKeypad && (
-              <div className="my-2">
-                <NumericKeypad
-                  onDigit={onKeypadDigit}
-                  onBackspace={onKeypadBackspace}
-                  onClear={onKeypadClear}
-                />
-              </div>
-            )}
-
+            <InputField
+              label={LOGIN_COPY.passwordLabel}
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder={LOGIN_COPY.passwordPlaceholder}
+              value={password}
+              onChange={onPasswordChange}
+              wrapperClassName="manager-login__field"
+              className="manager-login__input"
+              required
+            />
             <Button
               className="manager-login__submit"
               type="submit"
               size="lg"
               fullWidth
-              disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : LOGIN_COPY.submitLabel}
+              {LOGIN_COPY.submitLabel}
             </Button>
           </form>
 

@@ -1,13 +1,17 @@
 import type { ProductItem } from "@urqr/types";
 
-export type Dish = ProductItem;
+export interface Dish extends ProductItem {
+  stock?: number;
+  lowStockThreshold?: number;
+  imageUrl?: string;
+}
 
 export interface CartItem {
   dish: Dish;
   quantity: number;
 }
 
-export type PaymentMethod = "Cash" | "UPI" | "Card";
+export type PaymentMethod = "Cash" | "UPI" | "Others";
 
 export interface ReceiptData {
   orderId: string;
@@ -19,4 +23,6 @@ export interface ReceiptData {
   tax: number;
   total: number;
   paymentMethod: string;
+  cashCollected?: number;
+  change?: number;
 }

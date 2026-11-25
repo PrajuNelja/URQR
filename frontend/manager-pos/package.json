@@ -1,17 +1,14 @@
 {
   "name": "manager-pos",
   "type": "module",
-  "version": "1.0.0",
-  "description": "URQR Standalone Manager POS Terminal Application",
+  "version": "0.0.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -b && vite build"
   },
-  "keywords": ["pos", "restaurant", "urqr", "tauri"],
-  "author": "NELJA TECH",
+  "keywords": [],
+  "author": "",
   "license": "ISC"
 }

@@ -5,7 +5,7 @@ import type {
 import type { NotificationType } from "../../../components/Notification/Notification.types";
 
 export interface LoginCredentials {
-  username: string;
+  userName: string;
   password: string;
 }
 
@@ -17,12 +17,8 @@ export interface LoginFeedback {
 
 export interface ManagerLoginFormState extends LoginCredentials {
   feedback: LoginFeedback;
-  isLoading: boolean;
-  onUsernameChange: ChangeEventHandler<HTMLInputElement>;
+  onUserNameChange: ChangeEventHandler<HTMLInputElement>;
   onPasswordChange: ChangeEventHandler<HTMLInputElement>;
-  onKeypadDigit: (digit: string) => void;
-  onKeypadBackspace: () => void;
-  onKeypadClear: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
   dismissFeedback: () => void;
 }

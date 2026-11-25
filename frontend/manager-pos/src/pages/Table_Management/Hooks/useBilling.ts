@@ -1,37 +1,58 @@
-import { useState, useMemo } from "react";
-import type { CartItem, Dish, PaymentMethod, ReceiptData } from "../Types/billing.types";
-import { DISHES, TAX_RATE } from "../Config/billing.config";
-import { apiClient } from "../../../lib/apiClient";
+import { useState, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { CartItem, PaymentMethod, ReceiptData, Dish } from "../Types/billing.types";
+import { DISHES, TAX_RATE, CATEGORIES } from "../Config/billing.config";
+import { POS_CATALOG_QUERY_KEY } from "../../../queryClient";
+import { usePosHotkeys } from "./usePosHotkeys";
 
 export const useBilling = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<Record<number, number>>({});
-  const [dishes] = useState<Dish[]>(DISHES);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
-  const [orderNote, setOrderNote] = useState<string>("");
+  const [cashCollected, setCashCollected] = useState<string>("");
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // TanStack Query for POS Catalog with dedicated caching defaults
+  const { data: dishes = DISHES, refetch: refreshCatalog, isLoading: isCatalogLoading } = useQuery<Dish[]>({
+    queryKey: POS_CATALOG_QUERY_KEY,
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/products");
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            return data.map((item: Record<string, unknown>, idx: number) => ({
+              id: typeof item.id === "number" || typeof item.id === "string" ? Number(item.id) : idx + 1,
+              name: typeof item.name === "string" ? item.name : "Dish",
+              category: typeof item.category === "string" ? item.category : "Main Course",
+              description: typeof item.description === "string" ? item.description : "",
+              price: typeof item.price === "number" ? item.price : Number(item.price) || 0,
+            }));
+          }
+        }
+      } catch {
+        // Fallback to static catalog configuration
+      }
+      return DISHES;
+    },
+    initialData: DISHES,
+  });
 
   const filteredDishes = useMemo(() => {
     return dishes.filter((dish) => {
-      const matchesCategory =
-        activeTab === "all" ||
-        dish.category.toLowerCase() === activeTab.toLowerCase();
-      const matchesSearch = dish.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesCategory = activeTab === "all" || dish.category.toLowerCase() === activeTab.toLowerCase();
+      const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [dishes, activeTab, searchQuery]);
 
-  const addToCart = (dishId: number) => {
+  const addToCart = useCallback((dishId: number) => {
     setCart((prev) => ({ ...prev, [dishId]: (prev[dishId] || 0) + 1 }));
-  };
+  }, []);
 
-  const updateQuantity = (dishId: number, delta: number) => {
+  const updateQuantity = useCallback((dishId: number, delta: number) => {
     setCart((prev) => {
       const next = { ...prev };
       const newQty = (next[dishId] || 0) + delta;
@@ -39,13 +60,12 @@ export const useBilling = () => {
       else next[dishId] = newQty;
       return next;
     });
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCart({});
-    setOrderNote("");
-    setErrorMessage(null);
-  };
+    setCashCollected("");
+  }, []);
 
   const totals = useMemo(() => {
     const items: CartItem[] = Object.keys(cart)
@@ -56,104 +76,83 @@ export const useBilling = () => {
       })
       .filter((item): item is CartItem => item !== null);
 
-    const subtotal = items.reduce(
-      (sum, item) => sum + item.dish.price * item.quantity,
-      0
-    );
+    const subtotal = items.reduce((sum, item) => sum + item.dish.price * item.quantity, 0);
     const tax = Math.round(subtotal * (TAX_RATE / 100) * 100) / 100;
     const total = Math.round((subtotal + tax) * 100) / 100;
-
     return { items, subtotal, tax, total };
   }, [cart, dishes]);
 
-  // Direct 1-Tap Checkout (Zero Cash Tendering / Change Calculation)
-  const handleCompletePayment = async () => {
-    if (totals.items.length === 0) return;
+  const change = useMemo(() => {
+    if (paymentMethod !== "Cash") return 0;
+    const cash = parseFloat(cashCollected);
+    if (isNaN(cash)) return NaN;
+    return Math.round((cash - totals.total) * 100) / 100;
+  }, [paymentMethod, cashCollected, totals.total]);
 
-    setIsSubmitting(true);
-    setErrorMessage(null);
+  const handleCompletePayment = useCallback(() => {
+    if (totals.items.length === 0) return;
+    if (paymentMethod === "Cash") {
+      const cash = parseFloat(cashCollected);
+      if (isNaN(cash) || cash < totals.total) return;
+    }
 
     const now = new Date();
-    const orderPayload = {
-      items: totals.items.map((i) => ({
-        menuItemId: i.dish.id,
-        quantity: i.quantity,
-        unitPrice: i.dish.price,
-      })),
+    const newReceipt: ReceiptData = {
+      orderId: `#ORD${Math.floor(1000 + Math.random() * 9000)}`,
+      date: now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      time: now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      items: totals.items.map((i) => ({ name: i.dish.name, price: i.dish.price, quantity: i.quantity })),
       subtotal: totals.subtotal,
-      taxAmount: totals.tax,
-      totalAmount: totals.total,
+      taxRate: TAX_RATE,
+      tax: totals.tax,
+      total: totals.total,
       paymentMethod,
-      orderNote,
+      cashCollected: paymentMethod === "Cash" ? parseFloat(cashCollected) : undefined,
+      change: paymentMethod === "Cash" ? change : undefined,
     };
 
-    try {
-      // Post to Spring Boot POS Order Service
-      let orderId = `#ORD${Math.floor(1000 + Math.random() * 9000)}`;
-      try {
-        const response = await apiClient.post("/orders", orderPayload);
-        if (response.data?.id) {
-          orderId = `#ORD${response.data.id}`;
-        }
-      } catch (apiErr) {
-        // Graceful fallback to client generation if offline or mock backend
-        console.warn("Backend /orders offline, proceeding in local POS mode:", apiErr);
-      }
+    setReceipt(newReceipt);
+    setIsReceiptOpen(true);
+    clearCart();
+  }, [totals, paymentMethod, cashCollected, change, clearCart]);
 
-      const newReceipt: ReceiptData = {
-        orderId,
-        date: now.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
-        time: now.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        items: totals.items.map((i) => ({
-          name: i.dish.name,
-          price: i.dish.price,
-          quantity: i.quantity,
-        })),
-        subtotal: totals.subtotal,
-        taxRate: TAX_RATE,
-        tax: totals.tax,
-        total: totals.total,
-        paymentMethod,
-      };
-
-      setReceipt(newReceipt);
-      setIsReceiptOpen(true);
-      clearCart();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to process payment";
-      setErrorMessage(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // POS Keyboard Hotkeys (F1 - F12)
+  usePosHotkeys({
+    onSearchFocus: () => {
+      const searchInput = document.querySelector<HTMLInputElement>("input[type='text']");
+      searchInput?.focus();
+    },
+    onNextCategory: () => {
+      const currentIndex = CATEGORIES.findIndex((c) => c.key.toLowerCase() === activeTab.toLowerCase());
+      const nextIndex = (currentIndex + 1) % CATEGORIES.length;
+      setActiveTab(CATEGORIES[nextIndex].key);
+    },
+    onClearCart: () => clearCart(),
+    onRefreshCatalog: () => {
+      refreshCatalog();
+    },
+    onSelectCash: () => setPaymentMethod("Cash"),
+    onSelectUPI: () => setPaymentMethod("UPI"),
+    onSelectCard: () => setPaymentMethod("Others"),
+    onCheckout: () => handleCompletePayment(),
+    onEscape: () => {
+      setIsReceiptOpen(false);
+    },
+  });
 
   return {
-    activeTab,
-    setActiveTab,
-    searchQuery,
-    setSearchQuery,
+    activeTab, setActiveTab,
+    searchQuery, setSearchQuery,
     filteredDishes,
-    cart,
-    addToCart,
-    updateQuantity,
-    clearCart,
+    dishes,
+    isCatalogLoading,
+    refreshCatalog,
+    cart, addToCart, updateQuantity, clearCart,
     totals,
-    paymentMethod,
-    setPaymentMethod,
-    orderNote,
-    setOrderNote,
+    paymentMethod, setPaymentMethod,
+    cashCollected, setCashCollected,
+    change,
     handleCompletePayment,
-    receipt,
-    isReceiptOpen,
-    setIsReceiptOpen,
-    isSubmitting,
-    errorMessage,
+    receipt, isReceiptOpen, setIsReceiptOpen
   };
 };

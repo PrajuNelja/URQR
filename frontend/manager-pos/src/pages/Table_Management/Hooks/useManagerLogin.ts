@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -6,8 +7,7 @@ import type {
   FormEventHandler,
 } from "react";
 
-import { apiClient } from "../../../lib/apiClient";
-import { useAuthStore } from "../../../lib/authStore";
+import { LOGIN_CREDENTIALS } from "../Config/Login.config";
 
 import type {
   LoginCredentials,
@@ -16,15 +16,13 @@ import type {
 } from "../Types/Login.types";
 
 export const useManagerLogin = (): ManagerLoginFormState => {
+  // TanStack Router navigation
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [values, setValues] = useState<LoginCredentials>({
-    username: "",
+    userName: "",
     password: "",
   });
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [feedback, setFeedback] = useState<LoginFeedback>({
     isOpen: false,
@@ -39,15 +37,19 @@ export const useManagerLogin = (): ManagerLoginFormState => {
     }));
   }, []);
 
-  const onUsernameChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+  const onUserNameChange: ChangeEventHandler<HTMLInputElement> = (
+    event
+  ) => {
     setValues((current) => ({
       ...current,
-      username: event.target.value,
+      userName: event.target.value,
     }));
     dismissFeedback();
   };
 
-  const onPasswordChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+  const onPasswordChange: ChangeEventHandler<HTMLInputElement> = (
+    event
+  ) => {
     setValues((current) => ({
       ...current,
       password: event.target.value,
@@ -55,100 +57,35 @@ export const useManagerLogin = (): ManagerLoginFormState => {
     dismissFeedback();
   };
 
-  const onKeypadDigit = useCallback((digit: string) => {
-    setValues((current) => ({
-      ...current,
-      password: current.password + digit,
-    }));
-    dismissFeedback();
-  }, [dismissFeedback]);
-
-  const onKeypadBackspace = useCallback(() => {
-    setValues((current) => ({
-      ...current,
-      password: current.password.slice(0, -1),
-    }));
-    dismissFeedback();
-  }, [dismissFeedback]);
-
-  const onKeypadClear = useCallback(() => {
-    setValues((current) => ({
-      ...current,
-      password: "",
-    }));
-    dismissFeedback();
-  }, [dismissFeedback]);
-
-  const onSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+  const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
 
-    if (!values.username || !values.password) {
-      setFeedback({
-        isOpen: true,
-        type: "error",
-        message: "Please enter both username and password.",
-      });
-      return;
-    }
+    // Validate login credentials
+    const isValid =
+      values.userName === LOGIN_CREDENTIALS.userName &&
+      values.password === LOGIN_CREDENTIALS.password;
 
-    setIsLoading(true);
+    setFeedback({
+      isOpen: true,
+      type: isValid ? "success" : "error",
+      message: isValid
+        ? "Login successful."
+        : "Login failed. Please check your user name and password.",
+    });
 
-    try {
-      // Connect to real Spring Boot Auth API
-      const response = await apiClient.post("/auth/login", {
-        username: values.username,
-        password: values.password,
-      });
-
-      const { token, user } = response.data;
-
-      // Save token and hydrate store
-      localStorage.setItem("access_token", token);
-      if (user?.hotelId) {
-        localStorage.setItem("tenant_id", user.hotelId);
-      }
-      setAuth(user, user?.hotelId || "default", token);
-
-      setFeedback({
-        isOpen: true,
-        type: "success",
-        message: "Login successful. Redirecting to billing...",
-      });
-
-      // Primary operational workflow: redirect directly to Screen 2 Billing
+    // Navigate only after successful login
+    if (isValid) {
       void navigate({
-        to: "/pos/billing",
+        to: "/dashboard",
       });
-    } catch (error: unknown) {
-      let errorMsg = "Login failed. Please check your username and password.";
-      if (typeof error === "object" && error !== null) {
-        const resp = (error as { response?: { data?: { message?: string } } }).response;
-        if (resp?.data?.message) {
-          errorMsg = resp.data.message;
-        } else if (error instanceof Error) {
-          errorMsg = error.message;
-        }
-      }
-
-      setFeedback({
-        isOpen: true,
-        type: "error",
-        message: errorMsg,
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return {
     ...values,
     feedback,
-    isLoading,
-    onUsernameChange,
+    onUserNameChange,
     onPasswordChange,
-    onKeypadDigit,
-    onKeypadBackspace,
-    onKeypadClear,
     onSubmit,
     dismissFeedback,
   };
