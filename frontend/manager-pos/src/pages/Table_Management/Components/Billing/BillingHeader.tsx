@@ -1,14 +1,16 @@
 
+import { useEffect } from "react";
 import type { RefObject } from "react";
-import { Hotel, Menu } from "lucide-react";
 
 import { Header } from "../../../../components/Header/Header";
 import { IconButton } from "../../../../components/Buttons/IconButton";
+import { Icon } from "../../../../components/DataCard/Icon";
+import { Logo } from "../../../../components/Logo/Logo";
 import { SearchInput } from "../../../../components/InputField/SearchInput";
 import { NetworkStatusPill } from "../../../../components/Header/NetworkStatusPill";
 import { CurrentDatePill } from "../../../../components/Header/CurrentDatePill";
 
-interface Props {
+interface BillingHeaderProps {
   searchText: string;
   onSearchChange: (value: string) => void;
   searchInputRef: RefObject<HTMLInputElement | null>;
@@ -22,35 +24,108 @@ export function BillingHeader({
   searchInputRef,
   onMenuClick,
   menuOpen,
-}: Props) {
+}: BillingHeaderProps) {
+
+  // Focus the reusable search input
+  const focusSearch = () => {
+    const input =
+      searchInputRef.current ??
+      document.querySelector<HTMLInputElement>(
+        "#billing-search-input"
+      );
+
+    input?.focus();
+  };
+
+  // =====================================
+  // F2 KEYBOARD SHORTCUT
+  // =====================================
+
+  useEffect(() => {
+    const handleF2 = (event: KeyboardEvent) => {
+      if (
+        event.key === "F2" &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.metaKey
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const searchInput =
+          searchInputRef.current ??
+          document.querySelector<HTMLInputElement>(
+            "#billing-search-input"
+          );
+
+        searchInput?.focus();
+      }
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleF2,
+      true
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleF2,
+        true
+      );
+    };
+  }, [searchInputRef]);
+
   return (
     <Header
       variant="billing"
       title="GRAND HORIZON"
-      subtitle="Billing POS"
+      titleClassName="sr-only"
       className="urqr-billing-header"
-      titleClassName="urqr-billing-brand-name"
+
+      // REUSABLE MENU AND HOTEL LOGO
       logo={
         <>
           <IconButton
             label="Open navigation"
-            icon={<Menu size={22} />}
+            icon={
+              <Icon name="Menu" size={22} />
+            }
             variant="ghost"
-            onClick={onMenuClick}
+            size="md"
+            className="urqr-billing-menu-button"
             aria-expanded={menuOpen}
             aria-controls="urqr-billing-drawer"
+            onClick={onMenuClick}
           />
 
-          <span
-            className="urqr-billing-hotel-icon"
-            aria-hidden="true"
-          >
-            <Hotel size={21} />
-          </span>
+          <Logo
+            size="md"
+            variant="solid"
+            showText={true}
+            label="GRAND HORIZON"
+            subLabel=""
+            className="urqr-billing-brand-logo"
+          />
         </>
       }
+
+      // REUSABLE SEARCH INPUT WITH F2
       center={
-        <div className="urqr-billing-search">
+        <div
+          className="urqr-billing-search"
+          onClick={(event) => {
+            const target = event.target;
+
+            if (
+              target instanceof HTMLElement &&
+              target.closest(".pos-search-shortcut")
+            ) {
+              focusSearch();
+            }
+          }}
+        >
           <SearchInput
             id="billing-search-input"
             ref={searchInputRef}
@@ -58,7 +133,10 @@ export function BillingHeader({
             onChange={(event) =>
               onSearchChange(event.target.value)
             }
-            onClear={() => onSearchChange("")}
+            onClear={() => {
+              onSearchChange("");
+              focusSearch();
+            }}
             placeholder="Search items"
             shortcutHint="F2"
             aria-label="Search catalog products"
@@ -66,6 +144,8 @@ export function BillingHeader({
           />
         </div>
       }
+
+      // REUSABLE NETWORK AND DATE
       actions={
         <div className="urqr-billing-header-actions">
           <NetworkStatusPill />
@@ -75,3 +155,5 @@ export function BillingHeader({
     />
   );
 }
+
+export default BillingHeader;
