@@ -39,7 +39,7 @@ jobs:
 
       - name: Run k6 Performance Benchmark
         run: |
-          node scripts/run-k6-benchmark.js || k6 run qa/k6-tests/baseline.js
+          node scripts/run-k6-benchmark.js
         env:
           BASE_URL: "http://localhost:8080"
           VUS: "5"

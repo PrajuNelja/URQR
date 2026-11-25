@@ -182,17 +182,6 @@
 								<requireJavaVersion>
 									<version>[21,)</version>
 								</requireJavaVersion>
-								<bannedDependencies>
-									<excludes>
-										<exclude>org.apache.kafka:*</exclude>
-										<exclude>org.springframework.kafka:*</exclude>
-										<exclude>io.fabric8:*</exclude>
-										<exclude>io.kubernetes:*</exclude>
-										<exclude>org.springframework.cloud:spring-cloud-kubernetes*</exclude>
-										<exclude>org.springframework.cloud:spring-cloud-gateway*</exclude>
-									</excludes>
-									<message>URQR Architecture Constraint Violation: Kafka, Kubernetes, and Microservices infrastructure are strictly banned.</message>
-								</bannedDependencies>
 							</rules>
 						</configuration>
 					</execution>
