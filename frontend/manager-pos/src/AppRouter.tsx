@@ -5,65 +5,88 @@ import {
   RouterProvider,
   Outlet,
   Navigate,
+  redirect,
 } from "@tanstack/react-router";
+import { z } from "zod";
 
 import Showcase from "./components/Showcase/Showcase";
 import Dashboard from "./pages/Table_Management/Components/Dashboard/Dashboard";
 import ManagerLogin from "./pages/Table_Management/Components/ManagerLogin";
 import Billing from "./pages/Table_Management/Components/Billing/Billing";
+import { useAuthStore } from "./lib/authStore";
 
-// 2. Root route - UPDATED to catch errors
+// 1. Define the search schema for the login route (Day 3 Afternoon Task 2)
+const loginSearchSchema = z.object({
+  redirect: z.string().optional(),
+});
+
+// 2. Root route
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
   notFoundComponent: () => <Navigate to="/" replace />,
-  errorComponent: ({ error }) => (
-    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-bg text-text">
-      <h1 className="text-2xl font-bold">Something went wrong!</h1>
-      {/* Cast error to Error type to fix TypeScript */}
-      <pre className="text-sm text-error">{(error as Error).message || String(error)}</pre>
-      <button 
-        onClick={() => window.location.reload()} 
-        className="rounded-md bg-primary px-4 py-2 text-on-primary"
-      >
-        Reload Page
-      </button>
-    </div>
-  ),
 });
 
+// 3. Default Login route
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: ManagerLogin,
 });
 
-// 4. Login route
+// 4. Login route (Reverse Guard + Search Param Validation)
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: ManagerLogin,
+  validateSearch: (search) => loginSearchSchema.parse(search),
+  beforeLoad: () => {
+    // If already logged in, don't show the login page, send to billing
+    if (useAuthStore.getState().isAuthenticated()) {
+      throw redirect({ to: "/pos/billing" });
+    }
+  },
 });
 
-// 5. Dashboard route
+// 5. Dashboard route (PROTECTED)
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
   component: Dashboard,
+  beforeLoad: ({ location }) => {
+    // Guard + Redirect with query param
+    if (!useAuthStore.getState().isAuthenticated()) {
+      throw redirect({
+        to: "/login",
+        search: { redirect: location.href },
+      });
+    }
+  },
 });
 
-// 6. Billing route
+// 6. Billing route (PROTECTED)
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pos/billing",
   component: Billing,
+  beforeLoad: ({ location }) => {
+    // Guard + Redirect with query param
+    if (!useAuthStore.getState().isAuthenticated()) {
+      throw redirect({
+        to: "/login",
+        search: { redirect: location.href },
+      });
+    }
+  },
 });
 
+// 7. Showcase route
 const showcaseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/showcase",
   component: Showcase,
 });
 
+// 8. Register all routes
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -72,17 +95,20 @@ const routeTree = rootRoute.addChildren([
   showcaseRoute,
 ]);
 
+// 9. Create the router
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
 });
 
+// 10. Register router types for TypeScript
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
 }
 
+// 11. Application router component
 function AppRouter() {
   return <RouterProvider router={router} />;
 }

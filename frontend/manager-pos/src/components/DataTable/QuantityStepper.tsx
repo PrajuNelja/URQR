@@ -30,6 +30,7 @@ export const QuantityStepper = ({
   // Determine if buttons should be disabled
   const canDecrease = !disabled && value > min;
   const canIncrease = !disabled && value < max;
+  const btnSizeClass = size === "sm" ? "p-0.5" : "p-1";
 
   const handleDecrease = () => {
     if (canDecrease) {
@@ -95,7 +96,7 @@ export const QuantityStepper = ({
       {/* Minus Button */}
       <button
         type="button"
-        className="flex items-center justify-center rounded p-1 hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none"
+        className={`flex items-center justify-center rounded ${btnSizeClass} hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none`}
         aria-label="Decrease quantity"
         onClick={handleDecrease}
         disabled={!canDecrease}
@@ -121,7 +122,7 @@ export const QuantityStepper = ({
       {/* Plus Button */}
       <button
         type="button"
-        className="flex items-center justify-center rounded p-1 hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none"
+        className={`flex items-center justify-center rounded ${btnSizeClass} hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none`}
         aria-label="Increase quantity"
         onClick={handleIncrease}
         disabled={!canIncrease}
