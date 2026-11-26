@@ -144,7 +144,7 @@ export function BillingCartPreview() {
         </div>
 
         <p className="mb-4 text-xs text-text-muted">
-          Tax and discounts will be calculated
+          Tax will be calculated
           during checkout integration.
         </p>
 
