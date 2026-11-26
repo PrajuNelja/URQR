@@ -1,4 +1,3 @@
-
 import { X } from "lucide-react";
 import { IconButton } from "../Buttons/IconButton";
 import { QuantityStepper } from "../DataTable/QuantityStepper";
@@ -8,14 +7,19 @@ interface CartItemRowProps {
   productName: string;
   unitPricePaise: number;
   quantity: number;
-  maxQuantity?: number;
+  // Defaulting to 15 here, but you can override it if a specific item has less stock
+  maxQuantity?: number; 
   onQuantityChange: (value: number) => void;
   onRemove: () => void;
 }
 
 export function CartItemRow({
-  productName, unitPricePaise, quantity,
-  maxQuantity = 15, onQuantityChange, onRemove,
+  productName, 
+  unitPricePaise, 
+  quantity,
+  maxQuantity = 15, // <--- Limit hardcoded to 15
+  onQuantityChange, 
+  onRemove,
 }: CartItemRowProps) {
   return (
     <div className="pos-cart-row">
@@ -29,8 +33,8 @@ export function CartItemRow({
       <div className="pos-cart-row__controls">
         <QuantityStepper
           value={quantity}
-          min={0}
-          max={maxQuantity}
+          min={1} // <--- Cannot go below 1
+          max={maxQuantity} // <--- Cannot go above 15
           size="sm"
           onChange={onQuantityChange}
         />
