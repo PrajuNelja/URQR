@@ -12,13 +12,25 @@ import Dashboard from "./pages/Table_Management/Components/Dashboard/Dashboard";
 import ManagerLogin from "./pages/Table_Management/Components/ManagerLogin";
 import Billing from "./pages/Table_Management/Components/Billing/Billing";
 
-// 2. Root route
+// 2. Root route - UPDATED to catch errors
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
   notFoundComponent: () => <Navigate to="/" replace />,
+  errorComponent: ({ error }) => (
+    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-bg text-text">
+      <h1 className="text-2xl font-bold">Something went wrong!</h1>
+      {/* Cast error to Error type to fix TypeScript */}
+      <pre className="text-sm text-error">{(error as Error).message || String(error)}</pre>
+      <button 
+        onClick={() => window.location.reload()} 
+        className="rounded-md bg-primary px-4 py-2 text-on-primary"
+      >
+        Reload Page
+      </button>
+    </div>
+  ),
 });
 
-// 3. Default Login route
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
@@ -46,14 +58,12 @@ const billingRoute = createRoute({
   component: Billing,
 });
 
-// 7. Showcase route
 const showcaseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/showcase",
   component: Showcase,
 });
 
-// 8. Register all routes
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -62,20 +72,17 @@ const routeTree = rootRoute.addChildren([
   showcaseRoute,
 ]);
 
-// 9. Create the router
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
 });
 
-// 10. Register router types for TypeScript
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
 }
 
-// 11. Application router component
 function AppRouter() {
   return <RouterProvider router={router} />;
 }

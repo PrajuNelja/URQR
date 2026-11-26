@@ -55,7 +55,7 @@ export const Notification = ({
       <button
         type="button"
         onClick={onClose}
-        className="shrink-0 p-1 -mr-2 text-current opacity-70 hover:opacity-100 transition-opacity"
+        className="shrink-0 p-1 -mr-2 px-8 text-current opacity-70 hover:opacity-100 transition-opacity"
         aria-label="Close notification"
       >
         <X size={16} />
