@@ -254,7 +254,7 @@ class UrqrServerApplicationTests {
         mockMvc.perform(post("/api/v1/platform/hotels/{hotelId}/users", hotelId)
                         .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("username", "not-platform-admin",
+                        .content(objectMapper.writeValueAsString(Map.of("username", "not-platform-admin@example.test",
                                 "password", "ManagerPassword@123", "role", "CASHIER"))))
                 .andExpect(status().isForbidden());
     }
