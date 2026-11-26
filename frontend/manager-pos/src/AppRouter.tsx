@@ -63,20 +63,11 @@ const dashboardRoute = createRoute({
   },
 });
 
-// 6. Billing route (PROTECTED)
+// 6. Billing route (Accessible directly in POS standalone mode)
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pos/billing",
   component: Billing,
-  beforeLoad: ({ location }) => {
-    // Guard + Redirect with query param
-    if (!useAuthStore.getState().isAuthenticated()) {
-      throw redirect({
-        to: "/login",
-        search: { redirect: location.href },
-      });
-    }
-  },
 });
 
 // 7. Showcase route
