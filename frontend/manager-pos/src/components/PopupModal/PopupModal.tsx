@@ -1,7 +1,8 @@
-// src/components/PopupModal/PopupModal.tsx
-
-import { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
+import type { MouseEvent } from "react";
 import { X } from "lucide-react";
+
 import type { PopupModalProps } from "./PopupModal.types";
 import {
   MODAL_BACKDROP,
@@ -15,20 +16,6 @@ import {
 } from "./PopupModal.config";
 import { Button } from "../Buttons/Button";
 
-/**
- * PopupModal — accessible dialog with optional confirm/cancel footer.
- *
- * <PopupModal
- *   isOpen={open}
- *   onClose={() => setOpen(false)}
- *   title="Delete Record"
- *   confirmText="Delete"
- *   isDanger
- *   onConfirm={handleDelete}
- * >
- *   Are you sure?
- * </PopupModal>
- */
 export const PopupModal = ({
   isOpen,
   onClose,
@@ -47,30 +34,61 @@ export const PopupModal = ({
   className = "",
   hideCloseButton = false,
 }: PopupModalProps) => {
-  // ── Escape key handler ──
-  useEffect(() => {
-    if (!isOpen || !closeOnEscape) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, closeOnEscape, onClose]);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // ── Lock body scroll while open ──
   useEffect(() => {
     if (!isOpen) return;
-    const original = document.body.style.overflow;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const focusableElements = panel.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusableElements.length > 0) {
+      (focusableElements[0] as HTMLElement).focus();
+    } else {
+      panel.focus();
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && closeOnEscape) {
+        onClose();
+      }
+
+      if (e.key === "Tab") {
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, closeOnEscape, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = original;
+      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && closeOnBackdrop) onClose();
+  const handleBackdrop = (e: MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && closeOnBackdrop) {
+      onClose();
+    }
   };
 
   const handleCancel = () => {
@@ -78,48 +96,46 @@ export const PopupModal = ({
     else onClose();
   };
 
-  const showFooter =
-    footer !== undefined ||
-    onConfirm !== undefined;
+  const showFooter = footer !== undefined || onConfirm !== undefined;
 
-  return (
-    <div
-      className={MODAL_BACKDROP}
-      onClick={handleBackdrop}
-      role="presentation"
-    >
+  const modalContent = (
+    <div className={MODAL_BACKDROP} onClick={handleBackdrop} role="presentation">
       <div
-        className={`${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
+        ref={panelRef}
+        tabIndex={-1}
+        className={`relative ${MODAL_PANEL_BASE} ${MODAL_SIZES[size]} ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
+        aria-label={title ? undefined : "Dialog"}
       >
-        {/* Header */}
-        {(title || !hideCloseButton) && (
+        {/* If there is a title, show the header */}
+        {title && (
           <div className={MODAL_HEADER}>
-            {title && (
-              <h2 id="modal-title" className={MODAL_TITLE}>
-                {title}
-              </h2>
-            )}
-            {!hideCloseButton && (
-              <button
-                type="button"
-                className={MODAL_CLOSE_BTN}
-                onClick={onClose}
-                aria-label="Close modal"
-                title="Close"
-              >
-                <X size={18} />
-              </button>
-            )}
+            <h2 id="modal-title" className={MODAL_TITLE}>
+              {title}
+            </h2>
           </div>
         )}
 
-        {/* Body */}
-        <div className={MODAL_BODY}>{children}</div>
+        {/* Absolute positioned Close Button for all cases */}
+        {!hideCloseButton && (
+          <button
+            type="button"
+            className={`${MODAL_CLOSE_BTN} absolute right-4 top-4`}
+            onClick={onClose}
+            aria-label="Close modal"
+            title="Close"
+          >
+            <X size={24} strokeWidth={2} />
+          </button>
+        )}
 
-        {/* Footer */}
+        {/* Add padding-top if no title, so content doesn't overlap the X */}
+        <div className={`${MODAL_BODY} ${!title ? "pt-12" : ""}`}>
+          {children}
+        </div>
+
         {showFooter && (
           <div className={MODAL_FOOTER}>
             {footer ?? (
@@ -143,6 +159,8 @@ export const PopupModal = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default PopupModal;

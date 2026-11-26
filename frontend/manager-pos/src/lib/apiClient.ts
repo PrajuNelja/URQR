@@ -1,3 +1,4 @@
+// src/lib/apiClient.ts
 import axios from "axios";
 
 export const apiClient = axios.create({
@@ -7,6 +8,10 @@ export const apiClient = axios.create({
 
 // Request interceptor: inject tenant ID and Authorization token
 apiClient.interceptors.request.use((config) => {
+  const requestId = crypto.randomUUID();
+  config.headers.set("X-Request-ID", requestId);
+  config.headers.set("X-Correlation-ID", requestId);
+
   const tenantId = localStorage.getItem("tenant_id");
   if (tenantId) {
     config.headers["X-Tenant-ID"] = tenantId;
@@ -22,9 +27,21 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url: string = error.config?.url ?? "";
+
+    // ⚠️ Do NOT redirect on 401 from the login endpoint itself —
+    // that's an expected "wrong password" response, not an expired session.
+    // Let useManagerLogin handle it and show the inline toast.
+    const isLoginCall = url.includes("/auth/login");
+
+    if (status === 401 && !isLoginCall) {
+      // Only clear session + redirect for authenticated calls that expire
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("tenant_id");
       window.location.href = "/login";
     }
+
     return Promise.reject(error);
-  }
+  },
 );

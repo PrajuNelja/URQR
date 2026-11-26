@@ -14,24 +14,21 @@
     min-height: 100vh;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    margin: 0;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
-  #root {
-    min-height: 100vh;
-  }
+  #root { min-height: 100vh; }
+  img { max-width: 100%; display: block; }
 
-  img {
-    max-width: 100%;
-    display: block;
-  }
-
-  /* Focus ring (2px primary outline, offset 2px) */
   :focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
   }
 
-  /* Disabled states */
   button:disabled,
   input:disabled,
   textarea:disabled,
@@ -40,10 +37,9 @@
     color: var(--color-disabled-text);
     cursor: not-allowed;
     pointer-events: none;
-    opacity: 1; /* Overriding default opacity */
+    opacity: 1;
   }
 
-  /* Print styles (Receipt) */
   @media print {
     body * { visibility: hidden; }
     .print-receipt, .print-receipt * { visibility: visible; }
@@ -56,5 +52,14 @@
       background: #fff;
     }
     .no-print { display: none !important; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

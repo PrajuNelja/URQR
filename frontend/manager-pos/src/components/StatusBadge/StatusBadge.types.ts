@@ -5,28 +5,19 @@ export type StatusBadgeVariant =
   | "error"
   | "warning"
   | "info"
-  | "neutral";
+  | "neutral"
+  // Spec §8 Order Lifecycle Pills
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline";
 
 export type StatusBadgeSize = "sm" | "md";
 
 export interface StatusBadgeProps {
-  /**
-   * Status value. Accepts either:
-   *  - a raw status string ("paid", "pending", "cancelled", "completed")
-   *  - a variant name ("success", "error", "warning", "info", "neutral")
-   * (mapped automatically via StatusBadge.config)
-   */
   status?: string;
-
-  /** Explicit variant (overrides `status` mapping) */
   variant?: StatusBadgeVariant;
-
-  /** Custom display label (defaults to the formatted status) */
   label?: string;
-
-  /** Size preset (default: 'sm') */
   size?: StatusBadgeSize;
-
-  /** Extra classes */
   className?: string;
 }

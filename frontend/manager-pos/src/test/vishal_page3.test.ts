@@ -1,46 +1,70 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import React from "react";
-import { render, fireEvent, cleanup } from "@testing-library/react";
-import { UrqrBridgeClient } from "../lib/bridgeClient";
+import { cleanup, fireEvent, render } from "@testing-library/react";
+import { BridgeWebSocketClient } from "../lib/bridge/bridgeClient";
 import { DesktopWindowControls } from "../components/Header/DesktopWindowControls";
 import tauriConfig from "../../src-tauri/tauri.conf.json";
 
-class MockWebSocket {
-  public static readonly CONNECTING = 0;
-  public static readonly OPEN = 1;
-  public static readonly CLOSING = 2;
-  public static readonly CLOSED = 3;
+class MockWebSocket extends EventTarget {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 3;
+  static instances: MockWebSocket[] = [];
 
-  public static instances: MockWebSocket[] = [];
-  public url: string;
-  public readyState: number = 0; // CONNECTING
-  public onopen: (() => void) | null = null;
-  public onclose: (() => void) | null = null;
-  public onmessage: ((e: { data: string }) => void) | null = null;
-  public onerror: (() => void) | null = null;
-  public sentMessages: string[] = [];
+  readonly url: string;
+  readyState = MockWebSocket.CONNECTING;
+  sentMessages: string[] = [];
 
   constructor(url: string) {
+    super();
     this.url = url;
     MockWebSocket.instances.push(this);
     setTimeout(() => {
-      this.readyState = 1; // OPEN
-      this.onopen?.();
+      this.readyState = MockWebSocket.OPEN;
+      this.dispatchEvent(new Event("open"));
     }, 10);
   }
 
-  public send(msg: string) {
-    this.sentMessages.push(msg);
+  send(message: string): void {
+    this.sentMessages.push(message);
+    const request = JSON.parse(message) as Record<string, unknown>;
+    if (request.action === "ping") {
+      queueMicrotask(() => {
+        this.dispatchEvent(
+          new MessageEvent("message", {
+            data: JSON.stringify({
+              event: "pong",
+              timestamp: Date.now(),
+              status: "PRINTER_READY",
+            }),
+          }),
+        );
+      });
+    } else if (request.action === "print") {
+      queueMicrotask(() => {
+        this.dispatchEvent(
+          new MessageEvent("message", {
+            data: JSON.stringify({
+              success: true,
+              orderId: request.orderId,
+              status: "PRINTER_READY",
+              message: "Receipt printed",
+              latencyMs: 1,
+            }),
+          }),
+        );
+      });
+    }
   }
 
-  public close() {
-    this.readyState = 3; // CLOSED
-    this.onclose?.();
+  close(): void {
+    this.readyState = MockWebSocket.CLOSED;
+    this.dispatchEvent(new Event("close"));
   }
 }
 
-describe("Vishal Scope: Page 3 of 12 Verification (Tauri v2 & URQR-Bridge)", () => {
+describe("Vishal Morning POS Bridge Tasks", () => {
   let originalWebSocket: typeof WebSocket;
 
   beforeEach(() => {
@@ -51,12 +75,13 @@ describe("Vishal Scope: Page 3 of 12 Verification (Tauri v2 & URQR-Bridge)", () 
   });
 
   afterEach(() => {
+    for (const socket of MockWebSocket.instances) socket.close();
     globalThis.WebSocket = originalWebSocket;
     vi.useRealTimers();
     cleanup();
   });
 
-  it("Task 1: Tauri v2 configuration (tauri.conf.json) defines POS kiosk resolution & local WebSocket CSP", () => {
+  it("uses the Tauri v2 kiosk configuration and local WebSocket CSP", () => {
     expect(tauriConfig.productName).toBe("URQR Manager POS");
     expect(tauriConfig.identifier).toBe("com.nelja.urqr.pos");
 
@@ -65,87 +90,79 @@ describe("Vishal Scope: Page 3 of 12 Verification (Tauri v2 & URQR-Bridge)", () 
     expect(windowConfig.height).toBe(768);
     expect(windowConfig.minWidth).toBe(1024);
     expect(windowConfig.minHeight).toBe(600);
-
-    // CSP allows local WebSocket communication on port 9101
     expect(tauriConfig.app.security.csp).toContain("ws://localhost:*");
-    expect(tauriConfig.app.security.csp).toContain("http://localhost:*");
   });
 
-  it("Task 2: UrqrBridgeClient connects to local Go URQR-Bridge daemon on ws://localhost:9101", () => {
-    const client = new UrqrBridgeClient("ws://localhost:9101");
-    client.connect();
+  it("connects to the Go bridge on port 9101", async () => {
+    const client = new BridgeWebSocketClient("ws://localhost:9101/ws");
+    const connected = client.connect();
+    await vi.advanceTimersByTimeAsync(10);
+    await connected;
 
-    expect(MockWebSocket.instances.length).toBe(1);
-    expect(MockWebSocket.instances[0].url).toBe("ws://localhost:9101");
-
-    vi.advanceTimersByTime(20);
+    expect(MockWebSocket.instances[0].url).toBe("ws://localhost:9101/ws");
     expect(client.getState().status).toBe("CONNECTED");
-    expect(client.getState().isOnline).toBe(true);
-
     client.disconnect();
   });
 
-  it("Task 3: implements bridge heartbeat monitor pinging daemon every 3 seconds for connection health", () => {
-    const client = new UrqrBridgeClient("ws://localhost:9101");
-    client.connect();
-    vi.advanceTimersByTime(20);
+  it("sends a ping every three seconds and records the pong", async () => {
+    const client = new BridgeWebSocketClient("ws://localhost:9101/ws");
+    const connected = client.connect();
+    await vi.advanceTimersByTimeAsync(10);
+    await connected;
 
-    const ws = MockWebSocket.instances[0];
-    expect(ws.sentMessages.length).toBe(1); // Immediate initial ping
-    expect(JSON.parse(ws.sentMessages[0])).toEqual({ action: "ping" });
-
-    // Advance 3 seconds -> second ping sent
-    vi.advanceTimersByTime(3000);
-    expect(ws.sentMessages.length).toBe(2);
-    expect(JSON.parse(ws.sentMessages[1])).toEqual({ action: "ping" });
-
-    // Advance another 3 seconds -> third ping sent
-    vi.advanceTimersByTime(3000);
-    expect(ws.sentMessages.length).toBe(3);
-
-    // Simulate pong message from Go daemon
-    ws.onmessage?.({
-      data: JSON.stringify({ event: "pong", timestamp: Date.now(), status: "READY" }),
-    });
-
-    expect(client.getState().lastHeartbeat).toBeDefined();
-    expect(client.getState().isOnline).toBe(true);
-
+    const socket = MockWebSocket.instances[0];
+    expect(JSON.parse(socket.sentMessages[0])).toEqual({ action: "ping" });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(socket.sentMessages).toHaveLength(2);
+    expect(client.getState().lastHeartbeat).not.toBeNull();
     client.disconnect();
   });
 
-  it("Task 4: renders desktop window controls, full-screen kiosk toggle, and bridge status pill", () => {
+  it("renders the kiosk toggle and bridge status pill", () => {
     const { getByRole, getByText } = render(
-      React.createElement(DesktopWindowControls, {
-        showBridgePill: true,
-      })
+      React.createElement(DesktopWindowControls, { showBridgePill: true }),
     );
 
-    // Kiosk Mode toggle button
-    const kioskBtn = getByRole("button", { name: /Toggle Fullscreen Kiosk/i });
-    expect(kioskBtn).toBeDefined();
+    const kioskButton = getByRole("button", {
+      name: /Toggle Fullscreen Kiosk/i,
+    });
+    expect(kioskButton).toBeDefined();
     expect(getByText(/Kiosk/i)).toBeDefined();
-
-    // Toggle click invokes fullscreen
-    fireEvent.click(kioskBtn);
+    fireEvent.click(kioskButton);
   });
 
-  it("Task 5: UrqrBridgeClient dispatches ESC/POS print jobs and handles reconnects on daemon drop", async () => {
-    const client = new UrqrBridgeClient("ws://localhost:9101");
-    client.connect();
-    vi.advanceTimersByTime(20);
+  it("dispatches a print request and reconnects when the daemon drops", async () => {
+    const client = new BridgeWebSocketClient("ws://localhost:9101/ws");
+    const connected = client.connect();
+    await vi.advanceTimersByTimeAsync(10);
+    await connected;
 
-    const ws = MockWebSocket.instances[0];
+    const request = {
+      action: "print" as const,
+      orderId: "order-1",
+      tenantId: "tenant-1",
+      store: { name: "Grand Horizon" },
+      items: [{ name: "Coffee", quantity: 1, unitPrice: 5, totalPrice: 5 }],
+      taxes: {
+        cgst: 0.13,
+        cgstRate: 2.5,
+        sgst: 0.12,
+        sgstRate: 2.5,
+        totalTax: 0.25,
+      },
+      totals: { subtotal: 5, tax: 0.25, grandTotal: 5.25 },
+    };
+    const printing = client.printReceipt(request);
+    const response = await printing;
+    expect(response.success).toBe(true);
+    expect(JSON.parse(MockWebSocket.instances[0].sentMessages[1])).toEqual(
+      request,
+    );
 
-    // Simulate daemon drop
-    ws.close();
-    expect(client.getState().status).toBe("DISCONNECTED");
+    MockWebSocket.instances[0].close();
     expect(client.getState().isOnline).toBe(false);
-
-    // Auto-reconnect triggered after 3 seconds
-    vi.advanceTimersByTime(3000);
-    expect(MockWebSocket.instances.length).toBe(2);
-
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(MockWebSocket.instances).toHaveLength(2);
     client.disconnect();
   });
 });

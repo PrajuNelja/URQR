@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   bridgeClient,
+  isTauriRuntime,
   type BridgeState,
   type BridgePrintRequest,
   type BridgePrintResponse,
-} from "../../../lib/bridgeClient";
+} from "../../../lib/bridge/bridgeClient";
 
 /**
  * useBridgeHeartbeat — React hook managing WebSocket connection to the local Go URQR-Bridge.
@@ -19,7 +20,11 @@ export function useBridgeHeartbeat(autoConnect = true) {
     });
 
     if (autoConnect) {
-      bridgeClient.connect();
+      if (isTauriRuntime()) {
+        void bridgeClient.connect().catch((error: unknown) => {
+          console.error("Could not connect to the local URQR Bridge", error);
+        });
+      }
     }
 
     return () => {
@@ -27,8 +32,11 @@ export function useBridgeHeartbeat(autoConnect = true) {
     };
   }, [autoConnect]);
 
-  const printReceipt = async (req: BridgePrintRequest): Promise<BridgePrintResponse> => {
-    return bridgeClient.printReceipt(req);
+  const printReceipt = (
+    req: BridgePrintRequest,
+    checkoutStartedAt?: number,
+  ): Promise<BridgePrintResponse> => {
+    return bridgeClient.printReceipt(req, checkoutStartedAt);
   };
 
   const manualPing = () => {
@@ -37,12 +45,15 @@ export function useBridgeHeartbeat(autoConnect = true) {
 
   const reconnect = () => {
     bridgeClient.disconnect();
-    bridgeClient.connect();
+    void bridgeClient.connect().catch((error: unknown) => {
+      console.error("Could not reconnect to the local URQR Bridge", error);
+    });
   };
 
   return {
     status: bridgeState.status,
     isOnline: bridgeState.isOnline,
+    printerStatus: bridgeState.printerStatus,
     latencyMs: bridgeState.latencyMs,
     lastHeartbeat: bridgeState.lastHeartbeat,
     reconnectAttempts: bridgeState.reconnectAttempts,

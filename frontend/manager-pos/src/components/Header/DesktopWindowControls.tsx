@@ -1,7 +1,17 @@
 import React from "react";
-import { Maximize2, Minimize2, Minus, Square, X, Wifi, WifiOff } from "lucide-react";
+import {
+  AlertTriangle,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Printer,
+  Square,
+  WifiOff,
+  X,
+} from "lucide-react";
 import { useTauriWindow } from "../../pages/Table_Management/Hooks/useTauriWindow";
 import { useBridgeHeartbeat } from "../../pages/Table_Management/Hooks/useBridgeHeartbeat";
+import { getPrinterStatusPresentation } from "./printerStatus";
 
 export interface DesktopWindowControlsProps {
   className?: string;
@@ -21,7 +31,25 @@ export const DesktopWindowControls: React.FC<DesktopWindowControlsProps> = ({
 }) => {
   const { isFullscreen, isTauriContainer, toggleFullscreen, minimizeWindow, maximizeWindow, closeWindow } =
     useTauriWindow();
-  const { isOnline, latencyMs, status } = useBridgeHeartbeat();
+  const { isOnline, latencyMs, status, printerStatus } =
+    useBridgeHeartbeat();
+  const presentation = getPrinterStatusPresentation(
+    status,
+    isOnline,
+    printerStatus,
+  );
+  const PrinterIcon =
+    presentation.tone === "ready"
+      ? Printer
+      : presentation.tone === "disconnected"
+        ? WifiOff
+        : AlertTriangle;
+  const statusColor =
+    presentation.tone === "ready"
+      ? "bg-[#d9eedd] text-[#2f7a45] border-[#b7dfbd]"
+      : presentation.tone === "disconnected"
+        ? "bg-[#fbd9d6] text-[#b3402a] border-[#f5c2be]"
+        : "bg-[#fef3c7] text-[#92400e] border-[#fde68a]";
 
   return (
     <div className={`flex items-center gap-2 select-none ${className}`}>
@@ -29,29 +57,17 @@ export const DesktopWindowControls: React.FC<DesktopWindowControlsProps> = ({
       {showBridgePill && (
         <div
           title={
-            isOnline
-              ? `URQR-Bridge Online (ws://localhost:9101) - Latency: ${latencyMs}ms`
-              : `URQR-Bridge ${status} (ws://localhost:9101)`
+            `Printer ${presentation.label} (URQR-Bridge ${status})${
+              isOnline ? ` - Latency: ${latencyMs}ms` : ""
+            }`
           }
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${
-            isOnline
-              ? "bg-[#d9eedd] text-[#2f7a45] border-[#b7dfbd]"
-              : status === "CONNECTING"
-              ? "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"
-              : "bg-[#fbd9d6] text-[#b3402a] border-[#f5c2be]"
-          }`}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${statusColor}`}
         >
-          {isOnline ? (
-            <>
-              <Wifi size={12} className="shrink-0" />
-              <span>Bridge: 9101 ({latencyMs}ms)</span>
-            </>
-          ) : (
-            <>
-              <WifiOff size={12} className="shrink-0" />
-              <span>Bridge: {status === "CONNECTING" ? "Reconnecting..." : "Offline"}</span>
-            </>
-          )}
+          <PrinterIcon size={12} className="shrink-0" />
+          <span>
+            Printer: {presentation.label}
+            {isOnline ? ` (${latencyMs}ms)` : ""}
+          </span>
         </div>
       )}
 

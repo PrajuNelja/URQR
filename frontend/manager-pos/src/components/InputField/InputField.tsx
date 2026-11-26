@@ -1,5 +1,3 @@
-// src/components/InputField/InputField.tsx
-
 import { forwardRef, useId } from "react";
 import type { InputFieldProps } from "./InputField.types";
 import {
@@ -14,14 +12,6 @@ import {
   INPUT_RIGHT_ICON,
 } from "./InputField.config";
 
-/**
- * InputField — text/password/number/etc. input with label, hint, error, icons.
- *
- * <InputField label="MANAGER ID" placeholder="e.g., MGR-8902" />
- * <InputField label="Password" type="password" placeholder="••••••••" />
- * <InputField label="Search" leftIcon={<Icon name="Search" />} />
- * <InputField label="Amount" error="This field is required" />
- */
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
   (
     {
@@ -30,6 +20,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       hint,
       leftIcon,
       rightIcon,
+      suffix,
       fieldSize = "md",
       fullWidth = true,
       wrapperClassName = "",
@@ -48,7 +39,8 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       INPUT_VARIANTS[error ? "error" : "default"],
       INPUT_SIZES[fieldSize],
       leftIcon ? "pl-10" : "",
-      rightIcon ? "pr-10" : "",
+      rightIcon ? "pr-12" : "",
+      suffix ? "pr-14" : "",
       fullWidth ? "w-full" : "",
       className,
     ]
@@ -57,7 +49,11 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
 
     return (
       <div
-        className={[FIELD_WRAPPER, fullWidth ? "w-full" : "", wrapperClassName]
+        className={[
+          FIELD_WRAPPER,
+          fullWidth ? "w-full" : "",
+          wrapperClassName,
+        ]
           .filter(Boolean)
           .join(" ")}
       >
@@ -67,8 +63,10 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           </label>
         )}
 
-        <div className="relative">
-          {leftIcon && <span className={INPUT_LEFT_ICON}>{leftIcon}</span>}
+        <div className="relative w-full">
+          {leftIcon && (
+            <span className={INPUT_LEFT_ICON}>{leftIcon}</span>
+          )}
 
           <input
             ref={ref}
@@ -77,12 +75,24 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             disabled={disabled}
             aria-invalid={!!error}
             aria-describedby={
-              error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+              error
+                ? `${inputId}-error`
+                : hint
+                  ? `${inputId}-hint`
+                  : undefined
             }
             {...rest}
           />
 
-          {rightIcon && <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>}
+          {rightIcon && (
+            <span className={INPUT_RIGHT_ICON}>{rightIcon}</span>
+          )}
+
+          {suffix && (
+            <span className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center">
+              {suffix}
+            </span>
+          )}
         </div>
 
         {error ? (
@@ -100,5 +110,4 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
 );
 
 InputField.displayName = "InputField";
-
 export default InputField;

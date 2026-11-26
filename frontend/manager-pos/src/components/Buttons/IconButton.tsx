@@ -1,5 +1,4 @@
 // src/components/Buttons/IconButton.tsx
-
 import { forwardRef } from "react";
 import { Loader2 } from "lucide-react";
 import type { IconButtonProps } from "./Button.types";
@@ -10,13 +9,6 @@ import {
   SPINNER_CLASSES,
 } from "./Button.config";
 
-/**
- * IconButton — square icon-only button (eye, download, close).
- *
- * <IconButton label="View receipt" icon={<Icon name="Eye" />} />
- * <IconButton variant="primary" label="Download" icon={<Download size={18} />} />
- * <IconButton size="sm" label="Close" icon={<X size={14} />} />
- */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   (
     {

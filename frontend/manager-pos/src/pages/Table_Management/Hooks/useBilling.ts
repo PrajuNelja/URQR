@@ -1,158 +1,384 @@
+
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { CartItem, PaymentMethod, ReceiptData, Dish } from "../Types/billing.types";
-import { DISHES, TAX_RATE, CATEGORIES } from "../Config/billing.config";
+import type { CheckoutRequest } from "@urqr/types";
+
+import type {
+  CartItem,
+  PaymentMethod,
+  ReceiptData,
+  Dish,
+} from "../Types/billing.types";
+
+import {
+  DISHES,
+  TAX_RATE,
+  CATEGORIES,
+} from "../Config/billing.config";
+
 import { POS_CATALOG_QUERY_KEY } from "../../../queryClient";
 import { usePosHotkeys } from "./usePosHotkeys";
+import { useDebouncedValue } from "./useDebouncedValue";
 
 export const useBilling = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<Record<number, number>>({});
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
-  const [cashCollected, setCashCollected] = useState<string>("");
-  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("Cash");
+  const [cashCollected, setCashCollected] = useState("");
+  const [receipt, setReceipt] = useState<ReceiptData | null>(
+    null
+  );
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  // TanStack Query for POS Catalog with dedicated caching defaults
-  const { data: dishes = DISHES, refetch: refreshCatalog, isLoading: isCatalogLoading } = useQuery<Dish[]>({
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  // Get products from API, falling back to existing demo data.
+  const {
+    data: dishes = DISHES,
+    refetch: refreshCatalog,
+    isLoading: isCatalogLoading,
+  } = useQuery<Dish[]>({
     queryKey: POS_CATALOG_QUERY_KEY,
     queryFn: async () => {
       try {
         const response = await fetch("/api/products");
+
         if (response.ok) {
-          const data = await response.json();
+          const data: unknown = await response.json();
+
           if (Array.isArray(data) && data.length > 0) {
-            return data.map((item: Record<string, unknown>, idx: number) => ({
-              id: typeof item.id === "number" || typeof item.id === "string" ? Number(item.id) : idx + 1,
-              name: typeof item.name === "string" ? item.name : "Dish",
-              category: typeof item.category === "string" ? item.category : "Main Course",
-              description: typeof item.description === "string" ? item.description : "",
-              price: typeof item.price === "number" ? item.price : Number(item.price) || 0,
-            }));
+            return data.map(
+              (
+                item: Record<string, unknown>,
+                index: number
+              ) => ({
+                id:
+                  typeof item.id === "number" ||
+                  typeof item.id === "string"
+                    ? Number(item.id)
+                    : index + 1,
+
+                name:
+                  typeof item.name === "string"
+                    ? item.name
+                    : "Dish",
+
+                category:
+                  typeof item.category === "string"
+                    ? item.category
+                    : "Main Course",
+
+                description:
+                  typeof item.description === "string"
+                    ? item.description
+                    : "",
+
+                price:
+                  typeof item.price === "number"
+                    ? item.price
+                    : Number(item.price) || 0,
+
+                stock:
+                  typeof item.stock === "number"
+                    ? item.stock
+                    : undefined,
+
+                lowStockThreshold:
+                  typeof item.lowStockThreshold === "number"
+                    ? item.lowStockThreshold
+                    : undefined,
+
+                imageUrl:
+                  typeof item.imageUrl === "string"
+                    ? item.imageUrl
+                    : undefined,
+              })
+            );
           }
         }
       } catch {
-        // Fallback to static catalog configuration
+        // Keep existing fallback products if API is offline.
       }
+
       return DISHES;
     },
     initialData: DISHES,
   });
 
+  // Category filtering + 300ms debounced product search.
   const filteredDishes = useMemo(() => {
+    const query = debouncedSearch.trim().toLowerCase();
+
     return dishes.filter((dish) => {
-      const matchesCategory = activeTab === "all" || dish.category.toLowerCase() === activeTab.toLowerCase();
-      const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [dishes, activeTab, searchQuery]);
+      const category = dish.category.toLowerCase();
+      const name = dish.name.toLowerCase();
 
-  const addToCart = useCallback((dishId: number) => {
-    setCart((prev) => ({ ...prev, [dishId]: (prev[dishId] || 0) + 1 }));
-  }, []);
+      const matchesCategory =
+        activeTab === "all" ||
+        (activeTab === "main" &&
+          category === "main course") ||
+        (activeTab === "beverages" &&
+          ["beverages", "drinks"].includes(category)) ||
+        (activeTab === "soups" &&
+          (category === "soups" || name.includes("soup"))) ||
+        (activeTab === "salads" &&
+          (category === "salads" || name.includes("salad"))) ||
+        category === activeTab;
 
-  const updateQuantity = useCallback((dishId: number, delta: number) => {
-    setCart((prev) => {
-      const next = { ...prev };
-      const newQty = (next[dishId] || 0) + delta;
-      if (newQty <= 0) delete next[dishId];
-      else next[dishId] = newQty;
-      return next;
+      return matchesCategory && name.includes(query);
     });
-  }, []);
+  }, [dishes, activeTab, debouncedSearch]);
+
+  // Add only available products; maximum quantity = 15.
+  const addToCart = useCallback(
+    (dishId: number) => {
+      const dish = dishes.find(
+        (item) => item.id === dishId
+      );
+
+      if (!dish || dish.stock === 0) return;
+
+      const max = Math.min(15, dish.stock ?? 15);
+
+      setCart((previous) => {
+        const current = previous[dishId] ?? 0;
+
+        if (current >= max) return previous;
+
+        return {
+          ...previous,
+          [dishId]: current + 1,
+        };
+      });
+    },
+    [dishes]
+  );
+
+  // QuantityStepper uses absolute quantities.
+  // Our Billing cart receives quantity changes as a delta.
+  const updateQuantity = useCallback(
+    (dishId: number, delta: number) => {
+      const dish = dishes.find(
+        (item) => item.id === dishId
+      );
+
+      if (!dish || !Number.isFinite(delta)) return;
+
+      const max = Math.min(15, dish.stock ?? 15);
+
+      setCart((previous) => {
+        const next = { ...previous };
+
+        const quantity = Math.min(
+          max,
+          (previous[dishId] ?? 0) + delta
+        );
+
+        if (quantity <= 0) {
+          delete next[dishId];
+        } else {
+          next[dishId] = quantity;
+        }
+
+        return next;
+      });
+    },
+    [dishes]
+  );
 
   const clearCart = useCallback(() => {
     setCart({});
     setCashCollected("");
   }, []);
 
+  // Calculate subtotal and tax using integer paise.
   const totals = useMemo(() => {
-    const items: CartItem[] = Object.keys(cart)
-      .map((id) => {
-        const dish = dishes.find((d) => d.id === Number(id));
-        if (!dish) return null;
-        return { dish, quantity: cart[Number(id)] };
-      })
-      .filter((item): item is CartItem => item !== null);
+    const items: CartItem[] = Object.keys(cart).flatMap(
+      (key) => {
+        const dish = dishes.find(
+          (item) => item.id === Number(key)
+        );
 
-    const subtotal = items.reduce((sum, item) => sum + item.dish.price * item.quantity, 0);
-    const tax = Math.round(subtotal * (TAX_RATE / 100) * 100) / 100;
-    const total = Math.round((subtotal + tax) * 100) / 100;
-    return { items, subtotal, tax, total };
+        return dish
+          ? [{ dish, quantity: cart[Number(key)] }]
+          : [];
+      }
+    );
+
+    const subtotalPaise = items.reduce(
+      (sum, item) =>
+        sum +
+        Math.round(item.dish.price * 100) * item.quantity,
+      0
+    );
+
+    const taxPaise = Math.round(
+      (subtotalPaise * TAX_RATE) / 100
+    );
+
+    return {
+      items,
+      subtotal: subtotalPaise / 100,
+      tax: taxPaise / 100,
+      total: (subtotalPaise + taxPaise) / 100,
+    };
   }, [cart, dishes]);
 
-  const change = useMemo(() => {
-    if (paymentMethod !== "Cash") return 0;
-    const cash = parseFloat(cashCollected);
-    if (isNaN(cash)) return NaN;
-    return Math.round((cash - totals.total) * 100) / 100;
-  }, [paymentMethod, cashCollected, totals.total]);
+  // This is a frontend demonstration checkout.
+  // Real transactions must be confirmed by the backend.
+  const handleCompletePayment = useCallback(
+    (checkout: CheckoutRequest): ReceiptData | null => {
+      if (
+        !totals.items.length ||
+        !Number.isFinite(checkout.amountTendered)
+      ) {
+        return null;
+      }
 
-  const handleCompletePayment = useCallback(() => {
-    if (totals.items.length === 0) return;
-    if (paymentMethod === "Cash") {
-      const cash = parseFloat(cashCollected);
-      if (isNaN(cash) || cash < totals.total) return;
-    }
+      const duePaise = Math.round(totals.total * 100);
 
-    const now = new Date();
-    const newReceipt: ReceiptData = {
-      orderId: `#ORD${Math.floor(1000 + Math.random() * 9000)}`,
-      date: now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-      time: now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-      items: totals.items.map((i) => ({ name: i.dish.name, price: i.dish.price, quantity: i.quantity })),
-      subtotal: totals.subtotal,
-      taxRate: TAX_RATE,
-      tax: totals.tax,
-      total: totals.total,
-      paymentMethod,
-      cashCollected: paymentMethod === "Cash" ? parseFloat(cashCollected) : undefined,
-      change: paymentMethod === "Cash" ? change : undefined,
-    };
+      if (
+        Math.round(checkout.payableAmount * 100) !==
+        duePaise
+      ) {
+        return null;
+      }
 
-    setReceipt(newReceipt);
-    setIsReceiptOpen(true);
-    clearCart();
-  }, [totals, paymentMethod, cashCollected, change, clearCart]);
+      const receivedPaise = Math.round(
+        checkout.amountTendered * 100
+      );
 
-  // POS Keyboard Hotkeys (F1 - F12)
+      if (
+        checkout.paymentMode === "Cash" &&
+        receivedPaise < duePaise
+      ) {
+        return null;
+      }
+
+      const method: PaymentMethod =
+        checkout.paymentMode === "Card"
+          ? "Others"
+          : checkout.paymentMode;
+
+      setPaymentMethod(method);
+
+      setCashCollected(
+        checkout.paymentMode === "Cash"
+          ? String(checkout.amountTendered)
+          : ""
+      );
+
+      const now = new Date();
+
+      const newReceipt: ReceiptData = {
+        orderId: `#DEMO-${now
+          .getTime()
+          .toString(36)
+          .toUpperCase()}`,
+
+        date: now.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+
+        time: now.toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+
+        items: totals.items.map(({ dish, quantity }) => ({
+          name: dish.name,
+          price: dish.price,
+          quantity,
+        })),
+
+        subtotal: totals.subtotal,
+        taxRate: TAX_RATE,
+        tax: totals.tax,
+        total: totals.total,
+        paymentMethod: checkout.paymentMode,
+
+        cashCollected:
+          checkout.paymentMode === "Cash"
+            ? checkout.amountTendered
+            : undefined,
+
+        change:
+          checkout.paymentMode === "Cash"
+            ? (receivedPaise - duePaise) / 100
+            : undefined,
+      };
+
+      setReceipt(newReceipt);
+      setIsReceiptOpen(true);
+      clearCart();
+
+      return newReceipt;
+    },
+    [totals, clearCart]
+  );
+
+  // Existing POS keyboard shortcut system.
   usePosHotkeys({
-    onSearchFocus: () => {
-      const searchInput = document.querySelector<HTMLInputElement>("input[type='text']");
-      searchInput?.focus();
-    },
+    onSearchFocus: () =>
+      document
+        .querySelector<HTMLInputElement>(
+          "#billing-search-input"
+        )
+        ?.focus(),
+
     onNextCategory: () => {
-      const currentIndex = CATEGORIES.findIndex((c) => c.key.toLowerCase() === activeTab.toLowerCase());
-      const nextIndex = (currentIndex + 1) % CATEGORIES.length;
-      setActiveTab(CATEGORIES[nextIndex].key);
+      const index = CATEGORIES.findIndex(
+        (category) => category.key === activeTab
+      );
+
+      setActiveTab(
+        CATEGORIES[(index + 1) % CATEGORIES.length].key
+      );
     },
-    onClearCart: () => clearCart(),
+
+    onClearCart: clearCart,
+
     onRefreshCatalog: () => {
-      refreshCatalog();
+      void refreshCatalog();
     },
+
     onSelectCash: () => setPaymentMethod("Cash"),
     onSelectUPI: () => setPaymentMethod("UPI"),
     onSelectCard: () => setPaymentMethod("Others"),
-    onCheckout: () => handleCompletePayment(),
-    onEscape: () => {
-      setIsReceiptOpen(false);
-    },
+
+    onCheckout: () =>
+      document
+        .getElementById("billing-select-payment")
+        ?.click(),
+
+    onEscape: () => setIsReceiptOpen(false),
   });
 
   return {
-    activeTab, setActiveTab,
-    searchQuery, setSearchQuery,
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
     filteredDishes,
     dishes,
     isCatalogLoading,
     refreshCatalog,
-    cart, addToCart, updateQuantity, clearCart,
+    cart,
+    addToCart,
+    updateQuantity,
+    clearCart,
     totals,
-    paymentMethod, setPaymentMethod,
-    cashCollected, setCashCollected,
-    change,
+    paymentMethod,
+    setPaymentMethod,
+    cashCollected,
+    setCashCollected,
     handleCompletePayment,
-    receipt, isReceiptOpen, setIsReceiptOpen
+    receipt,
+    isReceiptOpen,
+    setIsReceiptOpen,
   };
 };

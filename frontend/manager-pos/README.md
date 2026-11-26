@@ -80,13 +80,28 @@ Open the local URL displayed in the terminal.
 pnpm build
 ```
 
-## 8. Preview the Production Build
+## 8. Local Receipt Printing
+
+The Tauri POS connects to the local Go bridge at `ws://localhost:9101/ws`.
+Override the URL with `VITE_BRIDGE_WS_URL` when needed. After a valid checkout,
+the frontend sends the receipt with the authenticated `tenant_id` and reports
+the bridge print response in a notification. A completed payment is not
+reversed if the bridge or printer is unavailable.
+
+The header badge reflects printer readiness, disconnection, paper-out, cover,
+and warning states. The receipt modal reprints through the bridge and reports
+printed, queued, and failed outcomes.
+
+The 50 ms target measures checkout confirmation through WebSocket dispatch; it
+does not measure the time for the printer to finish feeding paper.
+
+## 9. Preview the Production Build
 
 ```bash
 pnpm preview
 ```
 
-## 9. Code Quality Commands
+## 10. Code Quality Commands
 
 Check code using ESLint:
 
@@ -112,7 +127,7 @@ Check formatting without modifying files:
 pnpm format:check
 ```
 
-## 10. Development Guidelines
+## 11. Development Guidelines
 
 - Follow the existing project folder structure.
 - Use reusable components where appropriate.
@@ -122,7 +137,7 @@ pnpm format:check
 - Do not implement unapproved screens or features.
 - Follow the approved Phase 1 Manager POS requirements.
 
-## 11. Current Development Status
+## 12. Current Development Status
 
 - React + TypeScript + Vite setup: Completed
 - Initial routing: Completed
@@ -130,4 +145,7 @@ pnpm format:check
 - ESLint configuration: Verified
 - Prettier configuration: Verified
 - Development and production build: Verified
+- Tauri POS bridge status and reprint flows: Implemented
+- Go bridge and virtual printer round-trip: Verified
+- Joint hardware sign-off report: Pending
 - Shared application layout: Pending approved design from the design team

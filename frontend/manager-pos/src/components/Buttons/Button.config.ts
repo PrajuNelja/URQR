@@ -1,72 +1,62 @@
-// src/components/Buttons/Buttons.config.ts
-// All configs for the Buttons folder: Button, IconButton
-
+// src/components/Buttons/Button.config.ts
 import type { ButtonSize, ButtonVariant } from "./Button.types";
-
 
 // ═══════════════════════════════════════════
 // BUTTON — BASE
 // ═══════════════════════════════════════════
-
 export const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 font-bold tracking-[0.04em] " +
-  "rounded-md border transition-all duration-200 " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 " +
-  "disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none " +
-  "hover:-translate-y-[2px] active:translate-y-0";
+  "inline-flex items-center justify-center gap-2 font-semibold tracking-[0.04em] " +
+  "rounded-[8px] border transition-colors duration-200 outline-none " +
+  "whitespace-nowrap " + 
+  "disabled:bg-disabled disabled:text-disabled-text disabled:border-border disabled:cursor-not-allowed disabled:pointer-events-none " +
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2";
 
 // ═══════════════════════════════════════════
 // BUTTON — VARIANTS
 // ═══════════════════════════════════════════
-
 export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-button-text border-primary hover:brightness-110 shadow-ivory",
+    "bg-primary text-on-primary border-transparent hover:bg-primary-dark",
   secondary:
-    "bg-accent-gold text-button-text border-accent-gold hover:brightness-110 shadow-ivory",
+    "bg-surface-alt text-text border-border hover:bg-bg",
   outline:
-    "bg-transparent text-primary border-border-subtle hover:border-accent-gold hover:text-accent-gold",
+    "bg-surface text-primary border-primary hover:bg-surface-alt",
   ghost:
-    "bg-transparent text-primary border-transparent hover:bg-app-bg",
+    "bg-transparent text-text border-transparent hover:bg-surface-alt",
   danger:
-    "bg-error-text text-button-text border-error-text hover:brightness-110",
+    "bg-error text-on-primary border-transparent hover:opacity-90",
 };
 
 // ═══════════════════════════════════════════
 // BUTTON — SIZES
 // ═══════════════════════════════════════════
-
 export const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "text-[11px] px-3 py-1.5",
-  md: "text-xs px-3.5 py-2.5",
-  lg: "text-sm px-5 py-3.5",
+  sm: "h-9 px-4 text-[12px]",                               // 36px height
+  md: "h-10 px-5 text-[14px]",                              // 40px height
+  lg: "h-11 px-6 text-[14px]",                              // 44px height
+  login: "h-[52px] px-4 text-[14px]",                       // 52px height (Login Spec)
   icon: "p-2",
 };
 
 // ═══════════════════════════════════════════
-// BUTTON — MODIFIERS
+// BUTTON — MODIFIERS (This is the missing part!)
 // ═══════════════════════════════════════════
-
 export const BUTTON_FULL_WIDTH = "w-full";
 
 // ═══════════════════════════════════════════
 // ICON BUTTON — BASE
 // ═══════════════════════════════════════════
-
 export const ICON_BUTTON_BASE =
-  "inline-flex items-center justify-center rounded-md border " +
-  "transition-all duration-200 " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 " +
-  "disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none";
+  "inline-flex items-center justify-center rounded-lg border border-transparent transition-colors duration-200 outline-none " +
+  "disabled:bg-disabled disabled:text-disabled-text disabled:cursor-not-allowed disabled:pointer-events-none";
 
 export const ICON_BUTTON_SIZES: Record<"sm" | "md" | "lg", string> = {
-  sm: "w-8 h-8",
-  md: "w-9 h-9",
-  lg: "w-11 h-11",
+  sm: "w-9 h-9",
+  md: "w-10 h-10",
+  lg: "w-12 h-12",
 };
 
 // ═══════════════════════════════════════════
 // SPINNER
 // ═══════════════════════════════════════════
-
 export const SPINNER_CLASSES = "animate-spin";

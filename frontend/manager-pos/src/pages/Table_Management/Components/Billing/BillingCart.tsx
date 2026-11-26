@@ -1,35 +1,133 @@
+
+import { useEffect, useRef, useState } from "react";
+
 import { Card } from "../../../../components/DataCard/Card";
-import { Button } from "../../../../components/Buttons/Button";
-import { QuantityStepper } from "../../../../components/DataTable/QuantityStepper";
-import { TextArea } from "../../../../components/InputField/TextArea";
+import { CartItemRow } from "../../../../components/Cart/CartItemRow";
+import { EmptyState } from "../../../../components/DataCard/EmptyState";
+
 import type { CartItem } from "../../Types/billing.types";
 
-interface Props {
-  items: CartItem[]; updateQuantity: (id: number, delta: number) => void;
-  clearCart: () => void; note: string; setNote: (n: string) => void;
+interface BillingCartProps {
+  items: CartItem[];
+  updateQuantity: (id: number, delta: number) => void;
+
+  // Will receive the real ID after backend integration
+  orderId?: string | number | null;
 }
 
-export const BillingCart = ({ items, updateQuantity, clearCart, note, setNote }: Props) => (
-  <Card className="h-full">
-    <div className="flex justify-between items-center mb-3">
-      <h3 className="font-serif text-lg text-primary">2. Order Details</h3>
-      <Button variant="ghost" size="sm" onClick={clearCart}>Clear</Button>
-    </div>
-    <div className="space-y-2 mb-4">
-      {items.length === 0 ? (
-        <p className="text-center text-sm text-text-muted py-6">Cart is empty — add dishes.</p>
-      ) : (
-        items.map((item) => (
-          <div key={item.dish.id} className="flex justify-between items-center p-3 border border-border-subtle rounded-md bg-surface">
-            <div>
-              <b className="text-sm block">{item.dish.name}</b>
-              <small className="text-xs text-text-muted">₹{item.dish.price.toFixed(2)} each</small>
-            </div>
-            <QuantityStepper value={item.quantity} onChange={(v) => updateQuantity(item.dish.id, v - item.quantity)} />
-          </div>
-        ))
-      )}
-    </div>
-    <TextArea placeholder="Note: e.g., no onions..." rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
-  </Card>
-);
+// Temporary 4-digit order ID
+const generateOrderId = (): string => {
+  return String(Math.floor(1000 + Math.random() * 9000));
+};
+
+export function BillingCart({
+  items,
+  updateQuantity,
+  orderId,
+}: BillingCartProps) {
+  const [temporaryOrderId, setTemporaryOrderId] =
+    useState<string>(generateOrderId);
+
+  const previouslyHadItems = useRef(items.length > 0);
+
+  useEffect(() => {
+    // Generate an ID for the next order
+    // after the current cart is emptied
+    if (
+      previouslyHadItems.current &&
+      items.length === 0
+    ) {
+      setTemporaryOrderId(generateOrderId());
+    }
+
+    previouslyHadItems.current = items.length > 0;
+  }, [items.length]);
+
+  const hasBackendOrderId =
+    orderId !== null &&
+    orderId !== undefined &&
+    String(orderId).trim() !== "";
+
+  const displayedOrderId = hasBackendOrderId
+    ? String(orderId).trim().replace(/^#/, "")
+    : temporaryOrderId;
+
+  const totalUnits = items.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
+  return (
+    <Card
+      as="section"
+      padding="none"
+      className="urqr-billing-cart"
+    >
+      {/* ORDER SUMMARY HEADER */}
+      <div className="urqr-billing-cart-heading">
+        <div className="urqr-billing-cart-heading-info">
+          <h2>Order Summary</h2>
+
+          <p>
+            {items.length}{" "}
+            {items.length === 1 ? "item" : "items"}
+            {" · "}
+            {totalUnits}{" "}
+            {totalUnits === 1 ? "unit" : "units"}
+          </p>
+        </div>
+
+        {/* ORDER ID - TOP RIGHT */}
+        <span
+          className="urqr-billing-order-id"
+          title={
+            hasBackendOrderId
+              ? "Order ID from backend"
+              : "Temporary order ID"
+          }
+        >
+          Order #{displayedOrderId}
+        </span>
+      </div>
+
+      {/* REUSABLE CART ITEM ROWS */}
+      <div className="urqr-billing-cart-items">
+        {items.length === 0 ? (
+          <EmptyState
+            message="Cart is empty"
+            description="Add products from the catalog."
+          />
+        ) : (
+          items.map(({ dish, quantity }) => (
+            <CartItemRow
+              key={dish.id}
+              productName={dish.name}
+              unitPricePaise={Math.round(
+                dish.price * 100
+              )}
+              quantity={quantity}
+              maxQuantity={Math.min(
+                15,
+                dish.stock ?? 15
+              )}
+              onQuantityChange={(newQuantity) => {
+                updateQuantity(
+                  dish.id,
+                  newQuantity - quantity
+                );
+              }}
+              onRemove={() => {
+                updateQuantity(
+                  dish.id,
+                  -quantity
+                );
+              }}
+            />
+          ))
+        )}
+      </div>
+    </Card>
+  );
+}
+
+export default BillingCart;
