@@ -1,25 +1,19 @@
-
+// src/pages/Table_Management/Components/Billing/PosCheckoutModal.tsx
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Lock } from "lucide-react";
 
 import {
   CheckoutRequestSchema,
   type CheckoutRequest,
-  type PaymentMode,
 } from "@urqr/types";
 
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Button } from "../../../../components/Buttons/Button";
-import { InputField } from "../../../../components/InputField/InputField";
 import { SelectableGroup } from "../../../../components/Header/SelectableGroup";
 import { CashAmountInput } from "../../../../components/Payment/CashAmountInput";
 import { ChangeSummary } from "../../../../components/Payment/ChangeSummary";
 
-import {
-  formatINR,
-  parseINRToPaise,
-} from "../../../../lib/money";
-
+import { formatINR, parseINRToPaise } from "../../../../lib/money";
 import { PAYMENT_METHODS } from "../../Config/billing.config";
 import type { PaymentMethod } from "../../Types/billing.types";
 
@@ -30,84 +24,40 @@ interface PosCheckoutModalProps {
   tax: number;
   total: number;
   orderId?: string | number;
-  initialMode?: PaymentMode;
+  initialMode?: PaymentMethod;
   isSubmitting?: boolean;
-  onConfirmPayment: (
-    checkout: CheckoutRequest
-  ) => void | Promise<void>;
+  onConfirmPayment: (checkout: CheckoutRequest) => void | Promise<void>;
 }
 
-// Decorative QR pattern for demo purposes only.
-// It is NOT a real payment QR.
-const DEMO_QR_DOTS = Array.from(
-  { length: 29 * 29 },
-  (_, index) => ({
-    x: index % 29,
-    y: Math.floor(index / 29),
-  })
-).filter(({ x, y }) => {
-  const insideFinder =
-    (x < 9 && y < 9) ||
-    (x > 19 && y < 9) ||
-    (x < 9 && y > 19);
-
-  return (
-    !insideFinder &&
-    (x * 17 + y * 23 + x * y * 3) % 9 < 4
-  );
+// Demo QR only — not valid for real payment
+const DEMO_DOTS = Array.from({ length: 29 * 29 }, (_, i) => ({
+  x: i % 29,
+  y: Math.floor(i / 29),
+})).filter(({ x, y }) => {
+  const finder = (x < 9 && y < 9) || (x > 19 && y < 9) || (x < 9 && y > 19);
+  return !finder && (x * 17 + y * 23 + x * y * 3) % 9 < 4;
 });
 
 function DemoUpiQR() {
   return (
     <svg
       viewBox="0 0 37 37"
-      width="196"
-      height="196"
+      width="172"
+      height="172"
       role="img"
-      aria-label="Demo QR illustration. Not valid for payment."
+      aria-label="Demo QR illustration, not valid for payment"
       className="block max-w-full bg-white"
     >
       <rect width="37" height="37" fill="white" />
-
       <g transform="translate(4 4)">
-        {DEMO_QR_DOTS.map(({ x, y }) => (
-          <rect
-            key={`${x}-${y}`}
-            x={x}
-            y={y}
-            width="1"
-            height="1"
-            fill="#111B2E"
-          />
+        {DEMO_DOTS.map(({ x, y }) => (
+          <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#111B2E" />
         ))}
-
-        {[
-          [0, 0],
-          [22, 0],
-          [0, 22],
-        ].map(([x, y]) => (
+        {[[0, 0], [22, 0], [0, 22]].map(([x, y]) => (
           <g key={`${x}-${y}`}>
-            <rect
-              x={x}
-              y={y}
-              width="7"
-              height="7"
-              fill="#111B2E"
-            />
-            <rect
-              x={x + 1}
-              y={y + 1}
-              width="5"
-              height="5"
-              fill="white"
-            />
-            <rect
-              x={x + 2}
-              y={y + 2}
-              width="3"
-              height="3"
-              fill="#111B2E"
-            />
+            <rect x={x} y={y} width="7" height="7" fill="#111B2E" />
+            <rect x={x + 1} y={y + 1} width="5" height="5" fill="white" />
+            <rect x={x + 2} y={y + 2} width="3" height="3" fill="#111B2E" />
           </g>
         ))}
       </g>
@@ -123,20 +73,15 @@ export function PosCheckoutModal({
   isSubmitting = false,
   onConfirmPayment,
 }: PosCheckoutModalProps) {
-  const [method, setMethod] =
-    useState<PaymentMethod>("Cash");
-
-  const [cashReceived, setCashReceived] =
-    useState("0.00");
-
+  const [method, setMethod] = useState<PaymentMethod>("Cash");
+  const [cashReceived, setCashReceived] = useState("0.00");
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
   const submittingRef = useRef(false);
 
-  // Default to Cash whenever the modal opens.
+  // Reset state when modal opens
   useEffect(() => {
     if (!isOpen) return;
-
     setMethod("Cash");
     setCashReceived("0.00");
     setError("");
@@ -144,68 +89,27 @@ export function PosCheckoutModal({
     submittingRef.current = false;
   }, [isOpen]);
 
-  const payablePaise =
-    Number.isFinite(total)
-      ? Math.max(0, Math.round(total * 100))
-      : 0;
-
-  const receivedPaise =
-    parseINRToPaise(cashReceived);
-
-  const enoughCash =
-    receivedPaise !== null &&
-    receivedPaise >= payablePaise;
-
-  const changePaise =
-    receivedPaise === null
-      ? 0
-      : Math.max(
-          0,
-          receivedPaise - payablePaise
-        );
-
+  // Calculations
+  const payablePaise = Number.isFinite(total) ? Math.max(0, Math.round(total * 100)) : 0;
+  const receivedPaise = parseINRToPaise(cashReceived);
+  const enoughCash = receivedPaise !== null && receivedPaise >= payablePaise;
   const busy = processing || isSubmitting;
+  const canConfirm = method === "Cash" && payablePaise > 0 && enoughCash && !busy;
 
-  const canConfirm =
-    method === "Cash" &&
-    payablePaise > 0 &&
-    enoughCash &&
-    !busy;
+  // Handlers
+  const confirmCash = async () => {
+    if (!canConfirm || submittingRef.current) return;
 
-  const changeMethod = (value: string) => {
-    if (
-      value !== "Cash" &&
-      value !== "UPI" &&
-      value !== "Others"
-    ) {
-      return;
-    }
-
-    setMethod(value);
-    setError("");
-  };
-
-  const confirmCashPayment = async () => {
-    if (!canConfirm || submittingRef.current) {
-      return;
-    }
-
-    const candidate = {
-      paymentMode: "Cash" as PaymentMode,
+    const amountTendered = receivedPaise ?? 0;
+    const result = CheckoutRequestSchema.safeParse({
+      paymentMode: "Cash",
       payableAmount: payablePaise / 100,
-      amountTendered:
-        (receivedPaise ?? 0) / 100,
-      changeDue: changePaise / 100,
-    };
-
-    const result =
-      CheckoutRequestSchema.safeParse(candidate);
+      amountTendered: amountTendered / 100,
+      changeDue: Math.max(0, amountTendered - payablePaise) / 100,
+    });
 
     if (!result.success) {
-      setError(
-        result.error.issues[0]?.message ??
-          "Invalid cash payment."
-      );
+      setError("Invalid cash payment details.");
       return;
     }
 
@@ -214,8 +118,6 @@ export function PosCheckoutModal({
     setError("");
 
     try {
-      // Parent handles demo checkout and
-      // reusable payment-success notification.
       await onConfirmPayment(result.data);
     } catch {
       setError("Unable to complete payment.");
@@ -225,202 +127,139 @@ export function PosCheckoutModal({
     }
   };
 
+  const changePaymentMethod = (value: string) => {
+    if (["Cash", "UPI", "Others"].includes(value)) {
+      setMethod(value as PaymentMethod);
+      setError("");
+    }
+  };
+
   return (
     <PopupModal
       isOpen={isOpen}
-      onClose={onClose}
-      closeOnBackdrop={!busy}
+      onClose={() => { if (!busy) onClose(); }}
       closeOnEscape={!busy}
-      title={
-        method === "UPI"
-          ? `Total Payable ${formatINR(payablePaise)}`
-          : "Payment amount"
-      }
-      size={method === "UPI" ? "lg" : "md"}
-      className="!min-w-0"
+      closeOnBackdrop={!busy}
+      title={method === "UPI" ? `Total Payable ${formatINR(payablePaise)}` : "Payment amount"}
+      size="md"
+      className="!min-w-0 !max-w-md !h-[670px] !max-h-[calc(100dvh-32px)]"
     >
-      <div className="flex w-full min-w-0 flex-col gap-5">
-
-        {/* READ-ONLY TOTAL FOR CASH */}
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 pb-5">
+        
+        {/* 1. ENTER TOTAL AMOUNT */}
         {method === "Cash" && (
-          <InputField
-            label="Enter Total Amount"
-            type="text"
-            readOnly
-            value={formatINR(payablePaise)}
-            hint={
-              orderId !== undefined
-                ? `Order #${orderId} · Same payable total · Read-only`
-                : "Same payable total · Read-only"
-            }
-            fieldSize="lg"
-            className="bg-surface-alt font-bold text-lg"
-          />
+          <section className="w-full min-w-0 shrink-0 space-y-1">
+            <label className="block text-xs font-bold uppercase tracking-wide text-primary">
+              Enter Total Amount
+            </label>
+            <div 
+              className="flex min-h-10 w-full items-center rounded-md border border-border-subtle bg-surface-alt px-3 font-bold text-primary"
+              aria-label="Total payable, read only"
+            >
+              {formatINR(payablePaise)}
+            </div>
+            <p className="text-[11px] text-text-muted">
+              {orderId !== undefined ? `Order #${orderId} · ` : ""} Same payable total · Read-only
+            </p>
+          </section>
         )}
 
-        {/* REUSABLE PAYMENT METHOD SELECTOR */}
-        <section className="w-full space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted">
+        {/* 2. PAYMENT METHOD */}
+        <section className="w-full min-w-0 shrink-0 pt-3 pb-3">
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">
             Payment Method
           </h3>
-
           <SelectableGroup
             options={PAYMENT_METHODS}
             value={method}
-            onChange={changeMethod}
-            className="w-full"
+            onChange={changePaymentMethod}
+            className="!my-0 w-full [&>button]:!min-h-9 [&>button]:!py-2"
           />
         </section>
 
-        {/* CASH PAYMENT */}
+        {/* 3. CASH PAYMENT */}
         {method === "Cash" && (
           <>
-            <section className="space-y-4 rounded-xl border border-border-subtle bg-surface-alt p-4">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-bold text-primary">
-                  Cash Collected
-                </h3>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => {
-                    setCashReceived("0.00");
-                    setError("");
-                  }}
-                >
+            <section className="w-full min-w-0 shrink-0 rounded-lg border border-border-subtle bg-surface-alt p-3 [&_.pos-cash-input__field]:!h-10 [&_.pos-cash-input__quick]:!mt-2 [&_.pos-cash-input__quick]:!gap-2 [&_.pos-cash-input__button]:!min-h-9 [&_.pos-change-summary]:!min-h-[54px] [&_.pos-change-summary]:!p-2 [&_.pos-change-summary_strong]:!text-xl">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-bold text-primary">Cash Collected</h3>
+                <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => { setCashReceived("0.00"); setError(""); }}>
                   Clear
                 </Button>
               </div>
 
-              {/* EXISTING REUSABLE CASH INPUT
-                  Includes +50, +100, +200 */}
               <CashAmountInput
                 value={cashReceived}
-                onChange={(value) => {
-                  setCashReceived(value);
-                  setError("");
-                }}
-                disabled={busy}
+                onChange={(value) => { if (!busy) { setCashReceived(value); setError(""); } }}
               />
 
-              {/* EXISTING REUSABLE BALANCE UI */}
-              <ChangeSummary
-                amountDuePaise={payablePaise}
-                amountReceivedPaise={receivedPaise}
-              />
+              <div className="mt-2">
+                <ChangeSummary amountDuePaise={payablePaise} amountReceivedPaise={receivedPaise} />
+              </div>
             </section>
 
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-primary">
-                Amount to pay
-              </span>
-
-              <strong className="whitespace-nowrap text-2xl font-bold text-primary">
-                {formatINR(payablePaise)}
-              </strong>
+            <div className="flex w-full shrink-0 items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-primary">Amount to pay</span>
+              <strong className="whitespace-nowrap text-xl font-bold text-primary">{formatINR(payablePaise)}</strong>
             </div>
 
             {!enoughCash && (
-              <p
-                role="status"
-                className="text-xs text-warning-text"
-              >
-                Amount received is less than the
-                amount to pay.
+              <p role="status" className="shrink-0 text-[11px] text-warning-text">
+                Amount received is less than the amount to pay.
               </p>
             )}
 
             {error && (
-              <p
-                role="alert"
-                className="text-sm text-error-text"
-              >
-                {error}
-              </p>
+              <p role="alert" className="shrink-0 text-xs text-error-text">{error}</p>
             )}
 
-            {/* REUSABLE CONFIRM BUTTON */}
             <Button
               type="button"
               variant="primary"
-              size="lg"
+              size="md"
               fullWidth
               isLoading={busy}
               disabled={!canConfirm}
-              onClick={() => {
-                void confirmCashPayment();
-              }}
+              className="mt-auto !min-h-10 shrink-0"
+              onClick={() => { void confirmCash(); }}
             >
               Confirm Cash Payment
             </Button>
           </>
         )}
 
-        {/* UPI DEMO QR */}
+        {/* 4. UPI PAYMENT */}
         {method === "UPI" && (
           <>
-            <section className="flex w-full flex-col items-center gap-4 rounded-xl border border-border-subtle bg-surface-alt p-5">
-              <div className="rounded-lg border border-border-subtle bg-white p-3">
+            <section className="flex w-full min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-border-subtle bg-surface-alt p-3">
+              <div className="rounded-md bg-white p-3">
                 <DemoUpiQR />
               </div>
-
-              <div className="flex flex-wrap justify-center gap-2">
-                {[
-                  "GPay",
-                  "PhonePe",
-                  "Paytm",
-                  "BHIM",
-                ].map((provider) => (
-                  <span
-                    key={provider}
-                    className="rounded border border-border-subtle bg-white px-2 py-1 text-xs text-text-muted"
-                  >
-                    {provider}
-                  </span>
+              <div className="flex mt-10 flex-wrap items-center justify-center gap-x-4 gap-y-1">
+                {["GPay", "PhonePe", "Paytm", "BHIM"].map((provider) => (
+                  <span key={provider} className="text-[11px] font-medium text-text-muted">{provider}</span>
                 ))}
               </div>
+              <p className="text-center text-[11px] text-text-muted">Demo QR only — not valid for payment.</p>
             </section>
 
-            <p
-              role="status"
-              className="text-center text-xs text-text-muted"
-            >
-              Demo QR only — no real payment
-              can be made using this code.
-            </p>
-
-            <Button
-              type="button"
-              variant="primary"
-              size="lg"
-              fullWidth
-              disabled
-              rightIcon={
-                <ArrowRight
-                  size={16}
-                  aria-hidden="true"
-                />
-              }
-            >
-              COMPLETE PAYMENT (
-              {formatINR(payablePaise)})
+            <Button type="button" variant="primary" fullWidth disabled rightIcon={<ArrowRight size={15} />} className="!min-h-10 shrink-0">
+              COMPLETE PAYMENT ({formatINR(payablePaise)})
             </Button>
 
-            <div className="flex items-center justify-center gap-2 border-t border-border-subtle pt-4 text-xs text-text-muted">
-              <Lock
-                size={13}
-                aria-hidden="true"
-              />
-              Payment verification unavailable in demo mode
+            <div className="flex shrink-0 items-center justify-center gap-1.5 border-t border-border-subtle pt-2 text-center text-[10px] text-text-muted">
+              <Lock size={12} />
+              <span>Demo mode · Payment verification unavailable</span>
             </div>
           </>
         )}
 
-        {/* OTHERS:
-            No payment functionality added yet. */}
+        {/* 5. OTHERS */}
+        {method === "Others" && (
+          <div className="flex w-full flex-1 items-center justify-center">
+            <p className="text-sm text-text-muted">Others payment is not configured yet.</p>
+          </div>
+        )}
 
       </div>
     </PopupModal>
