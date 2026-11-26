@@ -8,6 +8,7 @@ import type { Dish } from "../../Types/billing.types";
 
 interface BillingCatalogProps {
   searchQuery: string;
+  setSearchQuery?: (value: string) => void;
   activeTab: string;
   setActiveTab: (value: string) => void;
   filteredDishes: Dish[];
@@ -63,8 +64,9 @@ export function BillingCatalog({
 
       {/* REUSABLE PRODUCT CARDS */}
       <div
-        className="urqr-billing-product-grid"
-        aria-label="Products"
+        role="region"
+        aria-label="Product Catalog Grid"
+        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 urqr-billing-product-grid"
       >
         {filteredDishes.length === 0 ? (
           <p
@@ -104,6 +106,7 @@ export function BillingCatalog({
                 )}
                 imageUrl={dish.imageUrl}
                 stockState={stockState}
+                stock={dish.stock}
                 inCartQuantity={
                   cart[dish.id] ?? 0
                 }
