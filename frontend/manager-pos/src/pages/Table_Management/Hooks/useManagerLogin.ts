@@ -9,7 +9,6 @@ import { apiClient } from "../../../lib/apiClient";
 import { useAuthStore } from "../../../lib/authStore";
 import type { BackendAuthResponse, LoginFeedback } from "../Types/Login.types";
 
-
 // ---------------------------------------------
 // LOGIN VALIDATION (Matches @urqr/types)
 // ---------------------------------------------
@@ -26,8 +25,8 @@ export type LoginFormValues = z.infer<typeof LoginFormSchema>;
 export const useManagerLogin = () => {
   const navigate = useNavigate();
   
-  // Grab the redirect URL from TanStack Router (Day 3 Afternoon Task 2)
-  const search = useSearch({ from: "/login" }) as { redirect?: string };
+  // FIXED: strict: false allows reading search params on ANY route (like "/" or "/login")
+  const search = useSearch({ strict: false }) as { redirect?: string };
 
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -82,7 +81,7 @@ export const useManagerLogin = () => {
 
       // Day 3 Task 5: Redirect to billing (or saved redirect URL)
       setTimeout(() => {
-        void navigate({ to: search.redirect || "/pos/billing" });
+        void navigate({ to: (search?.redirect || "/pos/billing") as any, replace: true });
       }, 350);
       
     } catch (err: unknown) {

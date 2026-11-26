@@ -19,8 +19,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const payload = decodeJWT(token);
     if (!payload) return;
 
-    // Keep a backup in localStorage strictly for Axios interceptors on refresh,
-    // but treat Zustand as the source of truth.
     localStorage.setItem("access_token", token);
     localStorage.setItem("tenant_id", payload.tenant_id);
 
