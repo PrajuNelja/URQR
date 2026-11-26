@@ -371,4 +371,5 @@ export const PosCheckoutModal: React.FC<PosCheckoutModalProps> = ({
   );
 };
 
+
 export default PosCheckoutModal;
