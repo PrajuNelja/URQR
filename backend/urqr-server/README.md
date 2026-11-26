@@ -7,7 +7,7 @@ Java 21 / Spring Boot 4.1.2 REST backend for a multi-hotel point-of-sale system.
 - PostgreSQL and Spring Data JPA persistence; Hibernate schema update is enabled for the current development configuration.
 - Java 21 virtual threads are enabled for servlet request handling and Spring-managed task execution.
 - First-hotel setup and platform hotel provisioning, hotel receipt configuration, activation status, and hotel-scoped Manager, Cashier, Cook, and Waiter roles and staff.
-- BCrypt staff password hashing, username-and-password login, RS256 JWTs signed with a 2048-bit RSA private key, and authorization built from current database user/role state on each request. The matching public key verifies JWT signatures. Login identifies the hotel from the matching staff account; tokens remain hotel-scoped.
+- BCrypt staff password hashing, email-username-and-password login, RS256 JWTs signed with a 2048-bit RSA private key, and authorization built from current database user/role state on each request. The matching public key verifies JWT signatures. Login identifies the hotel from the unique staff email; tokens remain hotel-scoped.
 - Menu category/item management, availability, and soft deactivation.
 - Orders with server-calculated totals and item name/price snapshots, order editing/cancellation/history, split Cash/UPI payment records, immutable receipt snapshots, hotel-local daily sales, and audit history.
 - Validation errors, stable JSON errors, correlation IDs in response headers/log MDC, Springdoc OpenAPI, and Actuator health.
@@ -106,16 +106,16 @@ Example hotel request body:
   "timezone": "Asia/Kolkata",
   "dayCutoff": "06:00:00",
   "receiptDetails": {},
-  "managerUsername": "owner",
+  "managerUsername": "owner@example.com",
   "managerPassword": "set-a-private-password-12-plus"
 }
 ```
 
-The response returns `hotelId`, `managerUserId`, and `managerUsername`; it never returns a password. Give the Manager their username and password privately; the hotel ID is not needed to log in.
-4. The Manager logs in through `POST /api/v1/auth/login` with `{"username":"owner","password":"the-manager-password"}`. The response contains a hotel-scoped access token and a seven-day refresh token. Exchange it at `POST /api/v1/auth/refresh` with body `{"refreshToken":"<refresh-token>"}`. They create staff and assign hotel roles, including Cashier, Cook, and Waiter.
+The response returns `hotelId`, `managerUserId`, and `managerUsername`; it never returns a password. The manager username must be an email address and is globally unique across hotels. Give the Manager their email and password privately; the hotel ID is not needed to log in.
+4. The Manager logs in through `POST /api/v1/auth/login` with `{"username":"owner@example.com","password":"the-manager-password"}`. Email login is case-insensitive. The response contains a hotel-scoped access token and a seven-day refresh token. Exchange it at `POST /api/v1/auth/refresh` with body `{"refreshToken":"<refresh-token>"}`. Managers can create other staff at `POST /api/v1/users`; the platform admin can create Manager or Cashier accounts for a hotel at `POST /api/v1/platform/hotels/{hotelId}/users`. Every new staff username must be an email address that is not already assigned at any hotel.
 5. Staff send their own `Authorization: Bearer <accessToken>` to protected business routes. Tenant operations derive the hotel from the signed staff identity; client-supplied hotel IDs cannot grant access to other hotels. Current staff, role, and hotel status are checked against the database on each request.
 
-Usernames are unique within a hotel. If the same username is used at multiple hotels, the password must identify exactly one active account; an identical active username/password combination in multiple hotels is rejected as ambiguous.
+New staff email usernames are globally unique across hotels, regardless of letter case. Reusing one returns HTTP 409 Conflict. Legacy non-email usernames from before this rule remain unchanged for backward compatibility.
 
 To deactivate or reactivate a tenant, the platform administrator calls `PATCH /api/v1/platform/hotels/{hotelId}/status` with the platform-admin bearer token and body `{"active":false}` or `{"active":true}`. Keep platform credentials private and use HTTPS outside local development.
 ## Endpoint groups
@@ -124,7 +124,7 @@ All business endpoints are versioned under `/api/v1` and return JSON. Date/time 
 
 | Group | Routes | Access / behavior |
 |---|---|---|
-| Platform admin | `POST /platform/auth/login`, `POST /platform/auth/refresh`, `GET /platform/hotels?page=&size=`, `POST /platform/hotels`, `PATCH /platform/hotels/{hotelId}/status` | Admin login uses configured operator credentials and returns a seven-day refresh token; tenant listing and provisioning require its access token |
+| Platform admin | `POST /platform/auth/login`, `POST /platform/auth/refresh`, `GET /platform/hotels?page=&size=`, `POST /platform/hotels`, `POST /platform/hotels/{hotelId}/users`, `PATCH /platform/hotels/{hotelId}/status` | Admin login uses configured operator credentials and returns a seven-day refresh token; hotel and staff provisioning require its access token; staff login emails are globally unique |
 | Authentication | `POST /auth/login`, `POST /auth/refresh` | Manager login returns a hotel-scoped access token and seven-day refresh token; refresh checks the current active hotel and Manager account |
 | Hotel | `GET /hotel`, `PATCH /hotel` | Manager/Cashier can read; Manager-only settings update; status changes are restricted to platform admin |
 | Users | `POST /users`, `GET /users`, `GET /users/{id}`, `PATCH /users/{id}`, `PATCH /users/{id}/status` | Manager-only; role reassignment and password reset validate hotel ownership; password hashes are never returned |
@@ -149,7 +149,7 @@ All business endpoints are versioned under `/api/v1` and return JSON. Date/time 
 
 - Currency values are ISO-4217 codes; money uses `numeric(12,2)`/`BigDecimal` with a two-decimal rounding/storage policy for all configured currencies. Prices may be zero but not negative. Quantities are integers 1–999.
 - Orders start `OPEN / UNPAID`. Split payments move payment status to `PARTIAL`, then `PAID` and order status to `COMPLETED` at the exact grand total. Zero-total orders are completed and receipted immediately. Only unpaid open orders can be edited/cancelled; cancellation requires a reason and is rejected once any payment exists.
-- Usernames, role names, order numbers, and receipt numbers are unique within a hotel. Menu item prices and names are copied to order-line snapshots. Menu items are deactivated, never hard-deleted through the API.
+- New staff login email usernames are globally unique (case-insensitive); hotel role names, order numbers, and receipt numbers are unique within a hotel. Menu item prices and names are copied to order-line snapshots. Menu items are deactivated, never hard-deleted through the API.
 - Every tenant-owned repository query scopes by hotel ID. Cross-tenant categories, menu items, orders, payments, roles, and users return not found or validation errors without exposing another hotel's data.
 
 ## Error format and logging

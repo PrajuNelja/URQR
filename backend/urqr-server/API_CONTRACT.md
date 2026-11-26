@@ -2,6 +2,8 @@
 
 All business endpoints require `Authorization: Bearer <access-token>`. Tenant identity comes from the verified JWT. The live generated OpenAPI document is `GET /v3/api-docs`; Swagger UI is `GET /swagger-ui.html`.
 
+New hotel Manager and staff login usernames must be email addresses. Email usernames are matched without regard to case and are unique across every hotel. `POST /api/v1/platform/hotels` and `POST /api/v1/platform/hotels/{hotelId}/users` return `409 Conflict` if that email is already assigned.
+
 ## Catalog
 
 `GET /api/v1/catalog/products` returns a paged list. Filters use the authenticated tenant and support `categoryId` and `available` (`true` by default; pass `false` to list out-of-stock products). Page size is capped at 100. Supported sorting fields are `name`, `price`, and `id`.

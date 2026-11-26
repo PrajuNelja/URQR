@@ -219,8 +219,8 @@ class UrqrServerApplicationTests {
                 .andExpect(status().isForbidden());
 
         String suffix = UUID.randomUUID().toString().substring(0, 8);
-        String managerUsername = "platform-manager-" + suffix;
-        String cashierUsername = "platform-cashier-" + suffix;
+        String managerUsername = "platform-manager-" + suffix + "@example.test";
+        String cashierUsername = "platform-cashier-" + suffix + "@example.test";
         String managerPassword = "ManagerPassword@123";
         String cashierPassword = "CashierPassword@123";
 

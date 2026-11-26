@@ -29,7 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         catch (IllegalArgumentException ex) { throw new UsernameNotFoundException("Invalid credentials"); }
         rls.bindTenant(hotelId);
         String staffName=username.substring(separator+1);
-        var user=users.findByHotelIdAndUsername(hotelId,staffName)
+        var user=users.findByHotelIdAndUsernameIgnoreCase(hotelId,staffName)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
         var role=roles.findByIdAndHotelId(user.getRoleId(),hotelId)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));

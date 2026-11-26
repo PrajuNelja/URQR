@@ -62,11 +62,12 @@ public class PlatformHotelStaffController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Active hotel not found"));
 
-        // Lock this platform request to the hotel in the URL before accessing RLS-protected staff tables.
-        rlsContext.bindTenant(hotelId);
-        String username = request.username().trim();
-        if (users.existsByHotelIdAndUsername(hotelId, username)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists in this hotel");
+        // This operation checks the shared login namespace, so allow its platform-admin RLS scope.
+        rlsContext.allowPlatformAdministration();
+        String username = request.username().trim().toLowerCase(java.util.Locale.ROOT);
+        if (users.existsByUsernameIgnoreCase(username)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This email is already assigned to a staff login");
         }
 
         String roleName = request.role().name();
@@ -85,8 +86,9 @@ public class PlatformHotelStaffController {
         try {
             user = users.saveAndFlush(user);
         } catch (DataIntegrityViolationException exception) {
-            // The database unique constraint handles two simultaneous requests for the same username.
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists in this hotel", exception);
+            // The global unique email index handles simultaneous registrations across hotels.
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This email is already assigned to a staff login", exception);
         }
 
         audit.recordSystem(hotelId, "PLATFORM_STAFF_USER_CREATED", "User", user.getId().toString(),
@@ -96,7 +98,8 @@ public class PlatformHotelStaffController {
     }
 
     public record CreatePlatformStaffUserRequest(
-            @NotBlank @Size(max = 160) String username,
+            @NotBlank @jakarta.validation.constraints.Email @Size(max = 254)
+            @Schema(description = "Email address used as the globally unique staff login username") String username,
             @NotBlank @Size(min = 12, max = 72) String password,
             @NotNull @Schema(description = "Only Manager and Cashier are provisionable here") ProvisionableStaffRole role) { }
 

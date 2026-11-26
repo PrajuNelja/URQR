@@ -6,6 +6,7 @@ import com.nelja.urqr.auth.access.user.StaffUser;
 import com.nelja.urqr.auth.access.user.StaffUserRepository;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.security.RedisAuthStateService;
+import com.nelja.urqr.auth.security.TenantRlsContext;
 import com.nelja.urqr.auth.hotel.dto.CreateHotelRequest;
 import com.nelja.urqr.auth.hotel.dto.CreateHotelResponse;
 import com.nelja.urqr.auth.hotel.dto.HotelResponse;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,9 +48,11 @@ public class PlatformHotelController {
     private final PasswordEncoder encoder;
     private final AuditService audit;
     private final RedisAuthStateService authState;
+    private final TenantRlsContext rlsContext;
 
     public PlatformHotelController(HotelRepository hotels, TenantRepository tenants, RoleRepository roles, StaffUserRepository users,
-            PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState) {
+            PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState,
+            TenantRlsContext rlsContext) {
         this.hotels = hotels;
         this.tenants = tenants;
         this.roles = roles;
@@ -56,6 +60,7 @@ public class PlatformHotelController {
         this.encoder = encoder;
         this.audit = audit;
         this.authState = authState;
+        this.rlsContext = rlsContext;
     }
 
     @PostMapping
@@ -63,14 +68,28 @@ public class PlatformHotelController {
     @Transactional
     @Operation(summary = "Create a hotel tenant and its first Manager account")
     public CreateHotelResponse create(@Valid @RequestBody CreateHotelRequest request) {
+        // The initial Manager login must be unique across every hotel's shared login namespace.
+        rlsContext.allowPlatformAdministration();
+        String managerUsername = request.managerUsername().trim().toLowerCase(java.util.Locale.ROOT);
+        if (users.existsByUsernameIgnoreCase(managerUsername)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This email is already assigned to a staff login");
+        }
+
         UUID tenantId = UUID.randomUUID();
         Hotel hotel = hotels.save(Hotel.create(tenantId, request.hotelName(), request.currency(), request.timezone(),
                 request.dayCutoff(), request.receiptDetails()));
         tenants.save(new Tenant(tenantId, hotel.getName()));
         Role manager = roles.save(new Role(hotel.getId(), "MANAGER"));
         roles.save(new Role(hotel.getId(), "CASHIER"));
-        StaffUser managerUser = users.save(new StaffUser(hotel.getId(), manager.getId(),
-                request.managerUsername().trim(), encoder.encode(request.managerPassword())));
+        StaffUser managerUser;
+        try {
+            managerUser = users.saveAndFlush(new StaffUser(hotel.getId(), manager.getId(),
+                    managerUsername, encoder.encode(request.managerPassword())));
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This email is already assigned to a staff login", exception);
+        }
         audit.recordSystem(hotel.getId(), "HOTEL_PROVISIONED", "Hotel", hotel.getId().toString(),
                 "Platform administrator provisioned hotel and initial Manager");
         return new CreateHotelResponse(hotel.getId(), managerUser.getId(), managerUser.getUsername());

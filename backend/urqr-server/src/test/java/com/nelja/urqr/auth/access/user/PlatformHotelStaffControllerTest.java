@@ -79,7 +79,7 @@ class PlatformHotelStaffControllerTest {
         assertEquals("MANAGER", manager.role());
         assertEquals("cashier-1", cashier.username());
         assertEquals("CASHIER", cashier.role());
-        verify(rlsContext, org.mockito.Mockito.times(2)).bindTenant(HOTEL_ID);
+        verify(rlsContext, org.mockito.Mockito.times(2)).allowPlatformAdministration();
         verify(users, org.mockito.Mockito.times(2)).saveAndFlush(userCaptor.capture());
         assertEquals("hashed-manager-password", userCaptor.getAllValues().getFirst().getPasswordHash());
         assertEquals("hashed-cashier-password", userCaptor.getAllValues().get(1).getPasswordHash());
@@ -91,14 +91,14 @@ class PlatformHotelStaffControllerTest {
 
     @Test
     void duplicateUsernameIsRejectedWithoutSavingAnotherAccount() {
-        when(users.existsByHotelIdAndUsername(HOTEL_ID, "same-name")).thenReturn(true);
+        when(users.existsByUsernameIgnoreCase("same-name@example.test")).thenReturn(true);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
                 () -> controller.create(HOTEL_ID, new PlatformHotelStaffController.CreatePlatformStaffUserRequest(
-                        "same-name", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.MANAGER)));
+                        "same-name@example.test", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.MANAGER)));
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
-        verify(rlsContext).bindTenant(HOTEL_ID);
+        verify(rlsContext).allowPlatformAdministration();
         verify(users, never()).saveAndFlush(any(StaffUser.class));
     }
 
@@ -108,7 +108,7 @@ class PlatformHotelStaffControllerTest {
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
                 () -> controller.create(HOTEL_ID, new PlatformHotelStaffController.CreatePlatformStaffUserRequest(
-                        "cashier-2", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.CASHIER)));
+                        "cashier-2@example.test", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.CASHIER)));
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
         verify(users, never()).saveAndFlush(any(StaffUser.class));
@@ -120,7 +120,7 @@ class PlatformHotelStaffControllerTest {
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
                 () -> controller.create(HOTEL_ID, new PlatformHotelStaffController.CreatePlatformStaffUserRequest(
-                        "manager-2", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.MANAGER)));
+                        "manager-2@example.test", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.MANAGER)));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         verify(rlsContext, never()).bindTenant(any());
