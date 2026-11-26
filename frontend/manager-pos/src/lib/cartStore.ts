@@ -9,7 +9,6 @@ export interface CartProduct {
   id: string;
   name: string;
   unitPricePaise: number;
-  itemDiscountPaise?: number;
   taxRateBps?: number | null;
   taxable?: boolean | null;
 }
@@ -20,7 +19,6 @@ export interface CartLineItem {
   productName: string;
   quantity: number;
   unitPricePaise: number;
-  itemDiscountPaise: number;
   taxRateBps: number | null;
   taxable: boolean | null;
 }
@@ -34,7 +32,7 @@ interface CartState {
   clearCart: () => void;
 }
 
-// Validate price and discount values
+// Validate price values
 const isValidAmount = (amount: number) =>
   Number.isSafeInteger(amount) && amount >= 0;
 
@@ -46,15 +44,12 @@ export const useCartStore = create<CartState>()((set) => ({
   // ADD PRODUCT
   addItem: (product) =>
     set((state) => {
-      const discount = product.itemDiscountPaise ?? 0;
       const taxRate = product.taxRateBps ?? null;
 
       if (
         !product.id.trim() ||
         !product.name.trim() ||
         !isValidAmount(product.unitPricePaise) ||
-        !isValidAmount(discount) ||
-        discount > product.unitPricePaise ||
         (taxRate !== null && !isValidAmount(taxRate))
       ) {
         return state;
@@ -91,7 +86,6 @@ export const useCartStore = create<CartState>()((set) => ({
             productName: product.name,
             quantity: 1,
             unitPricePaise: product.unitPricePaise,
-            itemDiscountPaise: discount,
             taxRateBps: taxRate,
             taxable: product.taxable ?? null,
           },
