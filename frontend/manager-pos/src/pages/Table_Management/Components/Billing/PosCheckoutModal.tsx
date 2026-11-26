@@ -1,9 +1,6 @@
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Lock } from "lucide-react";
 
 import {
   CheckoutRequestSchema,
@@ -15,324 +12,417 @@ import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Button } from "../../../../components/Buttons/Button";
 import { InputField } from "../../../../components/InputField/InputField";
 import { SelectableGroup } from "../../../../components/Header/SelectableGroup";
+import { CashAmountInput } from "../../../../components/Payment/CashAmountInput";
+import { ChangeSummary } from "../../../../components/Payment/ChangeSummary";
+
+import {
+  formatINR,
+  parseINRToPaise,
+} from "../../../../lib/money";
 
 import { PAYMENT_METHODS } from "../../Config/billing.config";
-import { formatINR } from "../../../../lib/money";
+import type { PaymentMethod } from "../../Types/billing.types";
 
 interface PosCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-
   subtotal: number;
   tax: number;
   total: number;
-
+  orderId?: string | number;
   initialMode?: PaymentMode;
   isSubmitting?: boolean;
-
   onConfirmPayment: (
     checkout: CheckoutRequest
-  ) => void;
+  ) => void | Promise<void>;
+}
+
+// Decorative QR pattern for demo purposes only.
+// It is NOT a real payment QR.
+const DEMO_QR_DOTS = Array.from(
+  { length: 29 * 29 },
+  (_, index) => ({
+    x: index % 29,
+    y: Math.floor(index / 29),
+  })
+).filter(({ x, y }) => {
+  const insideFinder =
+    (x < 9 && y < 9) ||
+    (x > 19 && y < 9) ||
+    (x < 9 && y > 19);
+
+  return (
+    !insideFinder &&
+    (x * 17 + y * 23 + x * y * 3) % 9 < 4
+  );
+});
+
+function DemoUpiQR() {
+  return (
+    <svg
+      viewBox="0 0 37 37"
+      width="196"
+      height="196"
+      role="img"
+      aria-label="Demo QR illustration. Not valid for payment."
+      className="block max-w-full bg-white"
+    >
+      <rect width="37" height="37" fill="white" />
+
+      <g transform="translate(4 4)">
+        {DEMO_QR_DOTS.map(({ x, y }) => (
+          <rect
+            key={`${x}-${y}`}
+            x={x}
+            y={y}
+            width="1"
+            height="1"
+            fill="#111B2E"
+          />
+        ))}
+
+        {[
+          [0, 0],
+          [22, 0],
+          [0, 22],
+        ].map(([x, y]) => (
+          <g key={`${x}-${y}`}>
+            <rect
+              x={x}
+              y={y}
+              width="7"
+              height="7"
+              fill="#111B2E"
+            />
+            <rect
+              x={x + 1}
+              y={y + 1}
+              width="5"
+              height="5"
+              fill="white"
+            />
+            <rect
+              x={x + 2}
+              y={y + 2}
+              width="3"
+              height="3"
+              fill="#111B2E"
+            />
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
 }
 
 export function PosCheckoutModal({
   isOpen,
   onClose,
   total,
-  initialMode = "Cash",
+  orderId,
   isSubmitting = false,
   onConfirmPayment,
 }: PosCheckoutModalProps) {
-  const [paymentMode, setPaymentMode] =
-    useState<PaymentMode>(initialMode);
+  const [method, setMethod] =
+    useState<PaymentMethod>("Cash");
 
-  const [cashCollected, setCashCollected] =
-    useState("");
+  const [cashReceived, setCashReceived] =
+    useState("0.00");
 
   const [error, setError] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const submittingRef = useRef(false);
 
-  const cashInputRef = useRef<HTMLInputElement>(null);
-
-  // Reset the payment form each time it opens.
+  // Default to Cash whenever the modal opens.
   useEffect(() => {
     if (!isOpen) return;
 
-    setPaymentMode(initialMode);
-    setCashCollected("");
+    setMethod("Cash");
+    setCashReceived("0.00");
     setError("");
-  }, [isOpen, initialMode]);
+    setProcessing(false);
+    submittingRef.current = false;
+  }, [isOpen]);
 
-  // Focus Cash Collected when Cash is selected.
-  useEffect(() => {
-    if (isOpen && paymentMode === "Cash") {
-      cashInputRef.current?.focus();
-    }
-  }, [isOpen, paymentMode]);
+  const payablePaise =
+    Number.isFinite(total)
+      ? Math.max(0, Math.round(total * 100))
+      : 0;
 
-  // Use integer paise for accurate calculations.
-  const payablePaise = Number.isFinite(total)
-    ? Math.max(0, Math.round(total * 100))
-    : 0;
+  const receivedPaise =
+    parseINRToPaise(cashReceived);
 
-  const validAmount =
-    /^\d{1,9}(?:\.\d{1,2})?$/.test(cashCollected);
+  const enoughCash =
+    receivedPaise !== null &&
+    receivedPaise >= payablePaise;
 
-  // Empty input represents ₹0 received.
-  const receivedPaise = validAmount
-    ? Math.round(Number(cashCollected) * 100)
-    : 0;
+  const changePaise =
+    receivedPaise === null
+      ? 0
+      : Math.max(
+          0,
+          receivedPaise - payablePaise
+        );
 
-  const sufficientCash =
-    validAmount && receivedPaise >= payablePaise;
+  const busy = processing || isSubmitting;
 
-  const changePaise = Math.max(
-    0,
-    receivedPaise - payablePaise
-  );
-
-  const isCash = paymentMode === "Cash";
-
-  const canComplete =
-    !isSubmitting &&
+  const canConfirm =
+    method === "Cash" &&
     payablePaise > 0 &&
-    (!isCash || sufficientCash);
+    enoughCash &&
+    !busy;
 
-  // Keep the shared checkout schema's Card value
-  // while displaying "Others" in the UI.
-  const handleMethodChange = (value: string) => {
-    if (value === "Cash") {
-      setPaymentMode("Cash");
-    } else if (value === "UPI") {
-      setPaymentMode("UPI");
-    } else if (value === "Others") {
-      setPaymentMode("Card");
-    }
-
-    setError("");
-  };
-
-  const handleCashChange = (
-    value: string
-  ) => {
-    // Accept positive numbers with up to 2 decimals.
+  const changeMethod = (value: string) => {
     if (
-      value === "" ||
-      /^\d{0,9}(?:\.\d{0,2})?$/.test(value)
+      value !== "Cash" &&
+      value !== "UPI" &&
+      value !== "Others"
     ) {
-      setCashCollected(value);
-      setError("");
-    }
-  };
-
-  const handleCompletePayment = () => {
-    if (!canComplete) {
-      setError(
-        "Enter the full cash amount before completing payment."
-      );
       return;
     }
 
-    const checkoutData = {
-      paymentMode,
+    setMethod(value);
+    setError("");
+  };
+
+  const confirmCashPayment = async () => {
+    if (!canConfirm || submittingRef.current) {
+      return;
+    }
+
+    const candidate = {
+      paymentMode: "Cash" as PaymentMode,
       payableAmount: payablePaise / 100,
-      amountTendered: isCash
-        ? receivedPaise / 100
-        : payablePaise / 100,
-      changeDue: isCash
-        ? changePaise / 100
-        : 0,
-      notes: undefined,
+      amountTendered:
+        (receivedPaise ?? 0) / 100,
+      changeDue: changePaise / 100,
     };
 
-    // Validate through existing shared Zod schema.
     const result =
-      CheckoutRequestSchema.safeParse(checkoutData);
+      CheckoutRequestSchema.safeParse(candidate);
 
     if (!result.success) {
       setError(
         result.error.issues[0]?.message ??
-          "Invalid payment details."
+          "Invalid cash payment."
       );
       return;
     }
 
+    submittingRef.current = true;
+    setProcessing(true);
     setError("");
-    onConfirmPayment(result.data);
-  };
 
-  if (!isOpen) return null;
+    try {
+      // Parent handles demo checkout and
+      // reusable payment-success notification.
+      await onConfirmPayment(result.data);
+    } catch {
+      setError("Unable to complete payment.");
+    } finally {
+      submittingRef.current = false;
+      setProcessing(false);
+    }
+  };
 
   return (
     <PopupModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Payment & Checkout"
-      size="lg"
+      closeOnBackdrop={!busy}
+      closeOnEscape={!busy}
+      title={
+        method === "UPI"
+          ? `Total Payable ${formatINR(payablePaise)}`
+          : "Payment amount"
+      }
+      size={method === "UPI" ? "lg" : "md"}
+      className="!min-w-0"
     >
-      <form
-        className="w-full min-w-0 space-y-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleCompletePayment();
-        }}
-      >
-        {/* ================================
-            1. SELECT PAYMENT METHOD
-        ================================ */}
+      <div className="flex w-full min-w-0 flex-col gap-5">
 
+        {/* READ-ONLY TOTAL FOR CASH */}
+        {method === "Cash" && (
+          <InputField
+            label="Enter Total Amount"
+            type="text"
+            readOnly
+            value={formatINR(payablePaise)}
+            hint={
+              orderId !== undefined
+                ? `Order #${orderId} · Same payable total · Read-only`
+                : "Same payable total · Read-only"
+            }
+            fieldSize="lg"
+            className="bg-surface-alt font-bold text-lg"
+          />
+        )}
+
+        {/* REUSABLE PAYMENT METHOD SELECTOR */}
         <section className="w-full space-y-3">
-          <h3
-            className="
-              text-xs font-bold
-              uppercase tracking-widest
-              text-text-secondary
-            "
-          >
-            Select Payment Method
+          <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted">
+            Payment Method
           </h3>
 
-          {/* EXISTING REUSABLE SELECTABLE GROUP */}
           <SelectableGroup
             options={PAYMENT_METHODS}
-            value={
-              paymentMode === "Card"
-                ? "Others"
-                : paymentMode
-            }
-            onChange={handleMethodChange}
+            value={method}
+            onChange={changeMethod}
             className="w-full"
           />
         </section>
 
-        {/* ================================
-            2. CASH COLLECTED
-        ================================ */}
+        {/* CASH PAYMENT */}
+        {method === "Cash" && (
+          <>
+            <section className="space-y-4 rounded-xl border border-border-subtle bg-surface-alt p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-bold text-primary">
+                  Cash Collected
+                </h3>
 
-        {isCash && (
-          <section className="w-full space-y-3">
-            <h3
-              className="
-                text-xs font-bold
-                uppercase tracking-widest
-                text-text-secondary px-4
-              "
-            >
-              Cash Collected
-            </h3>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => {
+                    setCashReceived("0.00");
+                    setError("");
+                  }}
+                >
+                  Clear
+                </Button>
+              </div>
 
-            {/* EXISTING REUSABLE INPUT FIELD */}
-            <InputField
-              ref={cashInputRef}
-              id="billing-cash-collected"
-              type="text"
-              inputMode="decimal"
-              fieldSize="lg"
-              value={cashCollected}
-              onChange={(event) =>
-                handleCashChange(
-                  event.target.value
-                )
-              }
-              placeholder="Amount received from customer"
-              aria-label="Cash received from customer"
-              autoComplete="off"
-              fullWidth
-            />
+              {/* EXISTING REUSABLE CASH INPUT
+                  Includes +50, +100, +200 */}
+              <CashAmountInput
+                value={cashReceived}
+                onChange={(value) => {
+                  setCashReceived(value);
+                  setError("");
+                }}
+                disabled={busy}
+              />
 
-            {/* CHANGE TO RETURN */}
-            <div
-              className="
-                flex w-full items-center
-                justify-between gap-3
-                pt-1 text-sm
-              "
-            >
-              <span className="text-text-secondary">
-                Change to return
+              {/* EXISTING REUSABLE BALANCE UI */}
+              <ChangeSummary
+                amountDuePaise={payablePaise}
+                amountReceivedPaise={receivedPaise}
+              />
+            </section>
+
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-primary">
+                Amount to pay
               </span>
 
-              <strong
-                className={
-                  sufficientCash
-                    ? "font-semibold text-success-text"
-                    : "font-semibold text-text-secondary"
-                }
-                aria-live="polite"
-              >
-                {sufficientCash
-                  ? formatINR(changePaise)
-                  : "—"}
+              <strong className="whitespace-nowrap text-2xl font-bold text-primary">
+                {formatINR(payablePaise)}
               </strong>
             </div>
 
-            {validAmount &&
-              receivedPaise < payablePaise && (
-                <p
-                  className="text-xs text-error-text"
-                  role="status"
-                >
-                  Remaining amount:{" "}
-                  {formatINR(
-                    payablePaise - receivedPaise
-                  )}
-                </p>
-              )}
-          </section>
+            {!enoughCash && (
+              <p
+                role="status"
+                className="text-xs text-warning-text"
+              >
+                Amount received is less than the
+                amount to pay.
+              </p>
+            )}
+
+            {error && (
+              <p
+                role="alert"
+                className="text-sm text-error-text"
+              >
+                {error}
+              </p>
+            )}
+
+            {/* REUSABLE CONFIRM BUTTON */}
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              fullWidth
+              isLoading={busy}
+              disabled={!canConfirm}
+              onClick={() => {
+                void confirmCashPayment();
+              }}
+            >
+              Confirm Cash Payment
+            </Button>
+          </>
         )}
 
-        {/* ================================
-            3. UPI / OTHER INFORMATION
-        ================================ */}
+        {/* UPI DEMO QR */}
+        {method === "UPI" && (
+          <>
+            <section className="flex w-full flex-col items-center gap-4 rounded-xl border border-border-subtle bg-surface-alt p-5">
+              <div className="rounded-lg border border-border-subtle bg-white p-3">
+                <DemoUpiQR />
+              </div>
 
-        {!isCash && (
-          <section
-            className="
-              rounded-lg border
-              border-border-subtle
-              bg-surface-alt p-4
-              text-sm text-text-secondary
-            "
-          >
-            <p>
-              {paymentMode === "UPI"
-                ? "UPI payment selected."
-                : "Other payment selected."}
+              <div className="flex flex-wrap justify-center gap-2">
+                {[
+                  "GPay",
+                  "PhonePe",
+                  "Paytm",
+                  "BHIM",
+                ].map((provider) => (
+                  <span
+                    key={provider}
+                    className="rounded border border-border-subtle bg-white px-2 py-1 text-xs text-text-muted"
+                  >
+                    {provider}
+                  </span>
+                ))}
+              </div>
+            </section>
+
+            <p
+              role="status"
+              className="text-center text-xs text-text-muted"
+            >
+              Demo QR only — no real payment
+              can be made using this code.
             </p>
 
-            <p className="mt-2 font-semibold text-text">
-              Amount payable:{" "}
-              {formatINR(payablePaise)}
-            </p>
-          </section>
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              fullWidth
+              disabled
+              rightIcon={
+                <ArrowRight
+                  size={16}
+                  aria-hidden="true"
+                />
+              }
+            >
+              COMPLETE PAYMENT (
+              {formatINR(payablePaise)})
+            </Button>
+
+            <div className="flex items-center justify-center gap-2 border-t border-border-subtle pt-4 text-xs text-text-muted">
+              <Lock
+                size={13}
+                aria-hidden="true"
+              />
+              Payment verification unavailable in demo mode
+            </div>
+          </>
         )}
 
-        {/* ERROR MESSAGE */}
-        {error && (
-          <p
-            className="text-sm text-error-text"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
+        {/* OTHERS:
+            No payment functionality added yet. */}
 
-        {/* ================================
-            4. COMPLETE PAYMENT
-        ================================ */}
-
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          fullWidth
-          isLoading={isSubmitting}
-          disabled={!canComplete}
-          className="w-full min-h-12 mb-6"
-        >
-          COMPLETE PAYMENT (
-          {formatINR(payablePaise)})
-        </Button>
-      </form>
+      </div>
     </PopupModal>
   );
 }
