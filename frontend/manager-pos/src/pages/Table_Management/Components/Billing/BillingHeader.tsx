@@ -1,6 +1,7 @@
-
-import { useEffect } from "react";
+// src/pages/Table_Management/Components/Billing/BillingHeader.tsx
+import { useCallback, useEffect } from "react";
 import type { RefObject } from "react";
+import { Keyboard } from "lucide-react";
 
 import { Header } from "../../../../components/Header/Header";
 import { IconButton } from "../../../../components/Buttons/IconButton";
@@ -14,8 +15,14 @@ interface BillingHeaderProps {
   searchText: string;
   onSearchChange: (value: string) => void;
   searchInputRef: RefObject<HTMLInputElement | null>;
+
   onMenuClick: () => void;
   menuOpen: boolean;
+
+  // Virtual keyboard integration
+  isKeyboardOpen: boolean; // ADDED: So we can toggle correctly
+  onToggleKeyboard: () => void; // CHANGED: Toggle instead of just open
+  onClearSearch: () => void;
 }
 
 export function BillingHeader({
@@ -24,58 +31,34 @@ export function BillingHeader({
   searchInputRef,
   onMenuClick,
   menuOpen,
+  isKeyboardOpen,
+  onToggleKeyboard,
+  onClearSearch,
 }: BillingHeaderProps) {
+  
+  const focusSearch = useCallback(() => {
+    const input = searchInputRef.current ?? document.querySelector<HTMLInputElement>("#billing-search-input");
+    input?.focus({ preventScroll: true });
+  }, [searchInputRef]);
 
-  // Focus the reusable search input
-  const focusSearch = () => {
-    const input =
-      searchInputRef.current ??
-      document.querySelector<HTMLInputElement>(
-        "#billing-search-input"
-      );
-
-    input?.focus();
-  };
-
-  // =====================================
-  // F2 KEYBOARD SHORTCUT
-  // =====================================
-
+  // Handle F2 Shortcut
   useEffect(() => {
     const handleF2 = (event: KeyboardEvent) => {
-      if (
-        event.key === "F2" &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !event.metaKey
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        const searchInput =
-          searchInputRef.current ??
-          document.querySelector<HTMLInputElement>(
-            "#billing-search-input"
-          );
-
-        searchInput?.focus();
-      }
+      if (event.key !== "F2" || event.ctrlKey || event.altKey || event.metaKey) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onToggleKeyboard();
+      focusSearch();
     };
 
-    window.addEventListener(
-      "keydown",
-      handleF2,
-      true
-    );
+    window.addEventListener("keydown", handleF2, true);
+    return () => window.removeEventListener("keydown", handleF2, true);
+  }, [focusSearch, onToggleKeyboard]);
 
-    return () => {
-      window.removeEventListener(
-        "keydown",
-        handleF2,
-        true
-      );
-    };
-  }, [searchInputRef]);
+  const handleClearSearch = () => {
+    onClearSearch();
+    focusSearch();
+  };
 
   return (
     <Header
@@ -83,15 +66,11 @@ export function BillingHeader({
       title="GRAND HORIZON"
       titleClassName="sr-only"
       className="urqr-billing-header"
-
-      // REUSABLE MENU AND HOTEL LOGO
       logo={
         <>
           <IconButton
             label="Open navigation"
-            icon={
-              <Icon name="Menu" size={22} />
-            }
+            icon={<Icon name="Menu" size={22} />}
             variant="ghost"
             size="md"
             className="urqr-billing-menu-button"
@@ -99,53 +78,42 @@ export function BillingHeader({
             aria-controls="urqr-billing-drawer"
             onClick={onMenuClick}
           />
-
-          <Logo
-            size="md"
-            variant="solid"
-            showText={true}
-            label="GRAND HORIZON"
-            subLabel=""
-            className="urqr-billing-brand-logo"
-          />
+          <Logo size="md" variant="solid" showText={true} label="GRAND HORIZON" subLabel="" className="urqr-billing-brand-logo" />
         </>
       }
-
-      // REUSABLE SEARCH INPUT WITH F2
       center={
-        <div
-          className="urqr-billing-search"
-          onClick={(event) => {
-            const target = event.target;
+        <div className="urqr-billing-search flex w-full min-w-0 items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <SearchInput
+              id="billing-search-input"
+              ref={searchInputRef}
+              value={searchText}
+              onChange={(event) => onSearchChange(event.target.value)}
+              onClear={handleClearSearch}
+              // NO onFocus here anymore!
+              placeholder="Search items"
+              shortcutHint="F2"
+              aria-label="Search catalog products"
+              fieldSize="sm"
+              inputMode="none"
+              autoComplete="off"
+            />
+          </div>
 
-            if (
-              target instanceof HTMLElement &&
-              target.closest(".pos-search-shortcut")
-            ) {
-              focusSearch();
-            }
-          }}
-        >
-          <SearchInput
-            id="billing-search-input"
-            ref={searchInputRef}
-            value={searchText}
-            onChange={(event) =>
-              onSearchChange(event.target.value)
-            }
-            onClear={() => {
-              onSearchChange("");
+          {/* Keyboard Icon - Now toggles the keyboard */}
+          <IconButton
+            label={isKeyboardOpen ? "Hide touch keyboard" : "Open touch keyboard"}
+            icon={<Keyboard size={19} aria-hidden="true" />}
+            variant={isKeyboardOpen ? "primary" : "outline"} // Optional: highlight when open
+            size="md"
+            className="shrink-0 !h-10 !w-10"
+            onClick={() => {
+              onToggleKeyboard();
               focusSearch();
             }}
-            placeholder="Search items"
-            shortcutHint="F2"
-            aria-label="Search catalog products"
-            fieldSize="sm"
           />
         </div>
       }
-
-      // REUSABLE NETWORK AND DATE
       actions={
         <div className="urqr-billing-header-actions">
           <NetworkStatusPill />

@@ -550,4 +550,5 @@ export function PosCheckoutModal({
   );
 }
 
+
 export default PosCheckoutModal;
