@@ -9,7 +9,7 @@ import (
 func TestSendToPythonSimulator(t *testing.T) {
 	p, err := NewTCPPrinter("127.0.0.1", 9100)
 	if err != nil {
-		t.Fatalf("Printer connection failed: %v", err)
+		t.Skipf("Printer connection skipped (simulator not active): %v", err)
 	}
 	defer p.Close()
 
