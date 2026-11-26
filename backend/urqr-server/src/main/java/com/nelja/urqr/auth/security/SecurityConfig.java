@@ -26,11 +26,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
-    private final TenantJwtAuthenticationConverter jwtConverter;
+    private final HotelJwtAuthenticationConverter jwtConverter;
     private final TenantFilter tenantFilter;
 
     public SecurityConfig(JsonAuthenticationEntryPoint authenticationEntryPoint,
-            JsonAccessDeniedHandler accessDeniedHandler, TenantJwtAuthenticationConverter jwtConverter,
+            JsonAccessDeniedHandler accessDeniedHandler, HotelJwtAuthenticationConverter jwtConverter,
             TenantFilter tenantFilter) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
@@ -74,8 +74,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", "X-Correlation-ID", "X-Request-Id", "X-Tenant-ID", "X-Hotel-ID"));
-        configuration.setExposedHeaders(List.of("X-Correlation-ID", "X-Request-Id", "X-Tenant-ID"));
+        configuration.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", "X-Correlation-ID", "X-Request-Id", "X-Hotel-ID"));
+        configuration.setExposedHeaders(List.of("X-Correlation-ID", "X-Request-Id"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(1800L);
 

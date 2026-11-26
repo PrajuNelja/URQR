@@ -39,7 +39,7 @@ public class CentrifugoPublisher {
 
         List<Map<String, Object>> commands = events.stream()
                 .map(event -> Map.<String, Object>of("publish", Map.of(
-                        "channel", "orders:" + event.tenantId(),
+                        "channel", "orders:" + event.hotelId(),
                         "data", publication(event),
                         // Centrifugo suppresses duplicates if the outbox worker retries after a crash.
                         "idempotency_key", event.eventId().toString())))
@@ -48,7 +48,7 @@ public class CentrifugoPublisher {
         Map<?, ?> response = client.post()
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-API-Key", apiKey)
-                // Sequential batch processing preserves publication order within a tenant channel.
+                // Sequential batch processing preserves publication order within a hotel channel.
                 .body(Map.of("commands", commands))
                 .retrieve()
                 .body(Map.class);
@@ -78,7 +78,7 @@ public class CentrifugoPublisher {
     private static Map<String, Object> publication(OutboxTransactionService.PendingEvent event) {
         return Map.of(
                 "eventId", event.eventId().toString(),
-                "tenantId", event.tenantId().toString(),
+                "hotelId", event.hotelId().toString(),
                 "type", event.eventType(),
                 "payload", event.payload());
     }

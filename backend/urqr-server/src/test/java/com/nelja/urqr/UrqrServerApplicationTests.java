@@ -5,9 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nelja.urqr.analytics.DailySalesService;
-import com.nelja.urqr.auth.security.TenantRlsContext;
-import com.nelja.urqr.billing.catalog.entity.BillingCategory;
-import com.nelja.urqr.billing.catalog.repository.BillingCategoryRepository;
+import com.nelja.urqr.auth.security.HotelRlsContext;
 import com.nelja.urqr.billing.order.PosOrderService.LineInput;
 import com.nelja.urqr.billing.order.PosOrderService;
 import com.nelja.urqr.billing.outbox.OutboxWriter;
@@ -112,10 +110,7 @@ class UrqrServerApplicationTests {
     private OutboxWriter outbox;
 
     @Autowired
-    private TenantRlsContext rlsContext;
-
-    @Autowired
-    private BillingCategoryRepository billingCategories;
+    private HotelRlsContext rlsContext;
 
     @Autowired
     private MockMvc mockMvc;
@@ -304,63 +299,31 @@ class UrqrServerApplicationTests {
     }
 
     @Test
-    void persistsAndReadsTenantOwnedCategoryThroughSpringDataJpa() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        insertTenant(tenantId);
-        setTenantAuthentication(tenantId);
-        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
-
-        try {
-            UUID categoryId = transaction.execute(status -> {
-                rlsContext.bindTenant(tenantId);
-                BillingCategory saved = billingCategories.saveAndFlush(
-                        new BillingCategory(null, "JPA CRUD " + tenantId));
-                assertEquals(tenantId, saved.getTenantId());
-                return saved.getId();
-            });
-
-            BillingCategory loaded = transaction.execute(status -> {
-                rlsContext.bindTenant(tenantId);
-                return billingCategories.findById(categoryId).orElseThrow();
-            });
-            assertEquals("JPA CRUD " + tenantId, loaded.getName());
-            assertEquals(tenantId, loaded.getTenantId());
-
-            transaction.executeWithoutResult(status -> {
-                rlsContext.bindTenant(tenantId);
-                billingCategories.deleteById(categoryId);
-            });
-        } finally {
-            SecurityContextHolder.clearContext();
-        }
-    }
-
-    @Test
-    void bindsTheAuthenticatedTenantToTheSpringTransaction() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        UUID userId = insertHotelWithPaidOrder(tenantId);
+    void bindsTheAuthenticatedHotelToTheSpringTransaction() throws Exception {
+        UUID hotelId = UUID.randomUUID();
+        UUID userId = insertHotelWithPaidOrder(hotelId);
         Jwt jwt = Jwt.withTokenValue("test-token")
                 .header("alg", "RS256")
-                .claim("hotel_id", tenantId.toString())
+                .claim("hotel_id", hotelId.toString())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_MANAGER"))));
 
         try {
             DailySalesService.Report report = dailySales.report(
-                    tenantId, LocalDate.now(ZoneId.of("Asia/Kolkata")));
+                    hotelId, LocalDate.now(ZoneId.of("Asia/Kolkata")));
             assertEquals(new BigDecimal("100.00"), report.totalPayments());
             assertEquals(1, report.ordersWithPayments());
 
-            insertOrders(tenantId, userId, 1_000);
-            printOrderSearchPlan(tenantId);
+            insertOrders(hotelId, userId, 1_000);
+            printOrderSearchPlan(hotelId);
             for (int i = 0; i < 5; i++) {
-                orders.list(tenantId, null, null, null, PageRequest.of(0, 20));
+                orders.list(hotelId, null, null, null, PageRequest.of(0, 20));
             }
             long[] samples = new long[30];
             for (int i = 0; i < samples.length; i++) {
                 long started = System.nanoTime();
-                var page = orders.list(tenantId, null, null, null, PageRequest.of(0, 20));
+                var page = orders.list(hotelId, null, null, null, PageRequest.of(0, 20));
                 samples[i] = System.nanoTime() - started;
                 assertEquals(1_001, page.getTotalElements());
             }
@@ -378,9 +341,9 @@ class UrqrServerApplicationTests {
 
     @Test
     void completesConcurrentBillingRequestsWithoutDeadlockOrPoolStarvation() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        UUID userId = insertHotelWithMenuItem(tenantId);
-        UUID menuItemId = findMenuItem(tenantId);
+        UUID hotelId = UUID.randomUUID();
+        UUID userId = insertHotelWithMenuItem(hotelId);
+        UUID menuItemId = findMenuItem(hotelId);
         int workerCount = 16;
         int ordersToCreate = 80;
         var executor = Executors.newFixedThreadPool(workerCount);
@@ -389,9 +352,9 @@ class UrqrServerApplicationTests {
 
         for (int i = 0; i < ordersToCreate; i++) {
             futures.add(executor.submit(() -> {
-                setTenantAuthentication(tenantId);
+                setHotelAuthentication(hotelId);
                 try {
-                    return orders.create(tenantId, userId, List.of(new LineInput(menuItemId, 1)), List.of());
+                    return orders.create(hotelId, userId, List.of(new LineInput(menuItemId, 1)), List.of());
                 } finally {
                     SecurityContextHolder.clearContext();
                 }
@@ -408,29 +371,29 @@ class UrqrServerApplicationTests {
 
         long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
         System.out.printf("CONCURRENT_ORDER_BURST_%d_MS=%d%n", ordersToCreate, elapsedMillis);
-        assertEquals(ordersToCreate, countOrders(tenantId));
+        assertEquals(ordersToCreate, countOrders(hotelId));
     }
 
     @Test
     void deliversOutboxEventsToCentrifugoWithinTheLatencyTarget() throws Exception {
-        UUID tenantId = UUID.randomUUID();
+        UUID hotelId = UUID.randomUUID();
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
-                PreparedStatement tenant = owner.prepareStatement(
-                        "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)")) {
-            tenant.setObject(1, tenantId);
-            tenant.setString(2, "Outbox tenant " + tenantId);
-            tenant.setString(3, "outbox-" + tenantId);
-            tenant.executeUpdate();
+                PreparedStatement hotel = owner.prepareStatement("""
+                        INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
+                        VALUES (?, 'Outbox test hotel', 'INR', 'Asia/Kolkata', '00:00', 'ACTIVE', now())
+                        """)) {
+            hotel.setObject(1, hotelId);
+            hotel.executeUpdate();
         }
 
         List<UUID> eventIds = new ArrayList<>();
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         long transactionStarted = System.nanoTime();
         transaction.executeWithoutResult(status -> {
-            rlsContext.bindTenant(tenantId);
+            rlsContext.bindHotel(hotelId);
             for (int sequence = 0; sequence < 20; sequence++) {
-                eventIds.add(outbox.enqueue(tenantId, "LATENCY_TEST", "Test", tenantId,
+                eventIds.add(outbox.enqueue(hotelId, "LATENCY_TEST", "Test", hotelId,
                         java.util.Map.of("sequence", sequence)));
             }
         });
@@ -439,14 +402,14 @@ class UrqrServerApplicationTests {
 
         long deliveryWaitStarted = System.nanoTime();
         long deadline = System.nanoTime() + 10_000_000_000L;
-        while (countDelivered(tenantId) < eventIds.size() && System.nanoTime() < deadline) {
+        while (countDelivered(hotelId) < eventIds.size() && System.nanoTime() < deadline) {
             Thread.sleep(5);
         }
-        assertEquals(eventIds.size(), countDelivered(tenantId));
+        assertEquals(eventIds.size(), countDelivered(hotelId));
         System.out.printf("OUTBOX_COMMIT_TO_ACK_ALL_MS=%.3f%n",
                 (System.nanoTime() - deliveryWaitStarted) / 1_000_000.0);
 
-        List<Double> latencies = deliveryLatenciesMillis(tenantId);
+        List<Double> latencies = deliveryLatenciesMillis(hotelId);
         latencies.sort(Double::compareTo);
         double burstP95Millis = latencies.get((int) Math.ceil(latencies.size() * 0.95) - 1);
         System.out.printf("OUTBOX_BURST_20_P95_MS=%.3f%n", burstP95Millis);
@@ -457,11 +420,11 @@ class UrqrServerApplicationTests {
         // Measure steady traffic separately after the HTTP connection and outbox path are warm.
         List<Double> steadyLatencies = new ArrayList<>();
         for (int sequence = 0; sequence < 20; sequence++) {
-            UUID eventId = enqueueEvent(tenantId, sequence, "LATENCY_STEADY");
+            UUID eventId = enqueueEvent(hotelId, sequence, "LATENCY_STEADY");
             long eventDeadline = System.nanoTime() + 10_000_000_000L;
             while (!isDelivered(eventId) && System.nanoTime() < eventDeadline) Thread.sleep(5);
             assertTrue(isDelivered(eventId), "Steady-state outbox event was not delivered");
-            steadyLatencies.add(deliveryLatencyMillis(tenantId, eventId));
+            steadyLatencies.add(deliveryLatencyMillis(hotelId, eventId));
         }
         steadyLatencies.sort(Double::compareTo);
         double steadyP95Millis = steadyLatencies.get((int) Math.ceil(steadyLatencies.size() * 0.95) - 1);
@@ -471,14 +434,14 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static int countDelivered(UUID tenantId) throws Exception {
+    private static int countDelivered(UUID hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement("""
                         SELECT count(*) FROM outbox_events
-                         WHERE tenant_id = ? AND event_type = 'LATENCY_TEST' AND state = 'DELIVERED'
+                         WHERE hotel_id = ? AND event_type = 'LATENCY_TEST' AND state = 'DELIVERED'
                         """)) {
-            query.setObject(1, tenantId);
+            query.setObject(1, hotelId);
             try (var result = query.executeQuery()) {
                 result.next();
                 return result.getInt(1);
@@ -486,15 +449,15 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static List<Double> deliveryLatenciesMillis(UUID tenantId) throws Exception {
+    private static List<Double> deliveryLatenciesMillis(UUID hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement("""
                         SELECT extract(epoch FROM (delivered_at - created_at)) * 1000.0
                           FROM outbox_events
-                         WHERE tenant_id = ? AND event_type = 'LATENCY_TEST' AND state = 'DELIVERED'
+                         WHERE hotel_id = ? AND event_type = 'LATENCY_TEST' AND state = 'DELIVERED'
                         """)) {
-            query.setObject(1, tenantId);
+            query.setObject(1, hotelId);
             try (var result = query.executeQuery()) {
                 List<Double> values = new ArrayList<>();
                 while (result.next()) values.add(result.getDouble(1));
@@ -503,11 +466,11 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private UUID enqueueEvent(UUID tenantId, int sequence, String eventType) {
+    private UUID enqueueEvent(UUID hotelId, int sequence, String eventType) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         return transaction.execute(status -> {
-            rlsContext.bindTenant(tenantId);
-            return outbox.enqueue(tenantId, eventType, "Test", tenantId,
+            rlsContext.bindHotel(hotelId);
+            return outbox.enqueue(hotelId, eventType, "Test", hotelId,
                     java.util.Map.of("sequence", sequence));
         });
     }
@@ -524,15 +487,15 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static double deliveryLatencyMillis(UUID tenantId, UUID eventId) throws Exception {
+    private static double deliveryLatencyMillis(UUID hotelId, UUID eventId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement("""
                         SELECT extract(epoch FROM (delivered_at - created_at)) * 1000.0
                           FROM outbox_events
-                         WHERE tenant_id = ? AND event_id = ? AND state = 'DELIVERED'
+                         WHERE hotel_id = ? AND event_id = ? AND state = 'DELIVERED'
                         """)) {
-            query.setObject(1, tenantId);
+            query.setObject(1, hotelId);
             query.setObject(2, eventId);
             try (var result = query.executeQuery()) {
                 if (!result.next()) throw new IllegalStateException("Outbox event was not acknowledged");
@@ -541,18 +504,16 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static UUID insertHotelWithPaidOrder(UUID tenantId) throws Exception {
+    private static UUID insertHotelWithPaidOrder(UUID hotelId) throws Exception {
         UUID roleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             owner.setAutoCommit(false);
-            try (PreparedStatement tenant = owner.prepareStatement(
-                    "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)");
-                    PreparedStatement hotel = owner.prepareStatement("""
+            try (PreparedStatement hotel = owner.prepareStatement("""
                     INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
-                    VALUES (?, 'Tenant test hotel', 'INR', 'Asia/Kolkata', '00:00', 'ACTIVE', now())
+                    VALUES (?, 'Hotel test', 'INR', 'Asia/Kolkata', '00:00', 'ACTIVE', now())
                     """);
                     PreparedStatement role = owner.prepareStatement(
                             "INSERT INTO hotel_role(id,hotel_id,name) VALUES (?,?, 'MANAGER')");
@@ -569,26 +530,22 @@ class UrqrServerApplicationTests {
                             INSERT INTO payment(id,hotel_id,order_id,method,amount,created_at)
                             VALUES (?,?,?,'CASH',100,now())
                             """)) {
-                tenant.setObject(1, tenantId);
-                tenant.setString(2, "Tenant " + tenantId);
-                tenant.setString(3, "tenant-" + tenantId);
-                tenant.executeUpdate();
-                hotel.setObject(1, tenantId);
+                hotel.setObject(1, hotelId);
                 hotel.executeUpdate();
                 role.setObject(1, roleId);
-                role.setObject(2, tenantId);
+                role.setObject(2, hotelId);
                 role.executeUpdate();
                 user.setObject(1, userId);
-                user.setObject(2, tenantId);
+                user.setObject(2, hotelId);
                 user.setObject(3, roleId);
                 user.executeUpdate();
                 order.setObject(1, orderId);
-                order.setObject(2, tenantId);
+                order.setObject(2, hotelId);
                 order.setString(3, "TEST-" + orderId.toString().substring(0, 8));
                 order.setObject(4, userId);
                 order.executeUpdate();
                 payment.setObject(1, UUID.randomUUID());
-                payment.setObject(2, tenantId);
+                payment.setObject(2, hotelId);
                 payment.setObject(3, orderId);
                 payment.executeUpdate();
             }
@@ -597,34 +554,16 @@ class UrqrServerApplicationTests {
         return userId;
     }
 
-    private static void insertTenant(UUID tenantId) throws Exception {
-        try (Connection owner = DriverManager.getConnection(
-                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
-                PreparedStatement tenant = owner.prepareStatement(
-                        "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)")) {
-            tenant.setObject(1, tenantId);
-            tenant.setString(2, "Tenant " + tenantId);
-            tenant.setString(3, "tenant-" + tenantId);
-            tenant.executeUpdate();
-        }
-    }
-
     private static void insertHotelWithStaffRoles(UUID hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             owner.setAutoCommit(false);
-            try (PreparedStatement tenant = owner.prepareStatement(
-                    "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)");
-                    PreparedStatement hotel = owner.prepareStatement("""
+            try (PreparedStatement hotel = owner.prepareStatement("""
                     INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
                     VALUES (?, 'Platform staff test hotel', 'INR', 'Asia/Kolkata', '06:00', 'ACTIVE', now())
                     """);
                     PreparedStatement role = owner.prepareStatement(
                             "INSERT INTO hotel_role(id,hotel_id,name) VALUES (?,?,?)")) {
-                tenant.setObject(1, hotelId);
-                tenant.setString(2, "Platform staff tenant " + hotelId);
-                tenant.setString(3, "platform-staff-" + hotelId);
-                tenant.executeUpdate();
                 hotel.setObject(1, hotelId);
                 hotel.executeUpdate();
                 for (String roleName : List.of("MANAGER", "CASHIER")) {
@@ -638,7 +577,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static UUID insertHotelWithMenuItem(UUID tenantId) throws Exception {
+    private static UUID insertHotelWithMenuItem(UUID hotelId) throws Exception {
         UUID roleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
@@ -646,9 +585,7 @@ class UrqrServerApplicationTests {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             owner.setAutoCommit(false);
-            try (PreparedStatement tenant = owner.prepareStatement(
-                    "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)");
-                    PreparedStatement hotel = owner.prepareStatement("""
+            try (PreparedStatement hotel = owner.prepareStatement("""
                     INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
                     VALUES (?, 'Load hotel', 'INR', 'Asia/Kolkata', '06:00', 'ACTIVE', now())
                     """);
@@ -664,24 +601,20 @@ class UrqrServerApplicationTests {
                     INSERT INTO menu_item(id,hotel_id,category_id,name,price,available,active)
                     VALUES (?,?,?,'Meal',100,true,true)
                     """)) {
-                tenant.setObject(1, tenantId);
-                tenant.setString(2, "Load tenant " + tenantId);
-                tenant.setString(3, "load-" + tenantId);
-                tenant.executeUpdate();
-                hotel.setObject(1, tenantId);
+                hotel.setObject(1, hotelId);
                 hotel.executeUpdate();
                 role.setObject(1, roleId);
-                role.setObject(2, tenantId);
+                role.setObject(2, hotelId);
                 role.executeUpdate();
                 user.setObject(1, userId);
-                user.setObject(2, tenantId);
+                user.setObject(2, hotelId);
                 user.setObject(3, roleId);
                 user.executeUpdate();
                 category.setObject(1, categoryId);
-                category.setObject(2, tenantId);
+                category.setObject(2, hotelId);
                 category.executeUpdate();
                 item.setObject(1, menuItemId);
-                item.setObject(2, tenantId);
+                item.setObject(2, hotelId);
                 item.setObject(3, categoryId);
                 item.executeUpdate();
             }
@@ -690,12 +623,12 @@ class UrqrServerApplicationTests {
         return userId;
     }
 
-    private static UUID findMenuItem(UUID tenantId) throws Exception {
+    private static UUID findMenuItem(UUID hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement(
                         "SELECT id FROM menu_item WHERE hotel_id=? AND name='Meal'")) {
-            query.setObject(1, tenantId);
+            query.setObject(1, hotelId);
             try (var rows = query.executeQuery()) {
                 if (!rows.next()) throw new IllegalStateException("Load fixture menu item was not inserted");
                 return rows.getObject(1, UUID.class);
@@ -703,12 +636,12 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static int countOrders(UUID tenantId) throws Exception {
+    private static int countOrders(UUID hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement(
                         "SELECT count(*) FROM pos_order WHERE hotel_id=?")) {
-            query.setObject(1, tenantId);
+            query.setObject(1, hotelId);
             try (var rows = query.executeQuery()) {
                 rows.next();
                 return rows.getInt(1);
@@ -716,17 +649,17 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static void setTenantAuthentication(UUID tenantId) {
+    private static void setHotelAuthentication(UUID hotelId) {
         Jwt jwt = Jwt.withTokenValue("load-test-token")
                 .header("alg", "none")
-                .claim("hotel_id", tenantId.toString())
+                .claim("hotel_id", hotelId.toString())
                 .claim("roles", List.of("MANAGER"))
                 .build();
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt,
                 List.of(new SimpleGrantedAuthority("ROLE_MANAGER"))));
     }
 
-    private static void printOrderSearchPlan(UUID tenantId) throws Exception {
+    private static void printOrderSearchPlan(UUID hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 Statement analyze = owner.createStatement()) {
@@ -738,7 +671,7 @@ class UrqrServerApplicationTests {
                     ORDER BY created_at DESC, id DESC
                     LIMIT 20
                     """)) {
-                explain.setObject(1, tenantId);
+                explain.setObject(1, hotelId);
                 try (var rows = explain.executeQuery()) {
                     StringBuilder plan = new StringBuilder();
                     while (rows.next()) plan.append(rows.getString(1)).append(System.lineSeparator());
@@ -751,7 +684,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static void insertOrders(UUID tenantId, UUID userId, int count) throws Exception {
+    private static void insertOrders(UUID hotelId, UUID userId, int count) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement order = owner.prepareStatement("""
@@ -762,7 +695,7 @@ class UrqrServerApplicationTests {
             owner.setAutoCommit(false);
             for (int i = 0; i < count; i++) {
                 order.setObject(1, UUID.randomUUID());
-                order.setObject(2, tenantId);
+                order.setObject(2, hotelId);
                 order.setString(3, "PERF-" + i);
                 order.setObject(4, userId);
                 order.setInt(5, i);

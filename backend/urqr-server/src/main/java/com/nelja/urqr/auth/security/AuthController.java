@@ -34,11 +34,11 @@ public class AuthController {
     private final RoleRepository roles;
     private final JwtDecoder jwtDecoder;
     private final RedisAuthStateService authState;
-    private final TenantRlsContext rls;
+    private final HotelRlsContext rls;
 
     public AuthController(AuthenticationManager authenticationManager, JwtService jwtService,
             HotelRepository hotels, StaffUserRepository users, RoleRepository roles, JwtDecoder jwtDecoder,
-            RedisAuthStateService authState, TenantRlsContext rls) {
+            RedisAuthStateService authState, HotelRlsContext rls) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.hotels = hotels;
@@ -56,10 +56,10 @@ public class AuthController {
         String username = request.username().trim().toLowerCase(java.util.Locale.ROOT);
         List<StaffPrincipal> matchingAccounts = new ArrayList<>();
 
-        // User accounts are protected by RLS, so probe each hotel in its own tenant context.
+        // User accounts are protected by RLS, so probe each hotel in its own RLS context.
         for (var hotel : hotels.findAll()) {
             if (!"ACTIVE".equals(hotel.getStatus())) continue;
-            rls.bindTenant(hotel.getId());
+            rls.bindHotel(hotel.getId());
             var account = users.findByHotelIdAndUsernameIgnoreCase(hotel.getId(), username);
             if (account.isEmpty()) continue;
             String principal = hotel.getId() + ":" + username;
@@ -102,7 +102,7 @@ public class AuthController {
         try {
             UUID hotelId = UUID.fromString(refresh.getClaimAsString("hotel_id"));
             UUID userId = UUID.fromString(refresh.getClaimAsString("uid"));
-            rls.bindTenant(hotelId);
+            rls.bindHotel(hotelId);
             var hotel = hotels.findByIdAndStatus(hotelId, "ACTIVE");
             var user = users.findByIdAndHotelId(userId, hotelId).filter(account -> account.isActive());
             if (hotel.isEmpty() || user.isEmpty() || !user.get().getUsername().equals(refresh.getSubject())) {

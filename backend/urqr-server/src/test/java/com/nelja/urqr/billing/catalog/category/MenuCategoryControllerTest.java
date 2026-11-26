@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.nelja.urqr.auth.audit.AuditService;
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import com.nelja.urqr.billing.catalog.item.MenuCatalogCache;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +31,7 @@ class MenuCategoryControllerTest {
 
     @Mock private MenuCategoryRepository categories;
     @Mock private MenuCatalogCache catalog;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
     @Mock private AuditService audit;
     @Captor private ArgumentCaptor<MenuCategory> categoryCaptor;
     @InjectMocks private MenuCategoryController controller;

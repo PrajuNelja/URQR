@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/** Redis cache for the manager POS catalog; the key is scoped to one hotel/tenant. */
+/** Redis cache for the manager POS catalog; the key is scoped to one hotel. */
 @Service
 public class MenuCatalogCache {
 
@@ -28,8 +28,8 @@ public class MenuCatalogCache {
         this.items = items;
     }
 
-    public List<CatalogProductDto> get(UUID tenantId) {
-        String key = key(tenantId);
+    public List<CatalogProductDto> get(UUID hotelId) {
+        String key = key(hotelId);
         String cached = redis.opsForValue().get(key);
         if (cached != null) {
             try {
@@ -39,7 +39,7 @@ public class MenuCatalogCache {
             }
         }
 
-        List<CatalogProductDto> catalog = items.findPosMenu(tenantId, null).stream()
+        List<CatalogProductDto> catalog = items.findPosMenu(hotelId, null).stream()
                 .map(item -> new CatalogProductDto(item.getId(), item.getCategoryId(), item.getName(),
                         item.getPrice(), item.isAvailable(), item.getDiscountPercent(), item.getCgstRate(),
                         item.getSgstRate(), item.getVatRate()))
@@ -52,8 +52,8 @@ public class MenuCatalogCache {
         return catalog;
     }
 
-    public void evictAfterCommit(UUID tenantId) {
-        String key = key(tenantId);
+    public void evictAfterCommit(UUID hotelId) {
+        String key = key(hotelId);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -64,7 +64,7 @@ public class MenuCatalogCache {
         }
     }
 
-    private static String key(UUID tenantId) {
-        return "tenant:" + tenantId + ":catalog";
+    private static String key(UUID hotelId) {
+        return "hotel:" + hotelId + ":catalog";
     }
 }

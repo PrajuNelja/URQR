@@ -19,17 +19,17 @@ public class OutboxWriter {
         this.objectMapper = objectMapper;
     }
 
-    public UUID enqueue(UUID tenantId, String eventType, String aggregateType, UUID aggregateId,
+    public UUID enqueue(UUID hotelId, String eventType, String aggregateType, UUID aggregateId,
             Map<String, ?> payload) {
         UUID eventId = UUID.randomUUID();
         try {
             String json = objectMapper.writeValueAsString(payload);
             jdbc.update("""
                     INSERT INTO outbox_events
-                      (event_id, tenant_id, aggregate_type, aggregate_id, event_type, payload,
+                      (event_id, hotel_id, aggregate_type, aggregate_id, event_type, payload,
                        state, attempts, next_attempt_at, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?::jsonb, 'PENDING', 0, clock_timestamp(), clock_timestamp(), clock_timestamp())
-                    """, eventId, tenantId, aggregateType, aggregateId, eventType, json);
+                    """, eventId, hotelId, aggregateType, aggregateId, eventType, json);
         } catch (JsonProcessingException exception) {
             throw new IllegalArgumentException("Outbox payload could not be serialized", exception);
         }

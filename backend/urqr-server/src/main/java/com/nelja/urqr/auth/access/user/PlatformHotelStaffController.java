@@ -4,7 +4,7 @@ import com.nelja.urqr.auth.access.role.Role;
 import com.nelja.urqr.auth.access.role.RoleRepository;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.hotel.HotelRepository;
-import com.nelja.urqr.auth.security.TenantRlsContext;
+import com.nelja.urqr.auth.security.HotelRlsContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -39,11 +39,11 @@ public class PlatformHotelStaffController {
     private final RoleRepository roles;
     private final StaffUserRepository users;
     private final PasswordEncoder passwordEncoder;
-    private final TenantRlsContext rlsContext;
+    private final HotelRlsContext rlsContext;
     private final AuditService audit;
 
     public PlatformHotelStaffController(HotelRepository hotels, RoleRepository roles, StaffUserRepository users,
-            PasswordEncoder passwordEncoder, TenantRlsContext rlsContext, AuditService audit) {
+            PasswordEncoder passwordEncoder, HotelRlsContext rlsContext, AuditService audit) {
         this.hotels = hotels;
         this.roles = roles;
         this.users = users;

@@ -1,14 +1,14 @@
 package com.nelja.urqr.billing.order;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import com.nelja.urqr.auth.security.CurrentTenant;import jakarta.validation.Valid;import jakarta.validation.constraints.*;import java.math.BigDecimal;import java.util.*;import org.springframework.data.domain.*;
+import com.nelja.urqr.auth.security.CurrentHotel;import jakarta.validation.Valid;import jakarta.validation.constraints.*;import java.math.BigDecimal;import java.util.*;import org.springframework.data.domain.*;
 import com.nelja.urqr.billing.payment.PaymentMethod;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.security.oauth2.jwt.Jwt;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.web.bind.annotation.*;
 @RestController @RequestMapping("/api/v1/orders") @SecurityRequirement(name="bearerAuth") @PreAuthorize("hasAnyRole('MANAGER','CASHIER')")
 public class OrderController {
  private final PosOrderService service;
- private final CurrentTenant tenant;
- public OrderController(PosOrderService s,CurrentTenant t){
+ private final CurrentHotel tenant;
+ public OrderController(PosOrderService s,CurrentHotel t){
      service=s;
      tenant=t;}
  @PostMapping @ResponseStatus(HttpStatus.CREATED)

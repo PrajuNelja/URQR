@@ -40,34 +40,34 @@ class RlsAndAtomicityIntegrationTest {
     }
 
     @Test
-    void tenantASeesOnlyItsRowsAndRuntimeRoleCannotBypassRls() throws Exception {
-        UUID tenantA = UUID.randomUUID();
-        UUID tenantB = UUID.randomUUID();
+    void hotelASeesOnlyItsRowsAndRuntimeRoleCannotBypassRls() throws Exception {
+        UUID hotelA = UUID.randomUUID();
+        UUID hotelB = UUID.randomUUID();
         UUID categoryA = UUID.randomUUID();
         UUID categoryB = UUID.randomUUID();
 
         try (Connection owner = ownerConnection();
-                PreparedStatement tenant = owner.prepareStatement(
-                        "INSERT INTO tenants(id,name,slug) VALUES (?, ?, ?)")) {
-            tenant.setObject(1, tenantA);
-            tenant.setString(2, "Tenant A");
-            tenant.setString(3, "tenant-" + tenantA);
-            tenant.executeUpdate();
-            tenant.setObject(1, tenantB);
-            tenant.setString(2, "Tenant B");
-            tenant.setString(3, "tenant-" + tenantB);
-            tenant.executeUpdate();
+                PreparedStatement hotel = owner.prepareStatement("""
+                        INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at)
+                        VALUES (?, ?, 'INR', 'Asia/Kolkata', '00:00', 'ACTIVE', now())
+                        """)) {
+            hotel.setObject(1, hotelA);
+            hotel.setString(2, "Hotel A");
+            hotel.executeUpdate();
+            hotel.setObject(1, hotelB);
+            hotel.setString(2, "Hotel B");
+            hotel.executeUpdate();
         }
-        insertCategory(tenantA, categoryA);
-        insertCategory(tenantB, categoryB);
+        insertCategory(hotelA, categoryA);
+        insertCategory(hotelB, categoryB);
 
         try (Connection app = appConnection()) {
             app.setAutoCommit(false);
             try (Statement statement = app.createStatement()) {
-                statement.execute("SELECT set_config('app.tenant_id', '" + tenantA + "', true)");
-                assertEquals(1, count(statement, "SELECT count(*) FROM categories"));
-                assertEquals(0, count(statement, "SELECT count(*) FROM categories WHERE id = '" + categoryB + "'"));
-                assertEquals(0, count(statement, "SELECT count(*) FROM categories WHERE tenant_id = '" + tenantB + "'"));
+                statement.execute("SELECT set_config('app.hotel_id', '" + hotelA + "', true)");
+                assertEquals(1, count(statement, "SELECT count(*) FROM menu_category"));
+                assertEquals(0, count(statement, "SELECT count(*) FROM menu_category WHERE id = '" + categoryB + "'"));
+                assertEquals(0, count(statement, "SELECT count(*) FROM menu_category WHERE hotel_id = '" + hotelB + "'"));
                 app.commit();
             }
         }
@@ -85,7 +85,6 @@ class RlsAndAtomicityIntegrationTest {
     @Test
     void orderItemsPaymentsAndOutboxRollbackTogether() throws Exception {
         UUID hotel = UUID.randomUUID();
-        UUID tenant = hotel;
         UUID role = UUID.randomUUID();
         UUID user = UUID.randomUUID();
         UUID category = UUID.randomUUID();
@@ -94,9 +93,7 @@ class RlsAndAtomicityIntegrationTest {
         UUID event = UUID.randomUUID();
         try (Connection owner = ownerConnection()) {
             owner.setAutoCommit(false);
-            try (PreparedStatement insertTenant = owner.prepareStatement(
-                    "INSERT INTO tenants(id,name,slug) VALUES (?,?,?)");
-                    PreparedStatement insertHotel = owner.prepareStatement(
+            try (PreparedStatement insertHotel = owner.prepareStatement(
                     "INSERT INTO hotel(id,name,currency_code,timezone,day_cutoff,status,created_at) VALUES (?,?,?,'Asia/Kolkata','06:00','ACTIVE',now())");
                     PreparedStatement insertRole = owner.prepareStatement(
                     "INSERT INTO hotel_role(id,hotel_id,name) VALUES (?,?,?)");
@@ -106,8 +103,6 @@ class RlsAndAtomicityIntegrationTest {
                     "INSERT INTO menu_category(id,hotel_id,name,active) VALUES (?,?,?,true)");
                     PreparedStatement insertItem = owner.prepareStatement(
                     "INSERT INTO menu_item(id,hotel_id,category_id,name,price,available,active) VALUES (?,?,?,?,100,true,true)")) {
-                insertTenant.setObject(1, tenant); insertTenant.setString(2, "Atomic Tenant");
-                insertTenant.setString(3, "atomic-" + tenant); insertTenant.executeUpdate();
                 insertHotel.setObject(1, hotel); insertHotel.setString(2, "Atomic Hotel");
                 insertHotel.setString(3, "INR"); insertHotel.executeUpdate();
                 insertRole.setObject(1, role); insertRole.setObject(2, hotel);
@@ -126,7 +121,7 @@ class RlsAndAtomicityIntegrationTest {
         try (Connection app = appConnection()) {
             app.setAutoCommit(false);
             try (Statement context = app.createStatement()) {
-                context.execute("SELECT set_config('app.tenant_id', '" + hotel + "', true)");
+                context.execute("SELECT set_config('app.hotel_id', '" + hotel + "', true)");
             }
             try {
                 try (PreparedStatement insertOrder = app.prepareStatement("""
@@ -152,10 +147,10 @@ class RlsAndAtomicityIntegrationTest {
                     insertPayment.setObject(3, order); insertPayment.executeUpdate();
                 }
                 try (PreparedStatement insertEvent = app.prepareStatement("""
-                        INSERT INTO outbox_events(event_id,tenant_id,aggregate_type,aggregate_id,event_type,payload)
+                        INSERT INTO outbox_events(event_id,hotel_id,aggregate_type,aggregate_id,event_type,payload)
                         VALUES (?,?, 'Order', ?, 'ORDER_CREATED', '{"orderId":"rollback"}'::jsonb)
                         """)) {
-                    insertEvent.setObject(1, event); insertEvent.setObject(2, tenant);
+                insertEvent.setObject(1, event); insertEvent.setObject(2, hotel);
                     insertEvent.setObject(3, order); insertEvent.executeUpdate();
                 }
                 throw new IllegalStateException("simulate a failure after all writes");
@@ -172,12 +167,12 @@ class RlsAndAtomicityIntegrationTest {
         }
     }
 
-    private static void insertCategory(UUID tenantId, UUID categoryId) throws Exception {
+    private static void insertCategory(UUID hotelId, UUID categoryId) throws Exception {
         try (Connection owner = ownerConnection();
                 PreparedStatement insert = owner.prepareStatement(
-                        "INSERT INTO categories(id,tenant_id,name) VALUES (?,?,?)")) {
+                        "INSERT INTO menu_category(id,hotel_id,name,active) VALUES (?,?,?,true)")) {
             insert.setObject(1, categoryId);
-            insert.setObject(2, tenantId);
+            insert.setObject(2, hotelId);
             insert.setString(3, "Category " + categoryId);
             insert.executeUpdate();
         }

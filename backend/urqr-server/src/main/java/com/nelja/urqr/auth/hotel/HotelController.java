@@ -1,12 +1,12 @@
 package com.nelja.urqr.auth.hotel;
 import org.springframework.transaction.annotation.Transactional;import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import com.nelja.urqr.auth.audit.AuditService;import com.nelja.urqr.auth.hotel.dto.HotelResponse;import com.nelja.urqr.auth.security.CurrentTenant;import jakarta.validation.Valid;import jakarta.validation.constraints.*;import java.time.LocalTime;import java.util.Map;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.security.oauth2.jwt.Jwt;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.web.bind.annotation.*;
+import com.nelja.urqr.auth.audit.AuditService;import com.nelja.urqr.auth.hotel.dto.HotelResponse;import com.nelja.urqr.auth.security.CurrentHotel;import jakarta.validation.Valid;import jakarta.validation.constraints.*;import java.time.LocalTime;import java.util.Map;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.security.oauth2.jwt.Jwt;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.web.bind.annotation.*;
 @RestController @RequestMapping("/api/v1/hotel") @Transactional @SecurityRequirement(name="bearerAuth")
 public class HotelController{
  private final HotelService hotels;
- private final CurrentTenant tenant;
+ private final CurrentHotel tenant;
  private final AuditService audit;
- public HotelController(HotelService h,CurrentTenant t,AuditService a){
+ public HotelController(HotelService h,CurrentHotel t,AuditService a){
      hotels=h;tenant=t;audit=a;
  }
  @GetMapping @PreAuthorize("hasAnyRole('MANAGER','CASHIER')")

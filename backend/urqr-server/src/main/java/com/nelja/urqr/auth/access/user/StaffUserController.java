@@ -4,7 +4,7 @@ import com.nelja.urqr.auth.access.role.HotelStaffRole;
 import com.nelja.urqr.auth.access.role.Role;
 import com.nelja.urqr.auth.access.role.RoleRepository;
 import com.nelja.urqr.auth.audit.AuditService;
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import com.nelja.urqr.auth.security.RedisAuthStateService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -41,12 +41,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class StaffUserController {
     private final StaffUserRepository users;
     private final RoleRepository roles;
-    private final CurrentTenant tenant;
+    private final CurrentHotel tenant;
     private final PasswordEncoder encoder;
     private final AuditService audit;
     private final RedisAuthStateService authState;
 
-    public StaffUserController(StaffUserRepository users, RoleRepository roles, CurrentTenant tenant,
+    public StaffUserController(StaffUserRepository users, RoleRepository roles, CurrentHotel tenant,
             PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState) {
         this.users = users;
         this.roles = roles;
