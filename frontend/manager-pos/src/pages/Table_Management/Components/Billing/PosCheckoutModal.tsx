@@ -1,320 +1,445 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { PopupModal } from "../../../../components/PopupModal/PopupModal";
-import { Button } from "../../../../components/Buttons/Button";
-import { NumericKeypad } from "../../../../components/Keypad/NumericKeypad";
-import {
-  Banknote,
-  CreditCard,
-  QrCode,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+﻿
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Lock, CreditCard, CheckCircle2 } from "lucide-react";
+
 import {
   CheckoutRequestSchema,
-  type PaymentMode,
   type CheckoutRequest,
+  type PaymentMode,
 } from "@urqr/types";
 
-export interface PosCheckoutModalProps {
+import { PopupModal } from "../../../../components/PopupModal/PopupModal";
+import { Button } from "../../../../components/Buttons/Button";
+import { SelectableGroup } from "../../../../components/Header/SelectableGroup";
+import { CashAmountInput } from "../../../../components/Payment/CashAmountInput";
+import { ChangeSummary } from "../../../../components/Payment/ChangeSummary";
+import { NumericKeypad } from "../../../../components/Keypad/NumericKeypad";
+
+import {
+  formatINR,
+  parseINRToPaise,
+} from "../../../../lib/money";
+
+import type { PaymentMethod } from "../../Types/billing.types";
+
+interface PosCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   subtotal: number;
   tax: number;
   total: number;
   orderId?: string | number;
-  onConfirmPayment: (checkoutData: CheckoutRequest) => void;
-  initialMode?: PaymentMode;
+  initialMode?: PaymentMethod | PaymentMode;
   isSubmitting?: boolean;
+  onConfirmPayment:
+    (checkout: CheckoutRequest) => void | Promise<void>;
 }
 
-/**
- * PosCheckoutModal — High-speed POS Checkout Modal for Cashier Counter operations.
- * - Supports Cash, Credit/Debit Card, and UPI tender options.
- * - Instant tender math, live Change Due calculation, and zero negative balance submission guard.
- * - Form state strictly validated against CheckoutRequestSchema (Zod).
- * - Keyboard shortcut listeners: Enter to confirm payment, Escape to dismiss.
- * - Fully responsive for both Web Browser and Tauri v2 Desktop (1366x768 to 1080p).
- */
-export const PosCheckoutModal: React.FC<PosCheckoutModalProps> = ({
+// Demo QR only — not valid for real payment
+const DEMO_DOTS = Array.from(
+  { length: 29 * 29 },
+  (_, index) => ({
+    x: index % 29,
+    y: Math.floor(index / 29),
+  })
+).filter(({ x, y }) => {
+  const finder =
+    (x < 9 && y < 9) ||
+    (x > 19 && y < 9) ||
+    (x < 9 && y > 19);
+
+  return (
+    !finder &&
+    (x * 17 + y * 23 + x * y * 3) % 9 < 4
+  );
+});
+
+function DemoUpiQR() {
+  return (
+    <svg
+      viewBox="0 0 37 37"
+      width="172"
+      height="172"
+      role="img"
+      aria-label="Demo QR illustration, not valid for payment"
+      className="block max-w-full bg-white"
+    >
+      <rect
+        width="37"
+        height="37"
+        fill="white"
+      />
+
+      <g transform="translate(4 4)">
+        {DEMO_DOTS.map(({ x, y }) => (
+          <rect
+            key={`${x}-${y}`}
+            x={x}
+            y={y}
+            width="1"
+            height="1"
+            fill="#111B2E"
+          />
+        ))}
+
+        {[
+          [0, 0],
+          [22, 0],
+          [0, 22],
+        ].map(([x, y]) => (
+          <g key={`${x}-${y}`}>
+            <rect
+              x={x}
+              y={y}
+              width="7"
+              height="7"
+              fill="#111B2E"
+            />
+
+            <rect
+              x={x + 1}
+              y={y + 1}
+              width="5"
+              height="5"
+              fill="white"
+            />
+
+            <rect
+              x={x + 2}
+              y={y + 2}
+              width="3"
+              height="3"
+              fill="#111B2E"
+            />
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+type LocalPaymentMode = PaymentMode | "Others";
+
+export function PosCheckoutModal({
   isOpen,
   onClose,
-  subtotal,
-  tax,
   total,
-  onConfirmPayment,
+  orderId,
   initialMode = "Cash",
   isSubmitting = false,
-}) => {
-  const [prevModalState, setPrevModalState] = useState({ isOpen, initialMode, total });
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>(initialMode);
-  const [cashTenderedInput, setCashTenderedInput] = useState<string>(
-    initialMode === "Cash" ? "" : String(total)
-  );
-  const [orderNotes, setOrderNotes] = useState<string>("");
-  const [validationError, setValidationError] = useState<string | null>(null);
+  onConfirmPayment,
+}: PosCheckoutModalProps) {
+  // Payment mode state
+  const [method, setMethod] =
+    useState<LocalPaymentMode>((initialMode as LocalPaymentMode) || "Cash");
 
-  if (
-    prevModalState.isOpen !== isOpen ||
-    prevModalState.initialMode !== initialMode ||
-    prevModalState.total !== total
-  ) {
-    setPrevModalState({ isOpen, initialMode, total });
-    if (isOpen) {
-      setPaymentMode(initialMode);
-      setCashTenderedInput(initialMode === "Cash" ? "" : String(total));
-      setOrderNotes("");
-      setValidationError(null);
-    }
-  }
+  // Initial cash amount is zero
+  const [cashReceived, setCashReceived] =
+    useState(initialMode === "Cash" ? "0.00" : String(total));
 
-  // Derived numeric amount tendered
-  const amountTendered = useMemo(() => {
-    if (paymentMode !== "Cash") return total;
-    const parsed = parseFloat(cashTenderedInput);
-    return isNaN(parsed) ? 0 : parsed;
-  }, [paymentMode, cashTenderedInput, total]);
+  const [error, setError] = useState("");
+  const [processing, setProcessing] = useState(false);
 
-  // Instant Change Due calculation
-  const changeDue = useMemo(() => {
-    if (paymentMode !== "Cash") return 0;
-    const diff = amountTendered - total;
-    return Math.round(diff * 100) / 100;
-  }, [paymentMode, amountTendered, total]);
+  const submittingRef = useRef(false);
 
-  const isTenderSufficient = useMemo(() => {
-    if (paymentMode !== "Cash") return true;
-    return amountTendered >= total;
-  }, [paymentMode, amountTendered, total]);
+  // Reset Cash / UPI states when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
 
-  // Quick tender chips (Exact, +50, +100, +500)
-  const handleQuickTender = (tender: number) => {
-    setValidationError(null);
-    setCashTenderedInput(String(tender));
-  };
+    setMethod((initialMode as PaymentMode) || "Cash");
+    setCashReceived(initialMode === "Cash" ? "0.00" : String(total));
+    setError("");
+    setProcessing(false);
 
-  const handleKeypadDigit = (digit: string) => {
-    setValidationError(null);
-    setCashTenderedInput((prev) => {
-      if (digit === "." && prev.includes(".")) return prev;
-      if (prev === "0" && digit !== ".") return digit;
-      return prev + digit;
-    });
-  };
+    submittingRef.current = false;
+  }, [isOpen, initialMode, total]);
 
-  const handleKeypadBackspace = () => {
-    setValidationError(null);
-    setCashTenderedInput((prev) => (prev.length > 0 ? prev.slice(0, -1) : ""));
-  };
+  // Work in integer paise
+  const payablePaise = Number.isFinite(total)
+    ? Math.max(0, Math.round(total * 100))
+    : 0;
 
-  const handleKeypadClear = () => {
-    setValidationError(null);
-    setCashTenderedInput("");
-  };
+  const receivedPaise =
+    parseINRToPaise(cashReceived);
 
-  // Submit and validate against Zod CheckoutRequestSchema
-  const handleCheckoutSubmit = useCallback(() => {
-    setValidationError(null);
+  const enoughCash =
+    receivedPaise !== null &&
+    receivedPaise >= payablePaise;
 
-    const payloadCandidate = {
-      paymentMode,
-      payableAmount: total,
-      amountTendered: paymentMode === "Cash" ? amountTendered : total,
-      changeDue: Math.max(0, changeDue),
-      notes: orderNotes.trim() || undefined,
-    };
+  const busy = processing || isSubmitting;
 
-    const parseResult = CheckoutRequestSchema.safeParse(payloadCandidate);
+  const canConfirm =
+    method === "Cash"
+      ? payablePaise > 0 && enoughCash && !busy
+      : !busy;
 
-    if (!parseResult.success) {
-      const issue = parseResult.error.issues[0];
-      setValidationError(issue?.message || "Invalid checkout payload.");
+  // Confirm demo payment
+  const confirmPayment = async () => {
+    if (submittingRef.current || busy) {
       return;
     }
 
-    onConfirmPayment(parseResult.data);
-  }, [paymentMode, total, amountTendered, changeDue, orderNotes, onConfirmPayment]);
+    if (method === "Cash") {
+      if (!canConfirm) return;
+      const amountTendered = receivedPaise ?? 0;
 
-  // Keyboard shortcut listeners (Enter to confirm, Escape handled by PopupModal)
+      const result = CheckoutRequestSchema.safeParse({
+        paymentMode: "Cash",
+        payableAmount: payablePaise / 100,
+        amountTendered: amountTendered / 100,
+        changeDue:
+          Math.max(
+            0,
+            amountTendered - payablePaise
+          ) / 100,
+      });
+
+      if (!result.success) {
+        setError("Invalid cash payment details.");
+        return;
+      }
+
+      submittingRef.current = true;
+      setProcessing(true);
+      setError("");
+
+      try {
+        await onConfirmPayment(result.data);
+      } catch {
+        setError("Unable to complete payment.");
+      } finally {
+        submittingRef.current = false;
+        setProcessing(false);
+      }
+    } else {
+      const mode = method === "Card" ? "Card" : method === "UPI" ? "UPI" : "Others";
+      const result = CheckoutRequestSchema.safeParse({
+        paymentMode: mode,
+        payableAmount: payablePaise / 100,
+        amountTendered: payablePaise / 100,
+        changeDue: 0,
+      });
+
+      if (!result.success) return;
+
+      submittingRef.current = true;
+      setProcessing(true);
+      setError("");
+
+      try {
+        await onConfirmPayment(result.data);
+      } catch {
+        setError("Unable to complete payment.");
+      } finally {
+        submittingRef.current = false;
+        setProcessing(false);
+      }
+    }
+  };
+
+  // Keyboard shortcut listener: Enter to confirm
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (isTenderSufficient && !isSubmitting) {
-          handleCheckoutSubmit();
-        }
+        void confirmPayment();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isTenderSufficient, isSubmitting, handleCheckoutSubmit]);
+  }, [isOpen, confirmPayment]);
 
-  if (!isOpen) return null;
+  // Handle payment method selection
+  const changePaymentMethod = (value: string) => {
+    if (
+      value === "Cash" ||
+      value === "Card" ||
+      value === "UPI" ||
+      value === "Others"
+    ) {
+      setMethod(value as LocalPaymentMode);
+      setError("");
+      if (value !== "Cash") {
+        setCashReceived(total.toFixed(2));
+      }
+    }
+  };
 
   return (
     <PopupModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!busy) onClose();
+      }}
+      closeOnEscape={!busy}
+      closeOnBackdrop={!busy}
       title="POS Checkout & Tender"
-      size="lg"
-      className="max-w-[720px] p-0 overflow-hidden"
-      footer={
-        <div className="flex w-full items-center justify-between gap-3 pt-2">
-          <Button variant="ghost" size="lg" onClick={onClose} disabled={isSubmitting}>
-            Cancel (Esc)
-          </Button>
-
-          <Button
-            variant="primary"
-            size="lg"
-            disabled={!isTenderSufficient || isSubmitting}
-            onClick={handleCheckoutSubmit}
-            className="flex-1 bg-[#2d241b] text-white hover:bg-[#433628] font-bold text-base shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting
-              ? "Processing Tender..."
-              : `Confirm & Print Receipt (Enter)`}
-          </Button>
-        </div>
-      }
+      size="md"
+      className="
+        !min-w-0
+        !max-w-md
+        !h-[670px]
+        !max-h-[calc(100dvh-32px)]
+      "
     >
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 p-1 text-[#2d241b]">
-        {/* Left Column (5 cols): Order Totals & Tender Selector */}
-        <div className="md:col-span-5 flex flex-col justify-between space-y-4 border-b md:border-b-0 md:border-r border-[#e4d5bd] pr-0 md:pr-4">
-          {/* Bill Summary */}
-          <div className="rounded-xl border border-[#e4d5bd] bg-[#fffaf2] p-4 shadow-xs">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#91816c] block mb-2">
-              Bill Summary
-            </span>
-            <div className="space-y-1.5 text-xs text-[#705e4b]">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span className="font-semibold text-[#2d241b]">₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>GST (5%)</span>
-                <span className="font-semibold text-[#2d241b]">₹{tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between border-t border-dashed border-[#e4d5bd] pt-2 text-lg font-extrabold text-[#2d241b]">
-                <span>Payable Total</span>
-                <span className="text-[#a46714] font-serif">₹{total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
+      {/* MAIN CONTENT
+          20px bottom padding for Cash and UPI */}
+      <div
+        className="
+          flex h-full min-h-0
+          w-full min-w-0
+          flex-col gap-3
+          pb-5
+        "
+      >
 
-          {/* Tender Mode Selector */}
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-[#91816c] block mb-2">
-              Select Tender Option
+        {/* 1. ENTER TOTAL AMOUNT */}
+        {method === "Cash" && (
+          <section className="w-full min-w-0 shrink-0 space-y-1">
+
+            <label
+              className="
+                block text-xs font-bold
+                uppercase tracking-wide
+                text-primary
+              "
+            >
+              Enter Total Amount
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { mode: "Cash" as PaymentMode, label: "Cash", icon: Banknote },
-                { mode: "Card" as PaymentMode, label: "Card", icon: CreditCard },
-                { mode: "UPI" as PaymentMode, label: "UPI", icon: QrCode },
-              ].map(({ mode, label, icon: Icon }) => {
-                const isSelected = paymentMode === mode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => {
-                      setPaymentMode(mode);
-                      setValidationError(null);
-                    }}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border font-bold text-xs transition-all ${
-                      isSelected
-                        ? "bg-[#2d241b] text-white border-[#2d241b] shadow-sm scale-102"
-                        : "bg-white text-[#705e4b] border-[#e4d5bd] hover:bg-[#f5efe6]"
-                    }`}
-                  >
-                    <Icon size={18} />
-                    <span>{label}</span>
-                  </button>
-                );
-              })}
+
+            <div
+              className="
+                flex min-h-10 w-full
+                items-center rounded-md
+                border border-border-subtle
+                bg-surface-alt px-3
+                font-bold text-primary
+              "
+              aria-label="Total payable, read only"
+            >
+              {formatINR(payablePaise)}
             </div>
-          </div>
 
-          {/* Order Notes Field */}
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-[#91816c] block mb-1">
-              Receipt / Order Note (Optional)
-            </label>
-            <input
-              type="text"
-              value={orderNotes}
-              onChange={(e) => setOrderNotes(e.target.value)}
-              placeholder="e.g. Table 4, split bill..."
-              className="w-full text-xs rounded-lg border border-[#e4d5bd] bg-white px-3 py-2 outline-none focus:border-[#a46714]"
-            />
-          </div>
-        </div>
+            <p className="text-[11px] text-text-muted">
+              {orderId !== undefined
+                ? `Order #${orderId} · `
+                : ""}
+              Same payable total · Read-only
+            </p>
+          </section>
+        )}
 
-        {/* Right Column (7 cols): Tender Display & Touch Keypad */}
-        <div className="md:col-span-7 flex flex-col justify-between space-y-3">
-          {paymentMode === "Cash" ? (
-            <>
-              {/* Cash Tendered & Change Due Readout Screen */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Amount Tendered Box */}
-                <div className="rounded-xl border border-[#e4d5bd] bg-[#fffaf2] p-3 text-right shadow-inner">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-[#91816c] text-left">
-                    Cash Tendered
-                  </span>
-                  <div className="font-mono text-2xl font-extrabold text-[#2d241b] truncate mt-0.5">
-                    ₹{cashTenderedInput || "0"}
-                  </div>
-                </div>
+        {/* 2. PAYMENT METHOD
+            Aligned with other sections */}
+        <section
+          className="
+            w-full min-w-0 shrink-0
+            pt-3 pb-3
+          "
+        >
+          <h3
+            className="
+              mb-2 text-xs font-bold
+              uppercase tracking-wide
+              text-primary
+            "
+          >
+            Payment Method
+          </h3>
 
-                {/* Change Due Box */}
-                <div
-                  className={`rounded-xl border p-3 text-right shadow-inner transition-colors ${
-                    changeDue >= 0
-                      ? "bg-[#d9eedd]/40 border-[#b7dfbd] text-[#2f7a45]"
-                      : "bg-[#fbd9d6]/40 border-[#f5c2be] text-[#b3402a]"
-                  }`}
+          {/* REUSABLE SELECTABLE GROUP */}
+          <SelectableGroup
+            options={[
+              { value: "Cash", label: "Cash" },
+              { value: "Card", label: "Card" },
+              { value: "UPI", label: "UPI" },
+              { value: "Others", label: "Others" },
+            ]}
+            value={method}
+            onChange={changePaymentMethod}
+            className="
+              !my-0 w-full
+              [&>button]:!min-h-9
+              [&>button]:!py-2
+            "
+          />
+        </section>
+
+        {/* 3. CASH PAYMENT */}
+        {method === "Cash" && (
+          <>
+            <section
+              className="
+                w-full min-w-0 shrink-0
+                rounded-lg border
+                border-border-subtle
+                bg-surface-alt p-3
+
+                [&_.pos-cash-input__field]:!h-10
+                [&_.pos-cash-input__quick]:!mt-2
+                [&_.pos-cash-input__quick]:!gap-2
+                [&_.pos-cash-input__button]:!min-h-9
+                [&_.pos-change-summary]:!min-h-[54px]
+                [&_.pos-change-summary]:!p-2
+                [&_.pos-change-summary_strong]:!text-xl
+              "
+            >
+
+              {/* CASH COLLECTED HEADER */}
+              <div
+                className="
+                  mb-2 flex items-center
+                  justify-between gap-3
+                "
+              >
+                <h3 className="text-sm font-bold text-primary">
+                  Cash Collected
+                </h3>
+
+                {/* REUSABLE CLEAR BUTTON */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => {
+                    setCashReceived("0.00");
+                    setError("");
+                  }}
                 >
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-left">
-                    {changeDue >= 0 ? "Change Due" : "Short / Balance"}
-                  </span>
-                  <div className="font-mono text-2xl font-extrabold truncate mt-0.5">
-                    {changeDue >= 0 ? `₹${changeDue.toFixed(2)}` : `-₹${Math.abs(changeDue).toFixed(2)}`}
-                  </div>
-                </div>
+                  Clear
+                </Button>
               </div>
 
-              {/* Zero Negative Balance Guard Alert */}
-              {!isTenderSufficient && cashTenderedInput !== "" && (
-                <div className="flex items-center gap-1.5 text-xs text-[#b3402a] font-semibold bg-[#fbd9d6]/50 p-2 rounded-lg border border-[#f5c2be]">
-                  <AlertCircle size={14} className="shrink-0" />
-                  <span>Insufficient cash tendered. Negative balance submission prevented.</span>
-                </div>
-              )}
-
-              {validationError && (
-                <div className="flex items-center gap-1.5 text-xs text-[#b3402a] font-semibold bg-[#fbd9d6]/50 p-2 rounded-lg border border-[#f5c2be]">
-                  <AlertCircle size={14} className="shrink-0" />
-                  <span>{validationError}</span>
-                </div>
-              )}
+              {/* REUSABLE CASH INPUT
+                  Includes +₹50, +₹100, +₹200 */}
+              <CashAmountInput
+                value={cashReceived}
+                onChange={(value) => {
+                  if (!busy) {
+                    setCashReceived(value);
+                    setError("");
+                  }
+                }}
+              />
 
               {/* Quick Cash Presets */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 mt-2">
                 <button
                   type="button"
-                  onClick={() => handleQuickTender(total)}
-                  className="shrink-0 px-3 py-1.5 rounded-lg border border-[#2d241b] bg-[#2d241b] text-white text-xs font-bold shadow-xs hover:bg-[#433628]"
+                  onClick={() => setCashReceived((payablePaise / 100).toFixed(2))}
+                  className="shrink-0 px-3 py-1.5 rounded-lg border border-[#2d241b] bg-[#2d241b] text-white text-xs font-bold hover:bg-[#433628]"
                 >
-                  Exact (₹{total.toFixed(2)})
+                  Exact (₹{(payablePaise / 100).toFixed(2)})
                 </button>
                 {[50, 100, 200, 500, 2000].map((amt) => (
                   <button
                     key={amt}
                     type="button"
-                    onClick={() => handleQuickTender(amt)}
+                    onClick={() => setCashReceived(amt.toFixed(2))}
                     className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#e4d5bd] bg-white text-[#705e4b] text-xs font-bold hover:bg-[#f5efe6]"
                   >
                     ₹{amt}
@@ -322,53 +447,243 @@ export const PosCheckoutModal: React.FC<PosCheckoutModalProps> = ({
                 ))}
               </div>
 
-              {/* 64x64px Touch Numeric Keypad */}
-              <NumericKeypad
-                onDigit={handleKeypadDigit}
-                onBackspace={handleKeypadBackspace}
-                onClear={handleKeypadClear}
-              />
-            </>
-          ) : (
-            /* Card / UPI Instant Direct Tender View */
-            <div className="h-full flex flex-col items-center justify-center p-6 text-center rounded-xl border border-[#e4d5bd] bg-[#fffaf2]">
-              {paymentMode === "Card" ? (
-                <>
-                  <CreditCard size={48} className="text-[#a46714] mb-3" />
-                  <h4 className="font-serif text-lg font-bold">Credit / Debit Card Terminal</h4>
-                  <p className="text-xs text-[#705e4b] mt-1 max-w-xs">
-                    Swipe, tap, or insert customer card on external payment EDC terminal.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <QrCode size={48} className="text-[#a46714] mb-3" />
-                  <h4 className="font-serif text-lg font-bold">Dynamic UPI QR Payment</h4>
-                  <p className="text-xs text-[#705e4b] mt-1 max-w-xs">
-                    Customer scans counter dynamic UPI QR code with any UPI app.
-                  </p>
-                </>
-              )}
-
-              <div className="mt-5 rounded-lg bg-white border border-[#e4d5bd] px-6 py-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#91816c] block">
-                  Amount to Authorize
-                </span>
-                <span className="font-serif text-2xl font-extrabold text-[#2d241b]">
-                  ₹{total.toFixed(2)}
-                </span>
+              {/* Touch Numeric Keypad */}
+              <div className="mt-2 scale-90 origin-top">
+                <NumericKeypad
+                  onDigit={(d) => {
+                    setCashReceived((prev) => {
+                      if (prev === "0.00" || prev === "0") return d;
+                      return prev + d;
+                    });
+                  }}
+                  onBackspace={() => {
+                    setCashReceived((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0"));
+                  }}
+                  onClear={() => setCashReceived("0.00")}
+                />
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-[#2f7a45] font-semibold mt-4">
-                <CheckCircle2 size={16} />
-                <span>Ready for 1-Tap instant authorization</span>
+              {/* REUSABLE CHANGE SUMMARY */}
+              <div className="mt-2">
+                <div className="text-xs font-bold text-primary mb-1">
+                  Change Due
+                </div>
+                <ChangeSummary
+                  amountDuePaise={payablePaise}
+                  amountReceivedPaise={receivedPaise}
+                />
               </div>
+            </section>
+
+            {/* AMOUNT TO PAY */}
+            <div
+              className="
+                flex w-full shrink-0
+                items-center justify-between gap-3
+              "
+            >
+              <span
+                className="
+                  text-sm font-semibold text-primary
+                "
+              >
+                Amount to pay
+              </span>
+
+              <strong
+                className="
+                  whitespace-nowrap
+                  text-xl font-bold text-primary
+                "
+              >
+                {formatINR(payablePaise)}
+              </strong>
             </div>
-          )}
-        </div>
+
+            {/* INSUFFICIENT CASH WARNING */}
+            {!enoughCash && (
+              <p
+                role="status"
+                className="
+                  shrink-0 text-[11px]
+                  text-warning-text
+                "
+              >
+                Insufficient cash tendered. Negative balance submission prevented.
+              </p>
+            )}
+
+            {/* ERROR MESSAGE */}
+            {error && (
+              <p
+                role="alert"
+                className="
+                  shrink-0 text-xs text-error-text
+                "
+              >
+                {error}
+              </p>
+            )}
+
+            {/* REUSABLE CONFIRM BUTTON */}
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              fullWidth
+              isLoading={busy}
+              disabled={!canConfirm}
+              className="
+                mt-auto !min-h-10
+                shrink-0
+              "
+              onClick={() => {
+                void confirmPayment();
+              }}
+            >
+              Confirm & Print Receipt (Enter)
+            </Button>
+          </>
+        )}
+
+        {/* 4. CARD PAYMENT */}
+        {method === "Card" && (
+          <div className="flex flex-col items-center justify-center p-6 text-center rounded-xl border border-border-subtle bg-surface-alt flex-1 gap-3">
+            <CreditCard size={48} className="text-primary mb-2" />
+            <h4 className="font-sans text-base font-bold text-primary">Card Payment EDC Terminal</h4>
+            <p className="text-xs text-text-muted max-w-xs">
+              Swipe, tap, or insert customer card on external terminal.
+            </p>
+            <div className="rounded-lg bg-surface border border-border-subtle px-6 py-2 mt-2">
+              <span className="text-xs font-bold text-primary">{formatINR(payablePaise)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-[#2f7a45] font-semibold mt-2">
+              <CheckCircle2 size={16} />
+              <span>Ready for 1-Tap instant authorization</span>
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              fullWidth
+              isLoading={busy}
+              className="mt-auto !min-h-10 shrink-0"
+              onClick={() => void confirmPayment()}
+            >
+              Confirm & Print Receipt (Enter)
+            </Button>
+          </div>
+        )}
+
+        {/* 5. UPI PAYMENT */}
+        {method === "UPI" && (
+          <>
+            <section
+              className="
+                flex w-full min-h-0 flex-1
+                flex-col items-center
+                justify-center gap-3
+                rounded-lg border
+                border-border-subtle
+                bg-surface-alt p-3
+              "
+            >
+
+              {/* DEMO QR */}
+              <div className="rounded-md bg-white p-3">
+                <DemoUpiQR />
+              </div>
+
+              {/* BORDERLESS PROVIDER LABELS */}
+              <div
+                className="
+                  flex flex-wrap items-center
+                  justify-center gap-x-4 gap-y-1
+                "
+              >
+                {[
+                  "GPay",
+                  "PhonePe",
+                  "Paytm",
+                  "BHIM",
+                ].map((provider) => (
+                  <span
+                    key={provider}
+                    className="
+                      text-[11px] font-medium
+                      text-text-muted
+                    "
+                  >
+                    {provider}
+                  </span>
+                ))}
+              </div>
+
+              <p
+                className="
+                  text-center text-[11px]
+                  text-text-muted
+                "
+              >
+                Demo QR only — not valid for payment.
+              </p>
+            </section>
+
+            {/* UPI BUTTON DISABLED UNTIL
+                REAL PAYMENT INTEGRATION */}
+            <Button
+              type="button"
+              variant="primary"
+              fullWidth
+              disabled
+              rightIcon={
+                <ArrowRight size={15} />
+              }
+              className="
+                !min-h-10 shrink-0
+              "
+            >
+              COMPLETE PAYMENT (
+              {formatINR(payablePaise)})
+            </Button>
+
+            {/* UPI FOOTER */}
+            <div
+              className="
+                flex shrink-0 items-center
+                justify-center gap-1.5
+                border-t border-border-subtle
+                pt-2 text-center
+                text-[10px] text-text-muted
+              "
+            >
+              <Lock size={12} />
+
+              <span>
+                Demo mode · Payment verification unavailable
+              </span>
+            </div>
+          </>
+        )}
+
+        {/* 5. OTHERS
+            No payment functionality */}
+        {method === "Others" && (
+          <div
+            className="
+              flex w-full flex-1
+              items-center justify-center
+            "
+          >
+            <p className="text-sm text-text-muted">
+              Others payment is not configured yet.
+            </p>
+          </div>
+        )}
+
       </div>
     </PopupModal>
   );
-};
+}
 
 export default PosCheckoutModal;
