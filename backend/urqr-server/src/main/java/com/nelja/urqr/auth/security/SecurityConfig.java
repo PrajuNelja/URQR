@@ -27,12 +27,15 @@ public class SecurityConfig {
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
     private final TenantJwtAuthenticationConverter jwtConverter;
+    private final TenantFilter tenantFilter;
 
     public SecurityConfig(JsonAuthenticationEntryPoint authenticationEntryPoint,
-            JsonAccessDeniedHandler accessDeniedHandler, TenantJwtAuthenticationConverter jwtConverter) {
+            JsonAccessDeniedHandler accessDeniedHandler, TenantJwtAuthenticationConverter jwtConverter,
+            TenantFilter tenantFilter) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
         this.jwtConverter = jwtConverter;
+        this.tenantFilter = tenantFilter;
     }
 
     @Bean
@@ -52,6 +55,7 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
+                .addFilterAfter(tenantFilter, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
                 .build();
     }
 

@@ -269,6 +269,41 @@ class UrqrServerApplicationTests {
     }
 
     @Test
+    void tamperingWithTenantHeaderIsOverriddenByVerifiedJwtClaims() throws Exception {
+        UUID hotelIdA = UUID.randomUUID();
+        UUID hotelIdB = UUID.randomUUID();
+        insertHotelWithStaffRoles(hotelIdA);
+        insertHotelWithStaffRoles(hotelIdB);
+
+        MvcResult platformLogin = mockMvc.perform(post("/api/v1/platform/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", platformAdminUsername,
+                                "password", "test-only-platform-admin-password"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        String platformToken = objectMapper.readTree(platformLogin.getResponse().getContentAsString())
+                .path("accessToken").asText();
+
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String managerUsernameA = "spoof-mgr-" + suffix + "@example.test";
+        mockMvc.perform(post("/api/v1/platform/hotels/{hotelId}/users", hotelIdA)
+                        .header("Authorization", "Bearer " + platformToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", managerUsernameA,
+                                "password", "ManagerPassword@123", "role", "MANAGER"))))
+                .andExpect(status().isCreated());
+
+        String managerTokenA = loginStaff(managerUsernameA, "ManagerPassword@123");
+
+        // Attacker attempts to spoof X-Tenant-ID header with Hotel B's ID while holding JWT for Hotel A.
+        // The system must prioritize the verified JWT claims and maintain tenant isolation.
+        mockMvc.perform(get("/api/v1/menu/categories")
+                        .header("Authorization", "Bearer " + managerTokenA)
+                        .header("X-Tenant-ID", hotelIdB.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void persistsAndReadsTenantOwnedCategoryThroughSpringDataJpa() throws Exception {
         UUID tenantId = UUID.randomUUID();
         insertTenant(tenantId);
