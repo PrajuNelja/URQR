@@ -6,9 +6,8 @@ import { ProductCard } from "../../../../components/DataCard/ProductCard";
 import { CATEGORIES } from "../../Config/billing.config";
 import type { Dish } from "../../Types/billing.types";
 
-export interface BillingCatalogProps {
+interface BillingCatalogProps {
   searchQuery: string;
-  setSearchQuery?: (value: string) => void;
   activeTab: string;
   setActiveTab: (value: string) => void;
   filteredDishes: Dish[];
@@ -24,7 +23,7 @@ export function BillingCatalog({
   addToCart,
   cart,
 }: BillingCatalogProps) {
-  const selected = CATEGORIES.find(
+  const selectedCategory = CATEGORIES.find(
     (category) => category.key === activeTab
   );
 
@@ -34,26 +33,26 @@ export function BillingCatalog({
       padding="none"
       className="urqr-billing-catalog"
     >
+      {/* CATEGORY TABS */}
       <div className="urqr-billing-catalog-head">
-        {/* CATEGORY TABS */}
         <nav
           className="urqr-billing-category-scroll"
           aria-label="Dish categories"
         >
           <Tabs
-            className="urqr-billing-tabs"
             items={CATEGORIES}
             value={activeTab}
             onChange={setActiveTab}
+            className="urqr-billing-tabs"
           />
         </nav>
 
-        {/* CATEGORY TITLE AND COUNT */}
+        {/* CATEGORY HEADING */}
         <div className="urqr-billing-catalog-heading">
           <h2>
             {activeTab === "all"
               ? "All items"
-              : selected?.label ?? "Items"}
+              : selectedCategory?.label ?? "Items"}
           </h2>
 
           <span>
@@ -62,11 +61,10 @@ export function BillingCatalog({
         </div>
       </div>
 
-      {/* PRODUCT GRID */}
+      {/* REUSABLE PRODUCT CARDS */}
       <div
-        className="urqr-billing-product-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
-        role="region"
-        aria-label="Product Catalog Grid"
+        className="urqr-billing-product-grid"
+        aria-label="Products"
       >
         {filteredDishes.length === 0 ? (
           <p
@@ -74,21 +72,28 @@ export function BillingCatalog({
             role="status"
           >
             {searchQuery
-              ? `No products match “${searchQuery}”`
+              ? `No products match "${searchQuery}"`
               : "No products in this category"}
           </p>
         ) : (
           filteredDishes.map((dish) => {
-            const stock = dish.stock;
+            const availableStock = dish.stock;
 
+            // Determine stock status
             const stockState =
-              stock === 0
+              availableStock === 0
                 ? "sold-out"
-                : stock !== undefined &&
-                    stock <=
+                : availableStock !== undefined &&
+                    availableStock <=
                       (dish.lowStockThreshold ?? 5)
                   ? "low-stock"
                   : "in-stock";
+
+            // Maximum allowed cart quantity
+            const maxQuantity = Math.min(
+              15,
+              availableStock ?? 15
+            );
 
             return (
               <ProductCard
@@ -99,14 +104,10 @@ export function BillingCatalog({
                 )}
                 imageUrl={dish.imageUrl}
                 stockState={stockState}
-                stock={stock}
                 inCartQuantity={
                   cart[dish.id] ?? 0
                 }
-                maxQuantity={Math.min(
-                  15,
-                  stock ?? 15
-                )}
+                maxQuantity={maxQuantity}
                 onAdd={() => addToCart(dish.id)}
               />
             );
@@ -116,3 +117,5 @@ export function BillingCatalog({
     </Card>
   );
 }
+
+export default BillingCatalog;

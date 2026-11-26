@@ -1,14 +1,10 @@
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PaymentMode } from "@urqr/types";
 
 import { Button } from "../../../../components/Buttons/Button";
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { OrderTotals } from "../../../../components/Cart/OrderTotals";
-import { formatINR } from "../../../../lib/money";
-import { useBridgeHeartbeat } from "../../Hooks/useBridgeHeartbeat";
-import { useNotification } from "../../../../components/Notification/useNotification";
-import { serializeReceiptForBridge } from "../../../../lib/bridge/printPayload";
-import type { BridgePrintRequest } from "../../../../lib/bridge/bridgeClient";
 
 import { TAX_RATE } from "../../Config/billing.config";
 import { useBilling } from "../../Hooks/useBilling";
@@ -20,6 +16,11 @@ import { BillingCart } from "./BillingCart";
 import { BillingReceiptModal } from "./BillingReceiptModal";
 import { PosCheckoutModal } from "./PosCheckoutModal";
 
+import { formatINR } from "../../../../lib/money";
+
+const generateOrderId = () =>
+  String(Math.floor(1000 + Math.random() * 9000));
+
 export default function Billing() {
   const {
     activeTab,
@@ -30,30 +31,53 @@ export default function Billing() {
     cart,
     addToCart,
     updateQuantity,
-    clearCart,
     totals,
-    paymentMethod,
     handleCompletePayment,
     receipt,
     isReceiptOpen,
     setIsReceiptOpen,
   } = useBilling();
-  const { printReceipt } = useBridgeHeartbeat(false);
-  const { success, error, warning } = useNotification();
 
   const [navOpen, setNavOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [paymentPopupOpen, setPaymentPopupOpen] =
+    useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [orderNote, setOrderNote] = useState("");
+
+  const [selectedMethod, setSelectedMethod] =
+    useState<PaymentMode>("Cash");
+
+  const [orderId, setOrderId] =
+    useState(generateOrderId);
+
+  const [previewTime, setPreviewTime] =
+    useState(() => new Date());
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const hadItems = useRef(false);
 
-  // Order totals
-  const subtotalPaise = Math.round(totals.subtotal * 100);
-  const taxPaise = Math.round(totals.tax * 100);
-  const grandTotalPaise = Math.round(totals.total * 100);
+  useEffect(() => {
+    if (
+      hadItems.current &&
+      totals.items.length === 0
+    ) {
+      setOrderId(generateOrderId());
+    }
 
-  const cgstPaise = Math.round(taxPaise / 2);
+    hadItems.current = totals.items.length > 0;
+  }, [totals.items.length]);
+
+  const subtotalPaise =
+    Math.round(totals.subtotal * 100);
+
+  const taxPaise =
+    Math.round(totals.tax * 100);
+
+  const grandTotalPaise =
+    Math.round(totals.total * 100);
+
+  const cgstPaise =
+    Math.round(taxPaise / 2);
 
   const taxLines = [
     {
@@ -68,9 +92,24 @@ export default function Billing() {
 
   const hasItems = totals.items.length > 0;
 
+  // Open receipt-style preview
+  const openPreview = () => {
+    setPreviewTime(new Date());
+    setPreviewOpen(true);
+  };
+
+  const choosePaymentMethod = (
+    method: PaymentMode
+  ) => {
+    setSelectedMethod(method);
+    setPaymentPopupOpen(false);
+    setCheckoutOpen(true);
+  };
+
   return (
     <main className="urqr-billing-screen">
-      {/* FULL-WIDTH BILLING HEADER */}
+
+      {/* EXISTING HEADER */}
       <BillingHeader
         searchText={searchQuery}
         onSearchChange={setSearchQuery}
@@ -79,14 +118,15 @@ export default function Billing() {
         menuOpen={navOpen}
       />
 
-      {/* THE ONE ACTIVE SIDEBAR */}
+      {/* EXISTING SIDEBAR */}
       <BillingSidebar
         isOpen={navOpen}
         onClose={() => setNavOpen(false)}
       />
 
-      {/* 60% CATALOG / 40% ORDER SUMMARY */}
+      {/* MAIN BILLING SCREEN */}
       <div className="urqr-billing-workspace">
+
         <BillingCatalog
           searchQuery={searchQuery}
           activeTab={activeTab}
@@ -101,11 +141,13 @@ export default function Billing() {
           aria-label="Order Summary"
         >
           <BillingCart
+            orderId={orderId}
             items={totals.items}
             updateQuantity={updateQuantity}
           />
 
           <div className="urqr-billing-summary-footer">
+
             <OrderTotals
               subtotalPaise={subtotalPaise}
               taxLines={taxLines}
@@ -113,22 +155,26 @@ export default function Billing() {
               collapsibleTaxes
             />
 
+            {/* RECEIPT PREVIEW */}
             <Button
               variant="outline"
               fullWidth
               className="urqr-billing-preview-button"
               disabled={!hasItems}
-              onClick={() => setPreviewOpen(true)}
+              onClick={openPreview}
             >
               Preview
             </Button>
 
+            {/* PAYMENT SELECTION */}
             <Button
               id="billing-select-payment"
               fullWidth
               className="urqr-billing-pay-button"
               disabled={!hasItems}
-              onClick={() => setCheckoutOpen(true)}
+              onClick={() =>
+                setPaymentPopupOpen(true)
+              }
             >
               SELECT PAYMENT METHOD
             </Button>
@@ -140,129 +186,152 @@ export default function Billing() {
         </aside>
       </div>
 
-      {/* DRAFT ORDER PREVIEW */}
-      <PopupModal
+      {/* NEW RECEIPT-STYLE PREVIEW */}
+      <BillingReceiptModal
         isOpen={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        title="Draft order preview — unpaid"
-        size="lg"
-        footer={
-          <Button
-            variant="outline"
-            onClick={() => setPreviewOpen(false)}
-          >
-            Close
-          </Button>
-        }
+        receipt={null}
+        previewOrder={{
+          orderId: `#${orderId}`,
+          date: previewTime.toLocaleDateString(
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }
+          ),
+          time: previewTime.toLocaleTimeString(
+            "en-IN",
+            {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }
+          ),
+          restaurantName: "GRAND HORIZON",
+          items: totals.items.map(
+            ({ dish, quantity }) => ({
+              name: dish.name,
+              price: dish.price,
+              quantity,
+            })
+          ),
+          subtotal: totals.subtotal,
+          tax: totals.tax,
+          taxRate: TAX_RATE,
+          total: totals.total,
+        }}
+      />
+
+      {/* EXISTING SELECT PAYMENT POPUP */}
+      <PopupModal
+        isOpen={paymentPopupOpen}
+        onClose={() => setPaymentPopupOpen(false)}
+        title="Select Payment Method"
+        size="md"
+        className="urqr-payment-reference-modal"
       >
-        <div className="urqr-billing-order-preview">
-          <p>This is an unpaid order preview.</p>
+        <div className="urqr-payment-reference-content">
 
-          {totals.items.map(({ dish, quantity }) => (
-            <div
-              className="urqr-billing-preview-line"
-              key={dish.id}
+          <div className="urqr-payment-reference-amount">
+            <span>
+              Amount Payable (Order #{orderId})
+            </span>
+
+            <strong>
+              {formatINR(grandTotalPaise)}
+            </strong>
+          </div>
+
+          <div className="urqr-payment-reference-options">
+
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              className="urqr-payment-reference-option"
+              onClick={() =>
+                choosePaymentMethod("UPI")
+              }
             >
-              <span>
-                {dish.name} × {quantity}
-              </span>
+              UPI
+            </Button>
 
-              <strong>
-                {formatINR(
-                  Math.round(dish.price * 100) * quantity
-                )}
-              </strong>
-            </div>
-          ))}
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              className="urqr-payment-reference-option"
+              onClick={() =>
+                choosePaymentMethod("Cash")
+              }
+            >
+              Cash
+            </Button>
 
-          <OrderTotals
-            subtotalPaise={subtotalPaise}
-            taxLines={taxLines}
-            grandTotalPaise={grandTotalPaise}
-            collapsibleTaxes
-          />
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              className="urqr-payment-reference-option"
+              onClick={() =>
+                choosePaymentMethod("Card")
+              }
+            >
+              Others
+            </Button>
+          </div>
         </div>
       </PopupModal>
 
-      {/* REUSE EXISTING CHECKOUT MODAL */}
+      {/* EXISTING CHECKOUT */}
       <PosCheckoutModal
+        key={selectedMethod}
         isOpen={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
         subtotal={totals.subtotal}
         tax={totals.tax}
         total={totals.total}
-        initialMode={
-          paymentMethod === "Others"
-            ? "Card"
-            : paymentMethod
-        }
+        initialMode={selectedMethod}
         onConfirmPayment={(checkout) => {
-          const checkoutStartedAt = performance.now();
-          const completedReceipt = handleCompletePayment(checkout);
-          if (!completedReceipt) {
-            error(
-              "Checkout could not be completed. Review the order and payment amount.",
-            );
-            return;
+          if (handleCompletePayment(checkout)) {
+            setCheckoutOpen(false);
           }
-
-          setCheckoutOpen(false);
-          let request: BridgePrintRequest;
-          try {
-            request = serializeReceiptForBridge(
-              completedReceipt,
-              localStorage.getItem("tenant_id"),
-              checkout.notes,
-            );
-          } catch (cause) {
-            const message =
-              cause instanceof Error
-                ? cause.message
-                : "Invalid receipt payload.";
-            error(`Payment completed, but the receipt was not sent: ${message}`);
-            return;
-          }
-
-          void printReceipt(request, checkoutStartedAt)
-            .then((response) => {
-              if (!response.success) {
-                error(
-                  `Payment completed, but receipt printing failed: ${
-                    response.message ?? response.status
-                  }`,
-                );
-                return;
-              }
-
-              const dispatchLatency = response.dispatchLatencyMs ?? 0;
-              if (dispatchLatency < 50) {
-                success(
-                  `Receipt printed; dispatched in ${dispatchLatency} ms.`,
-                );
-              } else {
-                warning(
-                  `Receipt printed, but dispatch took ${dispatchLatency} ms (target: under 50 ms).`,
-                );
-              }
-            })
-            .catch((cause: unknown) => {
-              const message =
-                cause instanceof Error
-                  ? cause.message
-                  : "Unknown bridge error";
-              error(
-                `Payment completed, but receipt printing failed: ${message}`,
-              );
-            });
         }}
       />
 
-      {/* REUSE EXISTING RECEIPT MODAL */}
-      <BillingReceiptModal
-        isOpen={isReceiptOpen}
-        onClose={() => setIsReceiptOpen(false)}
-        receipt={receipt}
-      />
+      {/* EXISTING COMPLETED RECEIPT */}
+     
+<BillingReceiptModal
+  isOpen={previewOpen}
+  onClose={() => setPreviewOpen(false)}
+  receipt={null}
+  previewOrder={{
+    orderId: `#${orderId}`,
+    date: previewTime.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: previewTime.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }),
+    restaurantName: "GRAND HORIZON",
+    items: totals.items.map(({ dish, quantity }) => ({
+      name: dish.name,
+      price: dish.price,
+      quantity,
+    })),
+    subtotal: totals.subtotal,
+    tax: totals.tax,
+    taxRate: TAX_RATE,
+    total: totals.total,
+  }}
+/>
+
     </main>
   );
 }
