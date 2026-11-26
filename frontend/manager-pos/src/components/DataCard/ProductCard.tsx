@@ -49,15 +49,7 @@ export function ProductCard({
   const qtyLabel =
     inCartQuantity >= 5
       ? "5+"
-      : inCartQuantity.toString();
-
-  // Reuse existing StatusBadge variants.
-  const stockVariant =
-    stockState === "in-stock"
-      ? "success"
-      : stockState === "low-stock"
-        ? "warning"
-        : "error";
+      : String(inCartQuantity);
 
   const stockLabel =
     stockState === "in-stock"
@@ -66,10 +58,41 @@ export function ProductCard({
         ? "Low stock"
         : "Sold out";
 
+  const stockVariant =
+    stockState === "in-stock"
+      ? "success"
+      : stockState === "low-stock"
+        ? "warning"
+        : "error";
+
+  // Green circles overlap the image's top edge.
+  // Half is above the image; half is inside.
   const indicator = inOrder ? (
     <div
       className="pos-product-card__indicators"
       aria-label={`${inCartQuantity} in order`}
+      style={
+        compact
+          ? {
+              position: "static",
+              display: "flex",
+              alignItems: "center",
+              gap: 9,
+              flexShrink: 0,
+            }
+          : {
+              position: "absolute",
+              top: 0,
+              right: 10,
+              transform: "translateY(-50%)",
+              zIndex: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 9,
+              pointerEvents: "none",
+            }
+      }
     >
       <span
         className="pos-product-card__check"
@@ -90,16 +113,25 @@ export function ProductCard({
   return (
     <Card
       padding="none"
-      className={`
-        pos-product-card
-        pos-product-card--${state}
-        ${compact ? "pos-product-card--compact" : ""}
-        ${className}
-      `}
+      className={[
+        "pos-product-card",
+        `pos-product-card--${state}`,
+        compact ? "pos-product-card--compact" : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {/* PRODUCT IMAGE */}
       {!compact && (
-        <div className="pos-product-card__image">
+        <div
+          className="pos-product-card__image"
+          style={{
+            position: "relative",
+            overflow: "visible",
+            isolation: "isolate",
+          }}
+        >
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -110,6 +142,7 @@ export function ProductCard({
             <span>PRODUCT IMAGE</span>
           )}
 
+          {/* GREEN CIRCLES OVERLAP IMAGE TOP EDGE */}
           {indicator}
         </div>
       )}
@@ -127,7 +160,7 @@ export function ProductCard({
           {compact && indicator}
         </div>
 
-        {/* PRICE AND REUSABLE STOCK BADGE */}
+        {/* PRICE AND STOCK STATUS */}
         <div className="pos-product-card__price-row">
           <strong className="pos-product-card__price">
             {formatINR(pricePaise)}
@@ -137,7 +170,10 @@ export function ProductCard({
             <StatusBadge
               label={stockLabel}
               variant={stockVariant}
-              size="sm"
+              className={[
+                "pos-product-card__status",
+                `pos-product-card__status--${stockState}`,
+              ].join(" ")}
             />
           )}
         </div>
