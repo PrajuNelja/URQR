@@ -22,3 +22,11 @@ export interface ManagerLoginFormState extends LoginCredentials {
   onSubmit: FormEventHandler<HTMLFormElement>;
   dismissFeedback: () => void;
 }
+export interface BackendAuthResponse {
+  accessToken: string;
+  tokenType: string;
+  hotelId: string;
+  userId: string;
+  username: string;
+  role: string;
+}
