@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 
 interface QuantityStepperProps {
@@ -20,12 +20,14 @@ export const QuantityStepper = ({
   disabled = false,
   className = "",
 }: QuantityStepperProps) => {
+  const [prevValue, setPrevValue] = useState(value);
   const [localInput, setLocalInput] = useState<string>(String(value));
 
   // Keep internal input in sync if the parent changes the value externally
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value);
     setLocalInput(String(value));
-  }, [value]);
+  }
 
   // Determine if buttons should be disabled
   const canDecrease = !disabled && value > min;

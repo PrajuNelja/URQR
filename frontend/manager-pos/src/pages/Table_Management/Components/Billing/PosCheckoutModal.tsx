@@ -1,5 +1,5 @@
 ﻿
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Lock, CreditCard, CheckCircle2 } from "lucide-react";
 
 import {
@@ -143,16 +143,16 @@ export function PosCheckoutModal({
   const submittingRef = useRef(false);
 
   // Reset Cash / UPI states when modal opens
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setMethod((initialMode as PaymentMode) || "Cash");
-    setCashReceived(initialMode === "Cash" ? "0.00" : String(total));
-    setError("");
-    setProcessing(false);
-
-    submittingRef.current = false;
-  }, [isOpen, initialMode, total]);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setMethod((initialMode as PaymentMode) || "Cash");
+      setCashReceived(initialMode === "Cash" ? "0.00" : String(total));
+      setError("");
+      setProcessing(false);
+    }
+  }
 
   // Work in integer paise
   const payablePaise = Number.isFinite(total)
@@ -174,7 +174,7 @@ export function PosCheckoutModal({
       : !busy;
 
   // Confirm demo payment
-  const confirmPayment = async () => {
+  const confirmPayment = useCallback(async () => {
     if (submittingRef.current || busy) {
       return;
     }
@@ -235,7 +235,7 @@ export function PosCheckoutModal({
         setProcessing(false);
       }
     }
-  };
+  }, [busy, canConfirm, method, onConfirmPayment, payablePaise, receivedPaise]);
 
   // Keyboard shortcut listener: Enter to confirm
   useEffect(() => {

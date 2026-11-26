@@ -1,4 +1,4 @@
-import { Centrifuge, type Subscription, type PublicationContext, type ConnectedContext, type ConnectingContext, type DisconnectedContext } from "centrifuge";
+import { Centrifuge, type Subscription, type PublicationContext } from "centrifuge";
 import { useAuthStore } from "../authStore";
 import {
   useCentrifugoStore,
@@ -64,15 +64,15 @@ export class CentrifugoClientManager {
       },
     });
 
-    this.client.on("connecting", (_ctx: ConnectingContext) => {
+    this.client.on("connecting", () => {
       this.updateStatus("connecting");
     });
 
-    this.client.on("connected", (_ctx: ConnectedContext) => {
+    this.client.on("connected", () => {
       this.updateStatus("connected");
     });
 
-    this.client.on("disconnected", (_ctx: DisconnectedContext) => {
+    this.client.on("disconnected", () => {
       this.updateStatus("disconnected");
     });
 

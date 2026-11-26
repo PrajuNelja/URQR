@@ -24,7 +24,7 @@ export interface InputFieldProps
 export interface SearchInputProps
   extends Omit<InputFieldProps, "leftIcon" | "type"> {
   onClear?: () => void;
-  shortcutHint?:any;
+  shortcutHint?: ReactNode;
 }
 
 export interface TextAreaProps

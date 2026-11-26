@@ -148,7 +148,7 @@ jobs:
           printf 'JWT_PRIVATE_KEY=%s\n' "$jwt_private_key" >> "$GITHUB_ENV"
           printf 'JWT_PUBLIC_KEY=%s\n' "$jwt_public_key" >> "$GITHUB_ENV"
       - name: Run tests
-        run: ./mvnw clean test -B -Dspring.profiles.active=test
+        run: ./mvnw clean test -B -Dspring.profiles.active=test || mvn clean test -B -Dspring.profiles.active=test
         env:
           MAVEN_OPTS: "-Xmx1g"
 
