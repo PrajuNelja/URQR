@@ -104,9 +104,19 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
             </div>
 
             <div className="flex justify-center gap-1.5 mt-0.5">
-              <button 
-                type="button" 
-                onClick={() => handleKeyAction("123", () => setIsNumeric(true))} 
+              {onClear && (
+                <button
+                  type="button"
+                  onClick={() => handleKeyAction("clear", onClear)}
+                  className={`${keySpecial("clear", "w-[50px]")} text-xs`}
+                >
+                  Clear
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleKeyAction("123", () => setIsNumeric(true))}
                 className={`${keySpecial("123", "w-[65px]")} text-xs`}
               >
                 123 / @#

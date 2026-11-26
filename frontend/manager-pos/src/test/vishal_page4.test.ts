@@ -11,7 +11,7 @@ afterEach(() => {
 
 describe("Vishal Scope: Page 4 of 12 Verification (POS Checkout Modal)", () => {
   it("Task 1: renders POS Checkout Modal with Cash, Credit/Debit Card, and UPI tender options", () => {
-    const { getByRole, getByText } = render(
+    const { getByRole, getByText, getAllByText } = render(
       React.createElement(PosCheckoutModal, {
         isOpen: true,
         onClose: vi.fn(),
@@ -24,12 +24,12 @@ describe("Vishal Scope: Page 4 of 12 Verification (POS Checkout Modal)", () => {
     );
 
     expect(getByText("POS Checkout & Tender")).toBeDefined();
-    expect(getByText("₹105.00")).toBeDefined();
+    expect(getAllByText("₹105.00").length).toBeGreaterThanOrEqual(1);
 
     // Verify all 3 tender options exist
-    expect(getByRole("button", { name: /Cash/i })).toBeDefined();
-    expect(getByRole("button", { name: /Card/i })).toBeDefined();
-    expect(getByRole("button", { name: /UPI/i })).toBeDefined();
+    expect(getByRole("radio", { name: /Cash/i })).toBeDefined();
+    expect(getByRole("radio", { name: /Card/i })).toBeDefined();
+    expect(getByRole("radio", { name: /UPI/i })).toBeDefined();
   });
 
   it("Task 2: implements tender amount calculation with instant Change Due & zero negative balance submission", () => {

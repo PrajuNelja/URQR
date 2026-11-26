@@ -1,10 +1,11 @@
 ﻿
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, CreditCard, CheckCircle2 } from "lucide-react";
 
 import {
   CheckoutRequestSchema,
   type CheckoutRequest,
+  type PaymentMode,
 } from "@urqr/types";
 
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
@@ -12,13 +13,13 @@ import { Button } from "../../../../components/Buttons/Button";
 import { SelectableGroup } from "../../../../components/Header/SelectableGroup";
 import { CashAmountInput } from "../../../../components/Payment/CashAmountInput";
 import { ChangeSummary } from "../../../../components/Payment/ChangeSummary";
+import { NumericKeypad } from "../../../../components/Keypad/NumericKeypad";
 
 import {
   formatINR,
   parseINRToPaise,
 } from "../../../../lib/money";
 
-import { PAYMENT_METHODS } from "../../Config/billing.config";
 import type { PaymentMethod } from "../../Types/billing.types";
 
 interface PosCheckoutModalProps {
@@ -28,7 +29,7 @@ interface PosCheckoutModalProps {
   tax: number;
   total: number;
   orderId?: string | number;
-  initialMode?: PaymentMethod;
+  initialMode?: PaymentMethod | PaymentMode;
   isSubmitting?: boolean;
   onConfirmPayment:
     (checkout: CheckoutRequest) => void | Promise<void>;
@@ -117,21 +118,24 @@ function DemoUpiQR() {
   );
 }
 
+type LocalPaymentMode = PaymentMode | "Others";
+
 export function PosCheckoutModal({
   isOpen,
   onClose,
   total,
   orderId,
+  initialMode = "Cash",
   isSubmitting = false,
   onConfirmPayment,
 }: PosCheckoutModalProps) {
-  // Cash is the default payment method
+  // Payment mode state
   const [method, setMethod] =
-    useState<PaymentMethod>("Cash");
+    useState<LocalPaymentMode>((initialMode as LocalPaymentMode) || "Cash");
 
   // Initial cash amount is zero
   const [cashReceived, setCashReceived] =
-    useState("0.00");
+    useState(initialMode === "Cash" ? "0.00" : String(total));
 
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -142,13 +146,13 @@ export function PosCheckoutModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    setMethod("Cash");
-    setCashReceived("0.00");
+    setMethod((initialMode as PaymentMode) || "Cash");
+    setCashReceived(initialMode === "Cash" ? "0.00" : String(total));
     setError("");
     setProcessing(false);
 
     submittingRef.current = false;
-  }, [isOpen]);
+  }, [isOpen, initialMode, total]);
 
   // Work in integer paise
   const payablePaise = Number.isFinite(total)
@@ -165,60 +169,102 @@ export function PosCheckoutModal({
   const busy = processing || isSubmitting;
 
   const canConfirm =
-    method === "Cash" &&
-    payablePaise > 0 &&
-    enoughCash &&
-    !busy;
+    method === "Cash"
+      ? payablePaise > 0 && enoughCash && !busy
+      : !busy;
 
-  // Confirm Cash demo payment
-  const confirmCash = async () => {
-    if (!canConfirm || submittingRef.current) {
+  // Confirm demo payment
+  const confirmPayment = async () => {
+    if (submittingRef.current || busy) {
       return;
     }
 
-    const amountTendered = receivedPaise ?? 0;
+    if (method === "Cash") {
+      if (!canConfirm) return;
+      const amountTendered = receivedPaise ?? 0;
 
-    const result = CheckoutRequestSchema.safeParse({
-      paymentMode: "Cash",
-      payableAmount: payablePaise / 100,
-      amountTendered: amountTendered / 100,
-      changeDue:
-        Math.max(
-          0,
-          amountTendered - payablePaise
-        ) / 100,
-    });
+      const result = CheckoutRequestSchema.safeParse({
+        paymentMode: "Cash",
+        payableAmount: payablePaise / 100,
+        amountTendered: amountTendered / 100,
+        changeDue:
+          Math.max(
+            0,
+            amountTendered - payablePaise
+          ) / 100,
+      });
 
-    if (!result.success) {
-      setError("Invalid cash payment details.");
-      return;
-    }
+      if (!result.success) {
+        setError("Invalid cash payment details.");
+        return;
+      }
 
-    submittingRef.current = true;
-    setProcessing(true);
-    setError("");
+      submittingRef.current = true;
+      setProcessing(true);
+      setError("");
 
-    try {
-      // The parent callback handles demo checkout
-      // and the reusable success notification.
-      await onConfirmPayment(result.data);
-    } catch {
-      setError("Unable to complete payment.");
-    } finally {
-      submittingRef.current = false;
-      setProcessing(false);
+      try {
+        await onConfirmPayment(result.data);
+      } catch {
+        setError("Unable to complete payment.");
+      } finally {
+        submittingRef.current = false;
+        setProcessing(false);
+      }
+    } else {
+      const mode = method === "Card" ? "Card" : method === "UPI" ? "UPI" : "Others";
+      const result = CheckoutRequestSchema.safeParse({
+        paymentMode: mode,
+        payableAmount: payablePaise / 100,
+        amountTendered: payablePaise / 100,
+        changeDue: 0,
+      });
+
+      if (!result.success) return;
+
+      submittingRef.current = true;
+      setProcessing(true);
+      setError("");
+
+      try {
+        await onConfirmPayment(result.data);
+      } catch {
+        setError("Unable to complete payment.");
+      } finally {
+        submittingRef.current = false;
+        setProcessing(false);
+      }
     }
   };
+
+  // Keyboard shortcut listener: Enter to confirm
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        void confirmPayment();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, confirmPayment]);
 
   // Handle payment method selection
   const changePaymentMethod = (value: string) => {
     if (
       value === "Cash" ||
+      value === "Card" ||
       value === "UPI" ||
       value === "Others"
     ) {
-      setMethod(value);
+      setMethod(value as LocalPaymentMode);
       setError("");
+      if (value !== "Cash") {
+        setCashReceived(total.toFixed(2));
+      }
     }
   };
 
@@ -230,11 +276,7 @@ export function PosCheckoutModal({
       }}
       closeOnEscape={!busy}
       closeOnBackdrop={!busy}
-      title={
-        method === "UPI"
-          ? `Total Payable ${formatINR(payablePaise)}`
-          : "Payment amount"
-      }
+      title="POS Checkout & Tender"
       size="md"
       className="
         !min-w-0
@@ -310,7 +352,12 @@ export function PosCheckoutModal({
 
           {/* REUSABLE SELECTABLE GROUP */}
           <SelectableGroup
-            options={PAYMENT_METHODS}
+            options={[
+              { value: "Cash", label: "Cash" },
+              { value: "Card", label: "Card" },
+              { value: "UPI", label: "UPI" },
+              { value: "Others", label: "Others" },
+            ]}
             value={method}
             onChange={changePaymentMethod}
             className="
@@ -379,8 +426,48 @@ export function PosCheckoutModal({
                 }}
               />
 
+              {/* Quick Cash Presets */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCashReceived((payablePaise / 100).toFixed(2))}
+                  className="shrink-0 px-3 py-1.5 rounded-lg border border-[#2d241b] bg-[#2d241b] text-white text-xs font-bold hover:bg-[#433628]"
+                >
+                  Exact (₹{(payablePaise / 100).toFixed(2)})
+                </button>
+                {[50, 100, 200, 500, 2000].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setCashReceived(amt.toFixed(2))}
+                    className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#e4d5bd] bg-white text-[#705e4b] text-xs font-bold hover:bg-[#f5efe6]"
+                  >
+                    ₹{amt}
+                  </button>
+                ))}
+              </div>
+
+              {/* Touch Numeric Keypad */}
+              <div className="mt-2 scale-90 origin-top">
+                <NumericKeypad
+                  onDigit={(d) => {
+                    setCashReceived((prev) => {
+                      if (prev === "0.00" || prev === "0") return d;
+                      return prev + d;
+                    });
+                  }}
+                  onBackspace={() => {
+                    setCashReceived((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0"));
+                  }}
+                  onClear={() => setCashReceived("0.00")}
+                />
+              </div>
+
               {/* REUSABLE CHANGE SUMMARY */}
               <div className="mt-2">
+                <div className="text-xs font-bold text-primary mb-1">
+                  Change Due
+                </div>
                 <ChangeSummary
                   amountDuePaise={payablePaise}
                   amountReceivedPaise={receivedPaise}
@@ -422,8 +509,7 @@ export function PosCheckoutModal({
                   text-warning-text
                 "
               >
-                Amount received is less than
-                the amount to pay.
+                Insufficient cash tendered. Negative balance submission prevented.
               </p>
             )}
 
@@ -452,16 +538,44 @@ export function PosCheckoutModal({
                 shrink-0
               "
               onClick={() => {
-                void confirmCash();
+                void confirmPayment();
               }}
             >
-              Confirm Cash Payment
+              Confirm & Print Receipt (Enter)
             </Button>
           </>
         )}
 
-        {/* 4. UPI PAYMENT
-            Same modal height and bottom padding */}
+        {/* 4. CARD PAYMENT */}
+        {method === "Card" && (
+          <div className="flex flex-col items-center justify-center p-6 text-center rounded-xl border border-border-subtle bg-surface-alt flex-1 gap-3">
+            <CreditCard size={48} className="text-primary mb-2" />
+            <h4 className="font-sans text-base font-bold text-primary">Card Payment EDC Terminal</h4>
+            <p className="text-xs text-text-muted max-w-xs">
+              Swipe, tap, or insert customer card on external terminal.
+            </p>
+            <div className="rounded-lg bg-surface border border-border-subtle px-6 py-2 mt-2">
+              <span className="text-xs font-bold text-primary">{formatINR(payablePaise)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-[#2f7a45] font-semibold mt-2">
+              <CheckCircle2 size={16} />
+              <span>Ready for 1-Tap instant authorization</span>
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              fullWidth
+              isLoading={busy}
+              className="mt-auto !min-h-10 shrink-0"
+              onClick={() => void confirmPayment()}
+            >
+              Confirm & Print Receipt (Enter)
+            </Button>
+          </div>
+        )}
+
+        {/* 5. UPI PAYMENT */}
         {method === "UPI" && (
           <>
             <section
