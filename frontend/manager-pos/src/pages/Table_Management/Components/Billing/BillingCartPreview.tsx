@@ -16,9 +16,12 @@ const formatPrice = (paise: number) =>
 
 export function BillingCartPreview() {
   const items = useCartStore((state) => state.items);
+  const heldCarts = useCartStore((state) => state.heldCarts);
   const setQuantity = useCartStore((state) => state.setQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
+  const holdCurrentCart = useCartStore((state) => state.holdCurrentCart);
+  const recallCart = useCartStore((state) => state.recallCart);
 
   // Calculate total quantity
   const itemCount = items.reduce(
@@ -158,6 +161,53 @@ export function BillingCartPreview() {
             ₹{formatPrice(subtotal)}
           </span>
         </div>
+
+        {/* PARK / HOLD CART ACTIONS */}
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => holdCurrentCart()}
+            disabled={items.length === 0}
+            className="flex-1 rounded bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-200 disabled:opacity-50"
+          >
+            ⏸️ Hold Cart {heldCarts.length > 0 && `(${heldCarts.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => clearCart()}
+            className="rounded bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+          >
+            Clear
+          </button>
+        </div>
+
+        {/* HELD CARTS LIST / RECALL */}
+        {heldCarts.length > 0 && (
+          <div className="mt-3 border-t border-border-subtle pt-3">
+            <span className="text-xs font-semibold text-text-muted">
+              Parked Orders ({heldCarts.length}):
+            </span>
+            <div className="mt-1 flex flex-col gap-1.5 max-h-28 overflow-y-auto">
+              {heldCarts.map((held) => (
+                <div
+                  key={held.id}
+                  className="flex items-center justify-between rounded bg-app-bg px-2.5 py-1.5 text-xs"
+                >
+                  <span className="text-text-muted">
+                    {held.heldAt} • {held.items.length} items
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => recallCart(held.id)}
+                    className="font-semibold text-accent hover:underline"
+                  >
+                    Recall
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );

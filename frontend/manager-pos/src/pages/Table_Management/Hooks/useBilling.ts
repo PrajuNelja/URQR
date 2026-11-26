@@ -196,6 +196,30 @@ export const useBilling = () => {
     useCartStore.getState().clearCart();
   }, []);
 
+  const heldCarts = useCartStore((state) => state.heldCarts);
+
+  const holdCurrentCart = useCallback(() => {
+    if (Object.keys(cart).length === 0) return;
+    useCartStore.getState().holdCurrentCart();
+    setCart({});
+    setCashCollected("");
+  }, [cart]);
+
+  const recallCart = useCallback((id: string) => {
+    const target = useCartStore.getState().heldCarts.find((c) => c.id === id);
+    if (!target) return;
+    useCartStore.getState().recallCart(id);
+    const restoredCart: Record<number, number> = {};
+    for (const item of target.items) {
+      restoredCart[Number(item.productId)] = item.quantity;
+    }
+    setCart(restoredCart);
+  }, []);
+
+  const deleteHeldCart = useCallback((id: string) => {
+    useCartStore.getState().deleteHeldCart(id);
+  }, []);
+
   const totals = useMemo(() => {
     const items: CartItem[] = Object.keys(cart)
       .map((id) => {
@@ -448,6 +472,10 @@ export const useBilling = () => {
     addToCart,
     updateQuantity,
     clearCart,
+    heldCarts,
+    holdCurrentCart,
+    recallCart,
+    deleteHeldCart,
     totals,
 
     paymentMethod,

@@ -29,6 +29,10 @@ export default function Billing() {
     cart,
     addToCart,
     updateQuantity,
+    clearCart,
+    heldCarts,
+    holdCurrentCart,
+    recallCart,
     totals,
     handleCompletePayment,
     receipt,
@@ -174,6 +178,63 @@ export default function Billing() {
               taxLines={taxLines}
               collapsibleTaxes
             />
+
+            {/* PARK / HOLD CART BUTTONS */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 text-xs py-2 text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
+                disabled={!hasItems}
+                onClick={() => {
+                  holdCurrentCart();
+                  notification.info("Order parked on hold.");
+                }}
+              >
+                ⏸️ Hold Cart {heldCarts.length > 0 && `(${heldCarts.length})`}
+              </Button>
+              <Button
+                variant="outline"
+                className="text-xs py-2 text-rose-700 bg-rose-50 hover:bg-rose-100 border-rose-200"
+                disabled={!hasItems}
+                onClick={() => {
+                  clearCart();
+                  notification.info("Cart cleared.");
+                }}
+              >
+                Clear
+              </Button>
+            </div>
+
+            {/* RECALL PARKED ORDER */}
+            {heldCarts.length > 0 && (
+              <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 text-xs">
+                <span className="font-semibold text-amber-800">
+                  Parked Orders ({heldCarts.length}):
+                </span>
+                <div className="mt-1 flex flex-col gap-1 max-h-24 overflow-y-auto">
+                  {heldCarts.map((held) => (
+                    <div
+                      key={held.id}
+                      className="flex items-center justify-between rounded bg-white px-2 py-1 shadow-xs"
+                    >
+                      <span className="text-text-muted">
+                        {held.heldAt} • {held.items.length} items
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          recallCart(held.id);
+                          notification.success("Parked order recalled!");
+                        }}
+                        className="font-semibold text-accent hover:underline"
+                      >
+                        Recall
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <Button
               variant="outline"

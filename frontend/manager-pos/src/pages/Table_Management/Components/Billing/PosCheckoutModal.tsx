@@ -1,4 +1,4 @@
-﻿
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Lock, CreditCard, CheckCircle2 } from "lucide-react";
 

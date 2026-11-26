@@ -23,13 +23,26 @@ export interface CartLineItem {
   taxable: boolean | null;
 }
 
+// 2b. Structure of a held / parked cart
+export interface HeldCart {
+  id: string;
+  heldAt: string;
+  items: CartLineItem[];
+  tableNumber?: string;
+  orderNotes?: string;
+}
+
 // 3. Cart state and functions
 interface CartState {
   items: CartLineItem[];
+  heldCarts: HeldCart[];
   addItem: (product: CartProduct) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
+  holdCurrentCart: () => void;
+  recallCart: (id: string) => void;
+  deleteHeldCart: (id: string) => void;
 }
 
 // Validate price values
@@ -37,9 +50,42 @@ const isValidAmount = (amount: number) =>
   Number.isSafeInteger(amount) && amount >= 0;
 
 // 4. Create the Zustand cart store
-export const useCartStore = create<CartState>()((set) => ({
+export const useCartStore = create<CartState>()((set, get) => ({
   // Initially empty cart
   items: [],
+  heldCarts: [],
+
+  // PARK / HOLD CURRENT CART
+  holdCurrentCart: () =>
+    set((state) => {
+      if (state.items.length === 0) return state;
+      const newHeld: HeldCart = {
+        id: "HELD-" + Date.now(),
+        heldAt: new Date().toLocaleTimeString(),
+        items: [...state.items],
+      };
+      return {
+        heldCarts: [...state.heldCarts, newHeld],
+        items: [],
+      };
+    }),
+
+  // RECALL A PARKED CART
+  recallCart: (id: string) =>
+    set((state) => {
+      const target = get().heldCarts.find((c) => c.id === id);
+      if (!target) return state;
+      return {
+        items: target.items,
+        heldCarts: state.heldCarts.filter((c) => c.id !== id),
+      };
+    }),
+
+  // DELETE A PARKED CART
+  deleteHeldCart: (id: string) =>
+    set((state) => ({
+      heldCarts: state.heldCarts.filter((c) => c.id !== id),
+    })),
 
   // ADD PRODUCT
   addItem: (product) =>
