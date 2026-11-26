@@ -1,4 +1,3 @@
-
 import { Button } from "../Buttons/Button";
 import { StatusBadge } from "../StatusBadge/StatusBadge";
 import { Card } from "./Card";
@@ -48,6 +47,7 @@ export function ProductCard({
         ? "hover"
         : "default";
 
+  // Shows the exact number, but caps the visual at "5+" if greater than or equal to 5
   const qtyLabel =
     inCartQuantity >= 5
       ? "5+"
@@ -71,8 +71,6 @@ export function ProductCard({
         ? "warning"
         : "error";
 
-  // Green circles overlap the image's top edge.
-  // Half is above the image; half is inside.
   const indicator = inOrder ? (
     <div
       className="pos-product-card__indicators"
@@ -100,32 +98,30 @@ export function ProductCard({
             }
       }
     >
-      <span
-        className="pos-product-card__check"
-        aria-hidden="true"
-      >
+      <span className="pos-product-card__check" aria-hidden="true">
         ✓
       </span>
 
-      <span
-        className="pos-product-card__count"
-        aria-hidden="true"
-      >
+      <span className="pos-product-card__count" aria-hidden="true">
         ×{qtyLabel}
       </span>
     </div>
   ) : null;
+
+  // 🟢 FIX: Stop event propagation so clicking the card doesn't trigger double adds
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!soldOut && !maxed) {
+      onAdd();
+    }
+  };
 
   return (
     <Card
       padding="none"
       role="button"
       tabIndex={soldOut ? -1 : 0}
-      onClick={() => {
-        if (!soldOut && !maxed) {
-          onAdd();
-        }
-      }}
+      onClick={handleAddClick}
       className={[
         "pos-product-card",
         `pos-product-card--${state}`,
@@ -147,11 +143,7 @@ export function ProductCard({
           }}
         >
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={name}
-              loading="lazy"
-            />
+            <img src={imageUrl} alt={name} loading="lazy" />
           ) : (
             <span>PRODUCT IMAGE</span>
           )}
@@ -164,10 +156,7 @@ export function ProductCard({
       {/* PRODUCT DETAILS */}
       <div className="pos-product-card__content">
         <div className="pos-product-card__name-row">
-          <h3
-            className="pos-product-card__name"
-            title={name}
-          >
+          <h3 className="pos-product-card__name" title={name}>
             {name}
           </h3>
 
@@ -197,15 +186,17 @@ export function ProductCard({
           fullWidth
           variant={inOrder ? "primary" : "outline"}
           disabled={soldOut || maxed}
-          onClick={onAdd}
+          onClick={handleAddClick} // 🟢 FIX: Use the wrapped click handler here too
           aria-pressed={inOrder}
           className="pos-product-card__action"
         >
           {soldOut
             ? "Unavailable"
-            : inOrder
-              ? `✓ In order · ${qtyLabel}`
-              : "+ Add"}
+            : maxed
+              ? "Max quantity reached"
+              : inOrder
+                ? `✓ In order · ${qtyLabel}`
+                : "+ Add"}
         </Button>
       </div>
     </Card>
