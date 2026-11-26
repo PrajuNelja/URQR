@@ -52,14 +52,15 @@ public class AuthController {
     @PostMapping("/login")
     @Transactional(readOnly = true)
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        String username = request.username().trim();
+        // Email login identifiers are case-insensitive; normalize consistently with staff creation.
+        String username = request.username().trim().toLowerCase(java.util.Locale.ROOT);
         List<StaffPrincipal> matchingAccounts = new ArrayList<>();
 
         // User accounts are protected by RLS, so probe each hotel in its own tenant context.
         for (var hotel : hotels.findAll()) {
             if (!"ACTIVE".equals(hotel.getStatus())) continue;
             rls.bindTenant(hotel.getId());
-            var account = users.findByHotelIdAndUsername(hotel.getId(), username);
+            var account = users.findByHotelIdAndUsernameIgnoreCase(hotel.getId(), username);
             if (account.isEmpty()) continue;
             String principal = hotel.getId() + ":" + username;
             try {

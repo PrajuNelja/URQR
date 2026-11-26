@@ -1,6 +1,7 @@
 package com.nelja.urqr.billing.catalog.item;
 import org.springframework.transaction.annotation.Transactional;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.Operation;
 
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.billing.catalog.category.MenuCategoryRepository;
@@ -58,6 +59,18 @@ public class MenuItemController {
                 .toList();
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')")
+    @Operation(summary = "List active menu items across all active categories, including unavailable items")
+    public List<AllItemDto> listAll(@AuthenticationPrincipal Jwt jwt) {
+        UUID hotel = tenant.hotelId(jwt);
+        return items.findAllActiveWithCategory(hotel).stream()
+                .map(item -> new AllItemDto(item.getId(), item.getCategoryId(), item.getCategoryName(),
+                        item.getName(), item.getPrice(), item.isAvailable(), item.getDiscountPercent(),
+                        item.getCgstRate(), item.getSgstRate(), item.getVatRate()))
+                .toList();
+    }
+
     @GetMapping("/{id}") @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')") public ItemDto get(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id){return dto(find(id,tenant.hotelId(jwt)));}
 
     @PatchMapping("/{id}") @PreAuthorize("hasRole('MANAGER')")
@@ -89,4 +102,7 @@ public class MenuItemController {
     }
     public record AvailabilityRequest(boolean available){}
     public record ItemDto(UUID id,UUID categoryId,String name,BigDecimal price,boolean available,BigDecimal discountPercent,BigDecimal cgstRate,BigDecimal sgstRate,BigDecimal vatRate){}
+    public record AllItemDto(UUID id, UUID categoryId, String categoryName, String name, BigDecimal price,
+            boolean available, BigDecimal discountPercent, BigDecimal cgstRate, BigDecimal sgstRate,
+            BigDecimal vatRate) { }
 }

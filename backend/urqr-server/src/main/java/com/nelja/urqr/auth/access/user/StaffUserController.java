@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -63,12 +64,19 @@ public class StaffUserController {
         if (request.password().length() < 8) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
         }
-        if (users.existsByHotelIdAndUsername(hotelId, request.username())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
+        String username = request.username().trim().toLowerCase(java.util.Locale.ROOT);
+        if (users.existsByHotelIdAndUsernameIgnoreCase(hotelId, username)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already used by a staff account");
         }
 
-        StaffUser user = users.save(new StaffUser(hotelId, role.getId(), request.username(),
-                encoder.encode(request.password())));
+        StaffUser user;
+        try {
+            user = users.saveAndFlush(new StaffUser(hotelId, role.getId(), username,
+                    encoder.encode(request.password())));
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Email is already used by a hotel staff account", exception);
+        }
         audit.record(hotelId, tenant.userId(jwt), "USER_CREATED", "User", user.getId().toString(), null,
                 user.getUsername());
         return dto(user, role);
@@ -169,7 +177,8 @@ public class StaffUserController {
                 user.getCreatedAt());
     }
 
-    public record CreateUser(@NotBlank @Size(max = 160) String username, @NotBlank String password,
+    public record CreateUser(@NotBlank @jakarta.validation.constraints.Email @Size(max = 254) String username,
+            @NotBlank String password,
             @NotNull UUID roleId) { }
     public record UpdateUser(UUID roleId, String password) { }
     public record Status(boolean active) { }

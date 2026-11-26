@@ -21,6 +21,9 @@ public class TenantRlsContext {
         entityManager.createNativeQuery("select set_config('app.tenant_id', :tenantId, true)")
                 .setParameter("tenantId", tenantId.toString())
                 .getSingleResult();
+        // A tenant-scoped operation must not inherit the platform-admin RLS bypass.
+        entityManager.createNativeQuery("select set_config('app.platform_admin', 'false', true)")
+                .getSingleResult();
     }
 
     public void allowPlatformAdministration() {

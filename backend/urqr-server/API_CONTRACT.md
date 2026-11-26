@@ -2,6 +2,8 @@
 
 All business endpoints require `Authorization: Bearer <access-token>`. Tenant identity comes from the verified JWT. The live generated OpenAPI document is `GET /v3/api-docs`; Swagger UI is `GET /swagger-ui.html`.
 
+New hotel Manager and staff login usernames must be email addresses. Email usernames are matched without regard to case and are unique across every hotel. `POST /api/v1/platform/hotels` and `POST /api/v1/platform/hotels/{hotelId}/users` return `409 Conflict` if that email is already assigned.
+
 ## Catalog
 
 `GET /api/v1/catalog/products` returns a paged list. Filters use the authenticated tenant and support `categoryId` and `available` (`true` by default; pass `false` to list out-of-stock products). Page size is capped at 100. Supported sorting fields are `name`, `price`, and `id`.
@@ -49,9 +51,9 @@ The date range is inclusive at `from` and exclusive at `to`. Results are scoped 
 ## Local checks
 
 ```powershell
-Invoke-RestMethod http://localhost:8081/actuator/health/liveness
-Invoke-RestMethod http://localhost:8081/actuator/health/readiness
-Invoke-WebRequest http://localhost:8081/v3/api-docs | Select-Object -ExpandProperty Content
+Invoke-RestMethod http://localhost:8080/actuator/health/liveness
+Invoke-RestMethod http://localhost:8080/actuator/health/readiness
+Invoke-WebRequest http://localhost:8080/v3/api-docs | Select-Object -ExpandProperty Content
 ```
 
 Expected: liveness and readiness return `{"status":"UP"}`; OpenAPI JSON contains `"openapi":"3.1.0"` and the catalog/order paths. Use Swagger UI to obtain a token and exercise the protected requests.

@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.Locale;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinColumns;
@@ -27,7 +28,7 @@ public class StaffUser {
     @Column(name = "hotel_id", nullable = false)
     private UUID hotelId;
 
-    @Column(nullable = false, length = 160)
+    @Column(nullable = false, length = 254)
     private String username;
 
     @Column(name = "password_hash", nullable = false, length = 100)
@@ -49,7 +50,7 @@ public class StaffUser {
     protected StaffUser() { }
 
     public StaffUser(UUID hotelId, UUID roleId, String username, String passwordHash) {
-        this.hotelId=hotelId; this.roleId=roleId; this.username=username.trim();
+        this.hotelId=hotelId; this.roleId=roleId; this.username=username.trim().toLowerCase(Locale.ROOT);
         this.passwordHash=passwordHash; this.status="ACTIVE"; this.createdAt=Instant.now();
     }
 
