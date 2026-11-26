@@ -5,20 +5,12 @@ import {
   RouterProvider,
   Outlet,
   Navigate,
-  redirect,
 } from "@tanstack/react-router";
-import { z } from "zod";
 
 import Showcase from "./components/Showcase/Showcase";
 import Dashboard from "./pages/Table_Management/Components/Dashboard/Dashboard";
 import ManagerLogin from "./pages/Table_Management/Components/ManagerLogin";
 import Billing from "./pages/Table_Management/Components/Billing/Billing";
-import { useAuthStore } from "./lib/authStore";
-
-// 1. Define the search schema for the login route (Day 3 Afternoon Task 2)
-const loginSearchSchema = z.object({
-  redirect: z.string().optional(),
-});
 
 // 2. Root route
 const rootRoute = createRootRoute({
@@ -33,50 +25,25 @@ const indexRoute = createRoute({
   component: ManagerLogin,
 });
 
-// 4. Login route (Reverse Guard + Search Param Validation)
+// 4. Login route
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: ManagerLogin,
-  validateSearch: (search) => loginSearchSchema.parse(search),
-  beforeLoad: () => {
-    // If already logged in, don't show the login page, send to billing
-    if (useAuthStore.getState().isAuthenticated()) {
-      throw redirect({ to: "/pos/billing" });
-    }
-  },
 });
 
-// 5. Dashboard route (PROTECTED)
+// 5. Dashboard route
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
   component: Dashboard,
-  beforeLoad: ({ location }) => {
-    // Guard + Redirect with query param
-    if (!useAuthStore.getState().isAuthenticated()) {
-      throw redirect({
-        to: "/login",
-        search: { redirect: location.href },
-      });
-    }
-  },
 });
 
-// 6. Billing route (PROTECTED)
+// 6. Billing route
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pos/billing",
   component: Billing,
-  beforeLoad: ({ location }) => {
-    // Guard + Redirect with query param
-    if (!useAuthStore.getState().isAuthenticated()) {
-      throw redirect({
-        to: "/login",
-        search: { redirect: location.href },
-      });
-    }
-  },
 });
 
 // 7. Showcase route

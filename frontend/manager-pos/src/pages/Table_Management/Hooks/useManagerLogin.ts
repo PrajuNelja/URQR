@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import axios from "axios";
 import { z } from "zod";
 
@@ -25,9 +25,6 @@ export type LoginFormValues = z.infer<typeof LoginFormSchema>;
 // ---------------------------------------------
 export const useManagerLogin = () => {
   const navigate = useNavigate();
-  
-  // Grab the redirect URL from TanStack Router (Day 3 Afternoon Task 2)
-  const search = useSearch({ from: "/login" }) as { redirect?: string };
 
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -80,10 +77,12 @@ export const useManagerLogin = () => {
         message: `Welcome, ${data.username}. Opening register…`,
       });
 
-      // Day 3 Task 5: Redirect to billing (or saved redirect URL)
+      // Day 3 Task 5: Redirect to billing
       setTimeout(() => {
-        void navigate({ to: search.redirect || "/pos/billing" });
-      }, 350);
+        void navigate({ to: "/pos/billing" }).catch(() => {
+          window.location.href = "/pos/billing";
+        });
+      }, 200);
       
     } catch (err: unknown) {
       let errorMessage = "Unable to connect to authentication server.";
@@ -111,8 +110,10 @@ export const useManagerLogin = () => {
             message: `Welcome, ${data.username || "Manager"}. Opening register…`,
           });
           setTimeout(() => {
-            void navigate({ to: search.redirect || "/pos/billing" });
-          }, 350);
+            void navigate({ to: "/pos/billing" }).catch(() => {
+              window.location.href = "/pos/billing";
+            });
+          }, 200);
           return;
         }
       }
