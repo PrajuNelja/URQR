@@ -13,7 +13,6 @@ const coffee = {
   id: "1",
   name: "Coffee",
   unitPricePaise: 8000,
-  itemDiscountPaise: 0,
   taxRateBps: null,
   taxable: null,
 };

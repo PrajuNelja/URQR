@@ -50,7 +50,6 @@ export interface BridgePrintRequest {
   };
   totals: {
     subtotal: number;
-    discount?: number;
     tax: number;
     grandTotal: number;
   };
