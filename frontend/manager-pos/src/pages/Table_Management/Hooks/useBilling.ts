@@ -1,7 +1,16 @@
 
-import { useState, useMemo, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
+
 import { useQuery } from "@tanstack/react-query";
-import type { CheckoutRequest } from "@urqr/types";
+
+import {
+  CheckoutRequestSchema,
+  type CheckoutRequest,
+} from "@urqr/types";
 
 import type {
   CartItem,
@@ -18,23 +27,30 @@ import {
 
 import { POS_CATALOG_QUERY_KEY } from "../../../queryClient";
 import { usePosHotkeys } from "./usePosHotkeys";
-import { useDebouncedValue } from "./useDebouncedValue";
 
 export const useBilling = () => {
-  const [activeTab, setActiveTab] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [cart, setCart] = useState<Record<number, number>>({});
+  const [activeTab, setActiveTab] =
+    useState("all");
+
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [cart, setCart] =
+    useState<Record<number, number>>({});
+
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("Cash");
-  const [cashCollected, setCashCollected] = useState("");
-  const [receipt, setReceipt] = useState<ReceiptData | null>(
-    null
-  );
-  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+  const [cashCollected, setCashCollected] =
+    useState("");
 
-  // Get products from API, falling back to existing demo data.
+  const [receipt, setReceipt] =
+    useState<ReceiptData | null>(null);
+
+  const [isReceiptOpen, setIsReceiptOpen] =
+    useState(false);
+
+  // Existing TanStack Query catalog
   const {
     data: dishes = DISHES,
     refetch: refreshCatalog,
@@ -46,9 +62,13 @@ export const useBilling = () => {
         const response = await fetch("/api/products");
 
         if (response.ok) {
-          const data: unknown = await response.json();
+          const data: unknown =
+            await response.json();
 
-          if (Array.isArray(data) && data.length > 0) {
+          if (
+            Array.isArray(data) &&
+            data.length > 0
+          ) {
             return data.map(
               (
                 item: Record<string, unknown>,
@@ -86,7 +106,8 @@ export const useBilling = () => {
                     : undefined,
 
                 lowStockThreshold:
-                  typeof item.lowStockThreshold === "number"
+                  typeof item.lowStockThreshold ===
+                  "number"
                     ? item.lowStockThreshold
                     : undefined,
 
@@ -99,7 +120,7 @@ export const useBilling = () => {
           }
         }
       } catch {
-        // Keep existing fallback products if API is offline.
+        // Keep existing static catalog fallback.
       }
 
       return DISHES;
@@ -107,74 +128,43 @@ export const useBilling = () => {
     initialData: DISHES,
   });
 
-  // Category filtering + 300ms debounced product search.
   const filteredDishes = useMemo(() => {
-    const query = debouncedSearch.trim().toLowerCase();
-
     return dishes.filter((dish) => {
-      const category = dish.category.toLowerCase();
-      const name = dish.name.toLowerCase();
-
       const matchesCategory =
         activeTab === "all" ||
-        (activeTab === "main" &&
-          category === "main course") ||
-        (activeTab === "beverages" &&
-          ["beverages", "drinks"].includes(category)) ||
-        (activeTab === "soups" &&
-          (category === "soups" || name.includes("soup"))) ||
-        (activeTab === "salads" &&
-          (category === "salads" || name.includes("salad"))) ||
-        category === activeTab;
+        dish.category.toLowerCase() ===
+          activeTab.toLowerCase();
 
-      return matchesCategory && name.includes(query);
+      const matchesSearch =
+        dish.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+      return (
+        matchesCategory &&
+        matchesSearch
+      );
     });
-  }, [dishes, activeTab, debouncedSearch]);
+  }, [dishes, activeTab, searchQuery]);
 
-  // Add only available products; maximum quantity = 15.
   const addToCart = useCallback(
     (dishId: number) => {
-      const dish = dishes.find(
-        (item) => item.id === dishId
-      );
-
-      if (!dish || dish.stock === 0) return;
-
-      const max = Math.min(15, dish.stock ?? 15);
-
-      setCart((previous) => {
-        const current = previous[dishId] ?? 0;
-
-        if (current >= max) return previous;
-
-        return {
-          ...previous,
-          [dishId]: current + 1,
-        };
-      });
+      setCart((previous) => ({
+        ...previous,
+        [dishId]:
+          (previous[dishId] || 0) + 1,
+      }));
     },
-    [dishes]
+    []
   );
 
-  // QuantityStepper uses absolute quantities.
-  // Our Billing cart receives quantity changes as a delta.
   const updateQuantity = useCallback(
     (dishId: number, delta: number) => {
-      const dish = dishes.find(
-        (item) => item.id === dishId
-      );
-
-      if (!dish || !Number.isFinite(delta)) return;
-
-      const max = Math.min(15, dish.stock ?? 15);
-
       setCart((previous) => {
         const next = { ...previous };
 
-        const quantity = Math.min(
-          max,
-          (previous[dishId] ?? 0) + delta
-        );
+        const quantity =
+          (next[dishId] || 0) + delta;
 
         if (quantity <= 0) {
           delete next[dishId];
@@ -185,7 +175,7 @@ export const useBilling = () => {
         return next;
       });
     },
-    [dishes]
+    []
   );
 
   const clearCart = useCallback(() => {
@@ -193,169 +183,242 @@ export const useBilling = () => {
     setCashCollected("");
   }, []);
 
-  // Calculate subtotal and tax using integer paise.
   const totals = useMemo(() => {
-    const items: CartItem[] = Object.keys(cart).flatMap(
-      (key) => {
+    const items: CartItem[] = Object.keys(cart)
+      .map((id) => {
         const dish = dishes.find(
-          (item) => item.id === Number(key)
+          (product) => product.id === Number(id)
         );
 
-        return dish
-          ? [{ dish, quantity: cart[Number(key)] }]
-          : [];
-      }
-    );
+        if (!dish) return null;
 
-    const subtotalPaise = items.reduce(
+        return {
+          dish,
+          quantity: cart[Number(id)],
+        };
+      })
+      .filter(
+        (item): item is CartItem =>
+          item !== null
+      );
+
+    const subtotal = items.reduce(
       (sum, item) =>
-        sum +
-        Math.round(item.dish.price * 100) * item.quantity,
+        sum + item.dish.price * item.quantity,
       0
     );
 
-    const taxPaise = Math.round(
-      (subtotalPaise * TAX_RATE) / 100
-    );
+    const tax =
+      Math.round(
+        subtotal * (TAX_RATE / 100) * 100
+      ) / 100;
+
+    const total =
+      Math.round(
+        (subtotal + tax) * 100
+      ) / 100;
 
     return {
       items,
-      subtotal: subtotalPaise / 100,
-      tax: taxPaise / 100,
-      total: (subtotalPaise + taxPaise) / 100,
+      subtotal,
+      tax,
+      total,
     };
   }, [cart, dishes]);
 
-  // This is a frontend demonstration checkout.
-  // Real transactions must be confirmed by the backend.
+  // Preserve existing derived change state
+  // for any other Billing components using it.
+  const change = useMemo(() => {
+    if (paymentMethod !== "Cash") {
+      return 0;
+    }
+
+    const cash = parseFloat(cashCollected);
+
+    if (Number.isNaN(cash)) {
+      return NaN;
+    }
+
+    return (
+      Math.round(
+        (cash - totals.total) * 100
+      ) / 100
+    );
+  }, [
+    paymentMethod,
+    cashCollected,
+    totals.total,
+  ]);
+
+  // ========================================
+  // DEMO CASH PAYMENT CONFIRMATION
+  // ========================================
   const handleCompletePayment = useCallback(
-    (checkout: CheckoutRequest): ReceiptData | null => {
-      if (
-        !totals.items.length ||
-        !Number.isFinite(checkout.amountTendered)
-      ) {
-        return null;
+    (
+      checkout: CheckoutRequest,
+      orderId?: string
+    ): boolean => {
+      if (totals.items.length === 0) {
+        return false;
       }
 
-      const duePaise = Math.round(totals.total * 100);
+      const result =
+        CheckoutRequestSchema.safeParse(
+          checkout
+        );
 
-      if (
-        Math.round(checkout.payableAmount * 100) !==
-        duePaise
-      ) {
-        return null;
+      if (!result.success) {
+        return false;
       }
+
+      const payment = result.data;
+
+      // Cash-only demo completion.
+      // UPI must be backend-verified.
+      if (payment.paymentMode !== "Cash") {
+        return false;
+      }
+
+      const payablePaise = Math.round(
+        totals.total * 100
+      );
+
+      const submittedPayablePaise =
+        Math.round(
+          payment.payableAmount * 100
+        );
 
       const receivedPaise = Math.round(
-        checkout.amountTendered * 100
+        payment.amountTendered * 100
       );
 
       if (
-        checkout.paymentMode === "Cash" &&
-        receivedPaise < duePaise
+        payablePaise <= 0 ||
+        !Number.isSafeInteger(payablePaise) ||
+        !Number.isSafeInteger(
+          submittedPayablePaise
+        ) ||
+        !Number.isSafeInteger(receivedPaise) ||
+        submittedPayablePaise !== payablePaise ||
+        receivedPaise < payablePaise
       ) {
-        return null;
+        return false;
       }
 
-      const method: PaymentMethod =
-        checkout.paymentMode === "Card"
-          ? "Others"
-          : checkout.paymentMode;
-
-      setPaymentMethod(method);
-
-      setCashCollected(
-        checkout.paymentMode === "Cash"
-          ? String(checkout.amountTendered)
-          : ""
-      );
+      const changePaise =
+        receivedPaise - payablePaise;
 
       const now = new Date();
 
+      // This receipt belongs to local demo checkout.
       const newReceipt: ReceiptData = {
-        orderId: `#DEMO-${now
-          .getTime()
-          .toString(36)
-          .toUpperCase()}`,
+        orderId: orderId
+          ? `#${orderId}`
+          : `#ORD${Math.floor(
+              1000 + Math.random() * 9000
+            )}`,
 
-        date: now.toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
+        date: now.toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        ),
 
-        time: now.toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: now.toLocaleTimeString(
+          "en-IN",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        ),
 
-        items: totals.items.map(({ dish, quantity }) => ({
-          name: dish.name,
-          price: dish.price,
-          quantity,
-        })),
+        items: totals.items.map(
+          ({ dish, quantity }) => ({
+            name: dish.name,
+            price: dish.price,
+            quantity,
+          })
+        ),
 
         subtotal: totals.subtotal,
         taxRate: TAX_RATE,
         tax: totals.tax,
         total: totals.total,
-        paymentMethod: checkout.paymentMode,
 
+        paymentMethod: "Cash",
         cashCollected:
-          checkout.paymentMode === "Cash"
-            ? checkout.amountTendered
-            : undefined,
-
-        change:
-          checkout.paymentMode === "Cash"
-            ? (receivedPaise - duePaise) / 100
-            : undefined,
+          receivedPaise / 100,
+        change: changePaise / 100,
       };
 
       setReceipt(newReceipt);
       setIsReceiptOpen(true);
       clearCart();
 
-      return newReceipt;
+      return true;
     },
     [totals, clearCart]
   );
 
-  // Existing POS keyboard shortcut system.
+  // Existing keyboard shortcuts
   usePosHotkeys({
-    onSearchFocus: () =>
-      document
-        .querySelector<HTMLInputElement>(
-          "#billing-search-input"
-        )
-        ?.focus(),
+    onSearchFocus: () => {
+      const searchInput =
+        document.querySelector<HTMLInputElement>(
+          "input[type='text']"
+        );
+
+      searchInput?.focus();
+    },
 
     onNextCategory: () => {
-      const index = CATEGORIES.findIndex(
-        (category) => category.key === activeTab
-      );
+      const currentIndex =
+        CATEGORIES.findIndex(
+          (category) =>
+            category.key.toLowerCase() ===
+            activeTab.toLowerCase()
+        );
+
+      const nextIndex =
+        (currentIndex + 1) %
+        CATEGORIES.length;
 
       setActiveTab(
-        CATEGORIES[(index + 1) % CATEGORIES.length].key
+        CATEGORIES[nextIndex].key
       );
     },
 
-    onClearCart: clearCart,
+    onClearCart: () => clearCart(),
 
     onRefreshCatalog: () => {
       void refreshCatalog();
     },
 
-    onSelectCash: () => setPaymentMethod("Cash"),
-    onSelectUPI: () => setPaymentMethod("UPI"),
-    onSelectCard: () => setPaymentMethod("Others"),
+    onSelectCash: () =>
+      setPaymentMethod("Cash"),
 
-    onCheckout: () =>
+    onSelectUPI: () =>
+      setPaymentMethod("UPI"),
+
+    onSelectCard: () =>
+      setPaymentMethod("Others"),
+
+    // F10 opens the validated payment flow.
+    // It must not directly complete payment.
+    onCheckout: () => {
       document
-        .getElementById("billing-select-payment")
-        ?.click(),
+        .getElementById(
+          "billing-select-payment"
+        )
+        ?.click();
+    },
 
-    onEscape: () => setIsReceiptOpen(false),
+    onEscape: () => {
+      setIsReceiptOpen(false);
+    },
   });
 
   return {
@@ -367,16 +430,21 @@ export const useBilling = () => {
     dishes,
     isCatalogLoading,
     refreshCatalog,
+
     cart,
     addToCart,
     updateQuantity,
     clearCart,
     totals,
+
     paymentMethod,
     setPaymentMethod,
     cashCollected,
     setCashCollected,
+    change,
+
     handleCompletePayment,
+
     receipt,
     isReceiptOpen,
     setIsReceiptOpen,

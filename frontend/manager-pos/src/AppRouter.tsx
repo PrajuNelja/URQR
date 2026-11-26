@@ -5,19 +5,12 @@ import {
   RouterProvider,
   Outlet,
   Navigate,
-  redirect,
 } from "@tanstack/react-router";
-import { z } from "zod";
 
 import Showcase from "./components/Showcase/Showcase";
 import Dashboard from "./pages/Table_Management/Components/Dashboard/Dashboard";
 import ManagerLogin from "./pages/Table_Management/Components/ManagerLogin";
 import Billing from "./pages/Table_Management/Components/Billing/Billing";
-import { useAuthStore } from "./lib/authStore";
-
-const loginSearchSchema = z.object({
-  redirect: z.string().optional(),
-});
 
 // 2. Root route - UPDATED to catch errors
 const rootRoute = createRootRoute({
@@ -44,44 +37,25 @@ const indexRoute = createRoute({
   component: ManagerLogin,
 });
 
+// 4. Login route
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: ManagerLogin,
-  validateSearch: (search) => loginSearchSchema.parse(search),
-  beforeLoad: () => {
-    if (useAuthStore.getState().isAuthenticated()) {
-      throw redirect({ to: "/pos/billing" });
-    }
-  },
 });
 
+// 5. Dashboard route
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
   component: Dashboard,
-  beforeLoad: ({ location }) => {
-    if (!useAuthStore.getState().isAuthenticated()) {
-      throw redirect({
-        to: "/login",
-        search: { redirect: location.href },
-      });
-    }
-  },
 });
 
+// 6. Billing route
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pos/billing",
   component: Billing,
-  beforeLoad: ({ location }) => {
-    if (!useAuthStore.getState().isAuthenticated()) {
-      throw redirect({
-        to: "/login",
-        search: { redirect: location.href },
-      });
-    }
-  },
 });
 
 const showcaseRoute = createRoute({

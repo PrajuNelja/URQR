@@ -1,11 +1,13 @@
 
-import { useEffect, useRef, useState } from "react";
-import type { PaymentMode } from "@urqr/types";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "../../../../components/Buttons/Button";
-import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { OrderTotals } from "../../../../components/Cart/OrderTotals";
-
+import { useNotification } from "../../../../components/Notification/useNotification";
 import { TAX_RATE } from "../../Config/billing.config";
 import { useBilling } from "../../Hooks/useBilling";
 
@@ -16,10 +18,10 @@ import { BillingCart } from "./BillingCart";
 import { BillingReceiptModal } from "./BillingReceiptModal";
 import { PosCheckoutModal } from "./PosCheckoutModal";
 
-import { formatINR } from "../../../../lib/money";
-
-const generateOrderId = () =>
-  String(Math.floor(1000 + Math.random() * 9000));
+const generateOrderId = (): string =>
+  String(
+    Math.floor(1000 + Math.random() * 9000)
+  );
 
 export default function Billing() {
   const {
@@ -38,14 +40,17 @@ export default function Billing() {
     setIsReceiptOpen,
   } = useBilling();
 
-  const [navOpen, setNavOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [paymentPopupOpen, setPaymentPopupOpen] =
-    useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // EXISTING REUSABLE NOTIFICATION
+  const notification = useNotification();
 
-  const [selectedMethod, setSelectedMethod] =
-    useState<PaymentMode>("Cash");
+  const [navOpen, setNavOpen] =
+    useState(false);
+
+  const [previewOpen, setPreviewOpen] =
+    useState(false);
+
+  const [checkoutOpen, setCheckoutOpen] =
+    useState(false);
 
   const [orderId, setOrderId] =
     useState(generateOrderId);
@@ -53,9 +58,13 @@ export default function Billing() {
   const [previewTime, setPreviewTime] =
     useState(() => new Date());
 
-  const searchRef = useRef<HTMLInputElement>(null);
+  const searchRef =
+    useRef<HTMLInputElement>(null);
+
   const hadItems = useRef(false);
 
+  // Create a new demo order ID after
+  // the previous order becomes empty.
   useEffect(() => {
     if (
       hadItems.current &&
@@ -64,17 +73,21 @@ export default function Billing() {
       setOrderId(generateOrderId());
     }
 
-    hadItems.current = totals.items.length > 0;
+    hadItems.current =
+      totals.items.length > 0;
   }, [totals.items.length]);
 
-  const subtotalPaise =
-    Math.round(totals.subtotal * 100);
+  const subtotalPaise = Math.round(
+    totals.subtotal * 100
+  );
 
-  const taxPaise =
-    Math.round(totals.tax * 100);
+  const taxPaise = Math.round(
+    totals.tax * 100
+  );
 
-  const grandTotalPaise =
-    Math.round(totals.total * 100);
+  const grandTotalPaise = Math.round(
+    totals.total * 100
+  );
 
   const cgstPaise =
     Math.round(taxPaise / 2);
@@ -90,26 +103,28 @@ export default function Billing() {
     },
   ];
 
-  const hasItems = totals.items.length > 0;
+  const hasItems =
+    totals.items.length > 0;
 
-  // Open receipt-style preview
+  // Open existing receipt-style preview.
   const openPreview = () => {
     setPreviewTime(new Date());
     setPreviewOpen(true);
   };
 
-  const choosePaymentMethod = (
-    method: PaymentMode
-  ) => {
-    setSelectedMethod(method);
-    setPaymentPopupOpen(false);
+  // =========================================
+  // OPEN PAYMENT MODAL
+  // =========================================
+  const openPaymentModal = () => {
+    if (!hasItems) return;
+
     setCheckoutOpen(true);
   };
 
   return (
     <main className="urqr-billing-screen">
 
-      {/* EXISTING HEADER */}
+      {/* HEADER */}
       <BillingHeader
         searchText={searchQuery}
         onSearchChange={setSearchQuery}
@@ -118,15 +133,16 @@ export default function Billing() {
         menuOpen={navOpen}
       />
 
-      {/* EXISTING SIDEBAR */}
+      {/* SIDEBAR */}
       <BillingSidebar
         isOpen={navOpen}
         onClose={() => setNavOpen(false)}
       />
 
-      {/* MAIN BILLING SCREEN */}
+      {/* 60% CATALOG / 40% ORDER SUMMARY */}
       <div className="urqr-billing-workspace">
 
+        {/* PRODUCT CATALOG */}
         <BillingCatalog
           searchQuery={searchQuery}
           activeTab={activeTab}
@@ -136,6 +152,7 @@ export default function Billing() {
           cart={cart}
         />
 
+        {/* ORDER SUMMARY */}
         <aside
           className="urqr-billing-summary"
           aria-label="Order Summary"
@@ -148,14 +165,15 @@ export default function Billing() {
 
           <div className="urqr-billing-summary-footer">
 
+            {/* REUSABLE ORDER TOTALS */}
             <OrderTotals
               subtotalPaise={subtotalPaise}
-              taxLines={taxLines}
               grandTotalPaise={grandTotalPaise}
+              taxLines={taxLines}
               collapsibleTaxes
             />
 
-            {/* RECEIPT PREVIEW */}
+            {/* ORDER PREVIEW */}
             <Button
               variant="outline"
               fullWidth
@@ -166,33 +184,36 @@ export default function Billing() {
               Preview
             </Button>
 
-            {/* PAYMENT SELECTION */}
+            {/* PAYMENT MODAL BUTTON */}
             <Button
               id="billing-select-payment"
+              variant="primary"
               fullWidth
               className="urqr-billing-pay-button"
               disabled={!hasItems}
-              onClick={() =>
-                setPaymentPopupOpen(true)
-              }
+              onClick={openPaymentModal}
             >
               SELECT PAYMENT METHOD
             </Button>
 
             <p className="urqr-billing-pay-hint">
-              UPI · Cash · Others
+              Cash · UPI · Others
             </p>
+
           </div>
         </aside>
       </div>
 
-      {/* NEW RECEIPT-STYLE PREVIEW */}
+      {/* EXISTING RECEIPT PREVIEW */}
       <BillingReceiptModal
         isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
+        onClose={() =>
+          setPreviewOpen(false)
+        }
         receipt={null}
         previewOrder={{
           orderId: `#${orderId}`,
+
           date: previewTime.toLocaleDateString(
             "en-GB",
             {
@@ -201,6 +222,7 @@ export default function Billing() {
               year: "numeric",
             }
           ),
+
           time: previewTime.toLocaleTimeString(
             "en-IN",
             {
@@ -209,7 +231,9 @@ export default function Billing() {
               hour12: true,
             }
           ),
+
           restaurantName: "GRAND HORIZON",
+
           items: totals.items.map(
             ({ dish, quantity }) => ({
               name: dish.name,
@@ -217,6 +241,7 @@ export default function Billing() {
               quantity,
             })
           ),
+
           subtotal: totals.subtotal,
           tax: totals.tax,
           taxRate: TAX_RATE,
@@ -224,113 +249,55 @@ export default function Billing() {
         }}
       />
 
-      {/* EXISTING SELECT PAYMENT POPUP */}
-      <PopupModal
-        isOpen={paymentPopupOpen}
-        onClose={() => setPaymentPopupOpen(false)}
-        title="Select Payment Method"
-        size="md"
-        className="urqr-payment-reference-modal"
-      >
-        <div className="urqr-payment-reference-content">
-
-          <div className="urqr-payment-reference-amount">
-            <span>
-              Amount Payable (Order #{orderId})
-            </span>
-
-            <strong>
-              {formatINR(grandTotalPaise)}
-            </strong>
-          </div>
-
-          <div className="urqr-payment-reference-options">
-
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              className="urqr-payment-reference-option"
-              onClick={() =>
-                choosePaymentMethod("UPI")
-              }
-            >
-              UPI
-            </Button>
-
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              className="urqr-payment-reference-option"
-              onClick={() =>
-                choosePaymentMethod("Cash")
-              }
-            >
-              Cash
-            </Button>
-
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              className="urqr-payment-reference-option"
-              onClick={() =>
-                choosePaymentMethod("Card")
-              }
-            >
-              Others
-            </Button>
-          </div>
-        </div>
-      </PopupModal>
-
-      {/* EXISTING CHECKOUT */}
+      {/* =====================================
+          PAYMENT AMOUNT MODAL
+          CASH DEFAULT / UPI DEMO QR
+      ===================================== */}
       <PosCheckoutModal
-        key={selectedMethod}
         isOpen={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
+        onClose={() =>
+          setCheckoutOpen(false)
+        }
+        orderId={orderId}
         subtotal={totals.subtotal}
         tax={totals.tax}
         total={totals.total}
-        initialMode={selectedMethod}
+        initialMode="Cash"
         onConfirmPayment={(checkout) => {
-          if (handleCompletePayment(checkout)) {
-            setCheckoutOpen(false);
+
+          // Existing Billing hook validates
+          // and completes the local demo order.
+          const completed =
+            handleCompletePayment(
+              checkout,
+              orderId
+            );
+
+          if (!completed) {
+            notification.error(
+              "Payment could not be completed. Check the cash amount."
+            );
+            return;
           }
+
+          // Close payment dialog.
+          setCheckoutOpen(false);
+
+          // EXISTING REUSABLE SUCCESS POPUP
+          notification.success(
+            "Payment successful! (Demo only)"
+          );
         }}
       />
 
       {/* EXISTING COMPLETED RECEIPT */}
-     
-<BillingReceiptModal
-  isOpen={previewOpen}
-  onClose={() => setPreviewOpen(false)}
-  receipt={null}
-  previewOrder={{
-    orderId: `#${orderId}`,
-    date: previewTime.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    time: previewTime.toLocaleTimeString("en-IN", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    }),
-    restaurantName: "GRAND HORIZON",
-    items: totals.items.map(({ dish, quantity }) => ({
-      name: dish.name,
-      price: dish.price,
-      quantity,
-    })),
-    subtotal: totals.subtotal,
-    tax: totals.tax,
-    taxRate: TAX_RATE,
-    total: totals.total,
-  }}
-/>
+      <BillingReceiptModal
+        isOpen={isReceiptOpen}
+        onClose={() =>
+          setIsReceiptOpen(false)
+        }
+        receipt={receipt}
+      />
 
     </main>
   );
