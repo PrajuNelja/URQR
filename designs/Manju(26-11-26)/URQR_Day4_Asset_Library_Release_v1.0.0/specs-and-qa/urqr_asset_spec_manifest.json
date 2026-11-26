@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "manifestVersion": "1.0.0",
+  "project": "Nelja Tech — URQR Platform (Phase 1 Standalone Manager POS)",
+  "owner": "Gagan (Design Systems & Hardware Specs)",
+  "date": "2026-11-26",
+  "themeCollection": "URQR THEME (Beige / Sepia)",
+  "targetViewports": {
+    "min": "1366x768",
+    "primary": "1920x1080",
+    "gridUnitPx": 8
+  },
+  "storage": {
+    "provider": "Cloudflare R2",
+    "maxRawUploadBytes": 2097152,
+    "colorSpace": "sRGB",
+    "stripMetadata": ["EXIF", "XMP", "IPTC", "ICC_NON_SRGB"],
+    "cacheControl": {
+      "immutable": "public, max-age=31536000, immutable",
+      "mutablePlaceholder": "public, max-age=3600, stale-while-revalidate=86400"
+    }
+  },
+  "assetSpecs": [
+    {
+      "id": "pos-ui-icons",
+      "label": "POS UI Custom SVG Icons",
+      "dimensions": [{ "width": 24, "height": 24, "unit": "viewBox" }],
+      "aspectRatio": "1:1",
+      "formats": { "primary": "image/svg+xml", "fallback": "image/svg+xml#sprite" },
+      "maxBytesPerAsset": 1024,
+      "compression": {
+        "tool": "SVGO v3+",
+        "config": "svgo.config.mjs",
+        "floatPrecision": 2,
+        "preserveAttributes": ["viewBox", "role", "aria-label", "stroke"]
+      },
+      "offlineBundled": true
+    },
+    {
+      "id": "store-logo-emblem",
+      "label": "Store Branding Emblem (Square)",
+      "dimensions": [{ "width": 512, "height": 512 }],
+      "aspectRatio": "1:1",
+      "formats": { "primary": "image/webp", "vectorMaster": "image/svg+xml", "fallback": "image/png" },
+      "maxBytesPerAsset": 35840,
+      "fallbackMaxBytes": 56320,
+      "compression": { "webpQuality": 90, "losslessAlpha": true, "pngOptimizer": "oxipng -o 4 --strip safe" },
+      "offlineBundled": true
+    },
+    {
+      "id": "store-logo-wordmark",
+      "label": "Store Branding Wordmark (Horizontal)",
+      "dimensions": [{ "width": 1200, "height": 320 }],
+      "aspectRatio": "15:4",
+      "formats": { "primary": "image/webp", "vectorMaster": "image/svg+xml", "fallback": "image/png" },
+      "maxBytesPerAsset": 46080,
+      "fallbackMaxBytes": 71680,
+      "compression": { "webpQuality": 90, "losslessAlpha": true, "pngOptimizer": "oxipng -o 4 --strip safe" },
+      "offlineBundled": true
+    },
+    {
+      "id": "store-avatar",
+      "label": "Store & Manager Avatars / Placeholders",
+      "dimensions": [
+        { "width": 256, "height": 256, "density": "2x" },
+        { "width": 128, "height": 128, "density": "1x" }
+      ],
+      "aspectRatio": "1:1",
+      "formats": { "primary": "image/webp", "placeholder": "image/svg+xml", "fallback": "image/png" },
+      "maxBytesPerAsset": 20480,
+      "compression": { "webpQuality": 85, "webpEffort": 6 },
+      "offlineBundled": true
+    },
+    {
+      "id": "menu-item-thumbnail",
+      "label": "Menu / Product Card Thumbnails",
+      "dimensions": [
+        { "width": 600, "height": 400, "density": "2x" },
+        { "width": 300, "height": 200, "density": "1x" }
+      ],
+      "aspectRatio": "3:2",
+      "formats": { "primary": "image/webp", "fallback": "image/jpeg" },
+      "maxBytesPerAsset": 46080,
+      "fallbackMaxBytes": 66560,
+      "compression": { "webpQuality": 80, "webpEffort": 6, "jpegProgressive": true },
+      "offlineBundled": false
+    },
+    {
+      "id": "login-backdrop",
+      "label": "Login Screen Backdrop",
+      "dimensions": [{ "width": 1920, "height": 1080 }],
+      "aspectRatio": "16:9",
+      "formats": { "primary": "image/webp", "fallback": "image/jpeg" },
+      "maxBytesPerAsset": 184320,
+      "fallbackMaxBytes": 256000,
+      "compression": { "webpQuality": 82, "alpha": false, "jpegProgressive": true },
+      "offlineBundled": true
+    },
+    {
+      "id": "thermal-receipt-logo-80mm",
+      "label": "Thermal Receipt Logo (80mm / 48 cols)",
+      "dimensions": [{ "maxWidth": 576, "maxHeight": 160, "dpi": 203 }],
+      "formats": { "primary": "image/png", "fallback": "image/bmp" },
+      "maxBytesPerAsset": 15360,
+      "compression": { "bitDepth": 1, "colorMode": "monochrome", "dither": "floyd-steinberg" },
+      "offlineBundled": true
+    },
+    {
+      "id": "thermal-receipt-logo-58mm",
+      "label": "Thermal Receipt Logo (58mm / 32 cols)",
+      "dimensions": [{ "maxWidth": 384, "maxHeight": 120, "dpi": 203 }],
+      "formats": { "primary": "image/png", "fallback": "image/bmp" },
+      "maxBytesPerAsset": 10240,
+      "compression": { "bitDepth": 1, "colorMode": "monochrome", "dither": "floyd-steinberg" },
+      "offlineBundled": true
+    },
+    {
+      "id": "app-favicons",
+      "label": "Favicon & Desktop App Icons",
+      "dimensions": [
+        { "width": 32, "height": 32 },
+        { "width": 180, "height": 180 },
+        { "width": 192, "height": 192 },
+        { "width": 512, "height": 512 }
+      ],
+      "aspectRatio": "1:1",
+      "formats": { "primary": "image/svg+xml", "raster": "image/png", "fallback": "image/x-icon" },
+      "maxBytesPerAsset": 25600,
+      "compression": { "pngOptimizer": "oxipng -o 4 --strip all", "safeZonePaddingPct": 12 },
+      "offlineBundled": true
+    }
+  ],
+  "themeTokens": {
+    "bg": "#F5EEE0",
+    "surface": "#FFFDF8",
+    "surfaceAlt": "#FAF3E6",
+    "border": "#E4D8C3",
+    "primary": "#8B5E3C",
+    "primaryDark": "#5C3D26",
+    "text": "#3B2A1E",
+    "textSecondary": "#7A6A5A",
+    "success": "#3F6B3A",
+    "successBg": "#EEF3E8",
+    "warning": "#B45309",
+    "warningBg": "#FDF1E1",
+    "error": "#B91C1C",
+    "disabled": "#D9CDB8",
+    "disabledText": "#8E7F6C",
+    "onPrimary": "#FFFFFF",
+    "inputBg": "#FFFFFF"
+  }
+}
