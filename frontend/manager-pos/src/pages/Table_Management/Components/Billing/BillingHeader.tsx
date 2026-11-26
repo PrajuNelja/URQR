@@ -9,6 +9,7 @@ import { Icon } from "../../../../components/DataCard/Icon";
 import { Logo } from "../../../../components/Logo/Logo";
 import { SearchInput } from "../../../../components/InputField/SearchInput";
 import { NetworkStatusPill } from "../../../../components/Header/NetworkStatusPill";
+import { CentrifugoStatusPill } from "../../../../components/Header/CentrifugoStatusPill";
 import { CurrentDatePill } from "../../../../components/Header/CurrentDatePill";
 
 interface BillingHeaderProps {
@@ -117,6 +118,7 @@ export function BillingHeader({
       actions={
         <div className="urqr-billing-header-actions">
           <NetworkStatusPill />
+          <CentrifugoStatusPill />
           <CurrentDatePill />
         </div>
       }
