@@ -1,41 +1,33 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import axios from "axios";
 import { z } from "zod";
 
 import { apiClient } from "../../../lib/apiClient";
 import { useAuthStore } from "../../../lib/authStore";
+import type { BackendAuthResponse, LoginFeedback } from "../Types/Login.types";
 
-import type {
-  LoginFeedback,
-  BackendAuthResponse,
-} from "../Types/Login.types";
 
 // ---------------------------------------------
-// LOGIN VALIDATION
+// LOGIN VALIDATION (Matches @urqr/types)
 // ---------------------------------------------
-
 const LoginFormSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(1, "Enter your username."),
-
-  password: z
-    .string()
-    .min(1, "Enter your password."), // never trim
+  username: z.string().trim().min(1, "Enter your username."),
+  password: z.string().min(4, "Password must be at least 4 characters."),
 });
 
 export type LoginFormValues = z.infer<typeof LoginFormSchema>;
 
 // ---------------------------------------------
-// MANAGER LOGIN HOOK
+// MANAGER LOGIN HOOK (Day 3 Final)
 // ---------------------------------------------
-
 export const useManagerLogin = () => {
   const navigate = useNavigate();
+  
+  // Grab the redirect URL from TanStack Router (Day 3 Afternoon Task 2)
+  const search = useSearch({ from: "/login" }) as { redirect?: string };
 
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -49,18 +41,12 @@ export const useManagerLogin = () => {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
-
     defaultValues: {
       username: "",
       password: "",
     },
-
     mode: "onSubmit",
   });
-
-  // -------------------------------------------
-  // DISMISS NOTIFICATION
-  // -------------------------------------------
 
   const dismissFeedback = () => {
     setFeedback((previous) => ({
@@ -69,16 +55,12 @@ export const useManagerLogin = () => {
     }));
   };
 
-  // -------------------------------------------
-  // LOGIN SUBMISSION
-  // -------------------------------------------
-
   const onSubmit = form.handleSubmit(async (data) => {
     setIsSubmitting(true);
     dismissFeedback();
 
     try {
-      // API request
+      // Day 3 Task 1: Live Backend Endpoint
       const response = await apiClient.post<BackendAuthResponse>(
         "/auth/login",
         {
@@ -87,54 +69,28 @@ export const useManagerLogin = () => {
         }
       );
 
-      const {
-        accessToken,
-        hotelId,
-        userId,
-        username,
-        role,
-      } = response.data;
+      const { accessToken } = response.data;
 
-      // Store authentication token
-      localStorage.setItem("access_token", accessToken);
+      // Day 3 Task 2 & 3: Parse JWT and store securely in Zustand
+      setAuth(accessToken);
 
-      // Preserve backend hotel context for authenticated requests
-      localStorage.setItem("tenant_id", hotelId);
-
-      // Update Zustand authentication store
-      setAuth(
-        {
-          id: userId,
-          name: username,
-          role,
-        },
-        hotelId,
-        accessToken
-      );
-
-      // Success notification
       setFeedback({
         isOpen: true,
         type: "success",
-        message: `Welcome, ${username}. Opening register…`,
+        message: `Welcome, ${data.username}. Opening register…`,
       });
 
-      // Navigate to billing page
+      // Day 3 Task 5: Redirect to billing (or saved redirect URL)
       setTimeout(() => {
-        void navigate({
-          to: "/pos/billing",
-        });
+        void navigate({ to: search.redirect || "/pos/billing" });
       }, 350);
+      
     } catch (err: unknown) {
-      let errorMessage =
-        "Unable to connect to authentication server.";
+      let errorMessage = "Unable to connect to authentication server.";
 
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {
-          errorMessage =
-            "Unable to sign in. Check your credentials and try again.";
-
-          // Keep Manager ID, clear only password
+          errorMessage = "Unable to sign in. Check your credentials and try again.";
           form.setValue("password", "", {
             shouldValidate: false,
             shouldDirty: false,

@@ -15,3 +15,11 @@ export interface BackendAuthResponse {
   username: string;
   role: string;
 }
+export interface BackendAuthResponse {
+  accessToken: string;
+  tokenType: string;
+  hotelId: string;
+  userId: string;
+  username: string;
+  role: string;
+}
