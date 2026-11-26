@@ -27,6 +27,7 @@ import {
 
 import { POS_CATALOG_QUERY_KEY } from "../../../queryClient";
 import { usePosHotkeys } from "./usePosHotkeys";
+import { useCartStore } from "../../../lib/cartStore";
 
 export const useBilling = () => {
   const [activeTab, setActiveTab] =
@@ -154,8 +155,18 @@ export const useBilling = () => {
         [dishId]:
           (previous[dishId] || 0) + 1,
       }));
+
+      const dish = dishes.find((d) => d.id === dishId);
+      if (dish) {
+        useCartStore.getState().addItem({
+          id: String(dish.id),
+          name: dish.name,
+          unitPricePaise: Math.round(dish.price * 100),
+          taxable: true,
+        });
+      }
     },
-    []
+    [dishes]
   );
 
   const updateQuantity = useCallback(
@@ -172,6 +183,7 @@ export const useBilling = () => {
           next[dishId] = quantity;
         }
 
+        useCartStore.getState().setQuantity(String(dishId), Math.max(0, quantity));
         return next;
       });
     },
@@ -181,6 +193,7 @@ export const useBilling = () => {
   const clearCart = useCallback(() => {
     setCart({});
     setCashCollected("");
+    useCartStore.getState().clearCart();
   }, []);
 
   const totals = useMemo(() => {
