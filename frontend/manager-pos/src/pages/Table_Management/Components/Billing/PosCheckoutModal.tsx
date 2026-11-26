@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Button } from "../../../../components/Buttons/Button";
 import { NumericKeypad } from "../../../../components/Keypad/NumericKeypad";
@@ -21,6 +21,7 @@ export interface PosCheckoutModalProps {
   subtotal: number;
   tax: number;
   total: number;
+  orderId?: string | number;
   onConfirmPayment: (checkoutData: CheckoutRequest) => void;
   initialMode?: PaymentMode;
   isSubmitting?: boolean;

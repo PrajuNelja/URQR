@@ -1,14 +1,18 @@
-# Starter ownership map. Replace each placeholder with an approved GitHub username or team.
-# Do not commit invented usernames.
+# ========================================================
+# URQR MONOREPO CODEOWNERS
+# Sole Central Gatekeeper: @PrajuNelja
+# ========================================================
 
-# Frontend representative
-# /frontend/ @<frontend-representative>
+# Default: PrajuNelja owns and reviews everything
+*                             @PrajuNelja
 
-# Backend representative
-# /backend/ @<backend-representative>
+# Core Shared Foundation & Cross-Cutting Contracts
+frontend/packages/types/      @PrajuNelja
+.github/                      @PrajuNelja
+.gitattributes                @PrajuNelja
 
-# QA representative
-# /qa/ @<qa-representative>
+# Foundation Tracks (Sole Foundation Approver: PrajuNelja)
+backend/                      @PrajuNelja
+frontend/                     @PrajuNelja
+qa/                           @PrajuNelja
 
-# Infrastructure representative
-# /infrastructure/ @<infrastructure-representative>

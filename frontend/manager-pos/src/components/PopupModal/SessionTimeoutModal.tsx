@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { PopupModal } from "./PopupModal";
 import { Button } from "../Buttons/Button";
@@ -21,11 +20,10 @@ export const SessionTimeoutModal = ({
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
+  // Reset timer when modal opens
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
-    if (isOpen) {
-      setSecondsLeft(initialSeconds);
-    }
+    if (isOpen) setSecondsLeft(initialSeconds);
   }
 
   // Countdown timer
@@ -36,21 +34,23 @@ export const SessionTimeoutModal = ({
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          onLogout();
           return 0;
         }
-
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isOpen, onLogout]);
+  }, [isOpen]);
 
-  const progress =
-    initialSeconds > 0
-      ? (secondsLeft / initialSeconds) * 100
-      : 0;
+  // Handle logout when timer hits 0 (Moved out of setState to prevent StrictMode double-fire)
+  useEffect(() => {
+    if (isOpen && secondsLeft === 0) {
+      onLogout();
+    }
+  }, [isOpen, secondsLeft, onLogout]);
+
+  const progress = initialSeconds > 0 ? (secondsLeft / initialSeconds) * 100 : 0;
 
   return (
     <PopupModal
@@ -65,39 +65,33 @@ export const SessionTimeoutModal = ({
           <Button variant="outline" onClick={onLogout}>
             Log Out Now
           </Button>
-
-          <Button variant="primary" onClick={onExtend}>
+          {/* Note: In your custom PopupModal, the first focusable element gets auto-focused, 
+              which is the Log Out button. If you strictly want Extend Session focused, 
+              you can swap the order here or add autoFocus to the Extend button. */}
+          <Button variant="primary" onClick={onExtend} autoFocus>
             Extend Session
           </Button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
-
-        {/* Warning Badge */}
         <div>
-          <span className="inline-flex items-center rounded-full bg-warning-bg px-2.5 py-0.5 text-[11px] font-semibold text-warning">
+          <span className="inline-flex items-center rounded-full bg-warning-bg px-2.5 py-0.5 text-[11px] font-semibold text-warning border border-warning/20">
             JWT RS256 Expiring
           </span>
         </div>
 
-        {/* Heading and Description */}
         <div className="space-y-1.5">
           <h3 className="text-base font-semibold text-text">
             Session Expiring Soon
           </h3>
-
           <p className="text-xs leading-relaxed text-text-secondary">
-            Your Manager POS session token will automatically
-            expire in{" "}
-            <strong className="font-mono text-text">
-              {secondsLeft}s
-            </strong>.
+            Your Manager POS session token will automatically expire in{" "}
+            <strong className="font-mono text-text">{secondsLeft}s</strong>.
             Extend now to stay on the management dashboard.
           </p>
         </div>
 
-        {/* Progress Bar */}
         <div className="mt-2 space-y-2">
           <div className="h-2 w-full overflow-hidden rounded-full bg-surface-alt">
             <div
@@ -108,7 +102,6 @@ export const SessionTimeoutModal = ({
 
           <div className="flex justify-between text-[11px] text-text-secondary">
             <span>Server-side jti revocation pending</span>
-
             <span>
               Press{" "}
               <kbd className="rounded border border-border bg-surface-alt px-1 font-mono text-[10px]">

@@ -1,5 +1,4 @@
 // src/components/InputField/DateInput.tsx
-
 import { forwardRef, useId } from "react";
 import { Calendar } from "lucide-react";
 import type { DateInputProps } from "./InputField.types";
@@ -11,12 +10,6 @@ import {
   DATE_INPUT_BASE,
 } from "./InputField.config";
 
-/**
- * DateInput — compact date picker pill (matches reference "From / To" filters).
- *
- * <DateInput label="From" value={from} onChange={...} />
- * <DateInput label="To" value={to} onChange={...} min={from} />
- */
 export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
   (
     {
@@ -39,7 +32,7 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
 
     const inputClasses = [
       DATE_INPUT_BASE,
-      error ? "border-error-text focus:border-error-text" : "",
+      error ? "!border-error focus:outline-error" : "",
       fullWidth ? "w-full" : "",
       className,
     ]
@@ -68,8 +61,8 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
 
         <div className="relative inline-flex items-center">
           <Calendar
-            size={13}
-            className="absolute left-2 text-text-muted pointer-events-none"
+            size={14}
+            className="absolute left-3 text-text-secondary pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -78,7 +71,7 @@ export const DateInput = forwardRef<HTMLInputElement, DateInputProps>(
             type="date"
             min={min}
             max={max}
-            className={`${inputClasses} pl-6`}
+            className={`${inputClasses} pl-8`}
             disabled={disabled}
             aria-invalid={!!error}
             aria-describedby={

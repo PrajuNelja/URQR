@@ -26,6 +26,22 @@ curl http://localhost:9100/health
 # → {"status":"UP","service":"urqr-bridge"}
 ```
 
+## Local desktop WebSocket
+The desktop frontend connects to `ws://127.0.0.1:9100/ws`. This endpoint
+accepts loopback connections from local origins only; it is not exposed as a
+remote client API. The bridge sends a `connected` message, then acknowledges
+`hello` messages and answers `ping` messages with `pong`.
+
+```json
+{"type":"hello","id":"hello-1"}
+{"type":"ping","id":"ping-1"}
+```
+
+```json
+{"type":"ack","id":"hello-1","status":"UP"}
+{"type":"pong","id":"ping-1","status":"UP"}
+```
+
 ## Make targets
 ```bash
 make build    # compile to bin/urqr-bridge

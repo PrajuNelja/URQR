@@ -1,89 +1,81 @@
 // src/components/Header/Header.config.ts
-// All configs for the Header folder: Header, Tabs, SelectableGroup, AppShell
-
-import type { HeaderVariant } from "./Header.types";
 
 // ═══════════════════════════════════════════
 // HEADER
 // ═══════════════════════════════════════════
 
-export const headerConfig = {
-  /** Outer wrapper — matches reference `.top` */
-  base: "flex justify-between items-center gap-3 flex-wrap mb-[18px]",
+import type { HeaderVariant, AppShellProps } from "./Header.types";
 
-  /** Left section (logo + title) */
+// SHARED HEADER STYLES
+export const headerConfig = {
+  // Spec: 72px height, border-b border-border, bg-surface, flat
+  base: "flex justify-between items-center gap-3 h-[72px] border-b border-border bg-surface px-6 shrink-0",
+
   left: "flex items-center gap-3",
 
-  /** Title block */
   titleBlock: "flex flex-col leading-tight",
-  title: "font-serif text-[17px] font-bold text-primary",
-  subtitle:
-    "text-[11px] font-medium tracking-[0.1em] text-text-muted uppercase",
+  title: "font-sans text-[18px] font-bold text-text", // Spec: 18/22 Bold
+  subtitle: "font-sans text-[14px] font-medium text-text-secondary", // Spec: 14/20
 
-  /** Nav container */
   nav: "flex items-center gap-2",
 
-  /** Nav link (default) */
+  // Spec: Default state transparent, hover text-text
   navItem:
-    "px-3.5 py-2 rounded-md text-[13px] font-bold cursor-pointer border border-transparent transition-all duration-200 hover:text-accent-gold",
+    "px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer border border-transparent text-text-secondary hover:text-text transition-colors duration-200",
 
-  /** Nav link (active) */
+  // Spec: Active state bg-primary, text-on-primary
   navItemActive:
-    "px-3.5 py-2 rounded-md text-[13px] font-bold cursor-pointer bg-primary text-button-text border-primary shadow-ivory",
+    "px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer bg-primary text-on-primary border-primary transition-colors duration-200",
 
-  /** Right actions */
   actions: "flex items-center gap-2",
 } as const;
 
+// VARIANT-SPECIFIC LAYOUT
 export const HEADER_VARIANTS: Record<HeaderVariant, string> = {
   dashboard: "",
-  billing: "",
+  billing:
+    "!mb-0 min-h-16 w-full border-b border-border-subtle bg-surface px-4 py-3 lg:px-7",
   plain: "",
 };
 
 // ═══════════════════════════════════════════
-// TABS
+// TABS (Category Pills)
 // ═══════════════════════════════════════════
 
 export const tabsConfig = {
-  /** Container */
   wrapper: "flex gap-2 flex-wrap my-3",
 
-  /** Tab pill (default) */
-  item: "cursor-pointer px-3.5 py-1.5 border border-border-subtle rounded-full text-xs font-bold bg-transparent text-primary transition-all duration-200 hover:border-accent-gold hover:text-accent-gold",
+  // Spec: border-border, text-text, hover border-primary
+  item: "cursor-pointer px-3.5 py-1.5 border border-border rounded-full text-xs font-semibold bg-transparent text-text transition-colors duration-200 hover:border-primary",
 
-  /** Tab pill (active) */
+  // Spec: bg-primary, text-on-primary
   itemActive:
-    "cursor-pointer px-3.5 py-1.5 border border-primary rounded-full text-xs font-bold bg-primary text-button-text shadow-ivory",
+    "cursor-pointer px-3.5 py-1.5 border border-primary rounded-full text-xs font-semibold bg-primary text-on-primary transition-colors duration-200",
 } as const;
 
 // ═══════════════════════════════════════════
-// SELECTABLE GROUP
+// SELECTABLE GROUP (Payment Methods)
 // ═══════════════════════════════════════════
 
 export const selectableGroupConfig = {
-  /** Container — pure flex, stretch full width */
   wrapper: "flex w-full gap-2",
 
-  /** Option (default) */
-  item: "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-bold cursor-pointer border border-border-subtle bg-transparent text-primary transition-all duration-200 hover:border-accent-gold whitespace-nowrap",
+  // Spec: bg-surface, border-border, text-text
+  item: "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-semibold cursor-pointer border border-border bg-surface text-text transition-colors duration-200 hover:bg-surface-alt whitespace-nowrap",
 
-  /** Option (active) */
+  // Spec: bg-primary, text-on-primary
   itemActive:
-    "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-bold cursor-pointer border border-primary bg-primary text-button-text shadow-ivory whitespace-nowrap",
+    "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-xs font-semibold cursor-pointer border border-primary bg-primary text-on-primary whitespace-nowrap",
 } as const;
 
-// ═══════════════════════════════════════════
 // APP SHELL
-// ═══════════════════════════════════════════
-
 export const appShellConfig = {
-  wrapper: "min-h-screen bg-[#f6efdf]",
-  main: "px-5 pt-5 pb-24 mx-auto w-full",
+  wrapper: "min-h-screen bg-bg flex flex-col", // Spec: bg-bg
+  main: "px-6 pt-6 pb-24 mx-auto w-full flex-1", // Added flex-1 to fill height
 } as const;
 
 export const APP_SHELL_MAX_WIDTH: Record<
-  NonNullable<import("./Header.types").AppShellProps["maxWidth"]>,
+  NonNullable<AppShellProps["maxWidth"]>,
   string
 > = {
   sm: "max-w-3xl",

@@ -1,28 +1,35 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import axios from "axios";
+import { z } from "zod";
 
-import { useCallback, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { apiClient } from "../../../lib/apiClient";
+import { useAuthStore } from "../../../lib/authStore";
+import type { BackendAuthResponse, LoginFeedback } from "../Types/Login.types";
 
-import type {
-  ChangeEventHandler,
-  FormEventHandler,
-} from "react";
 
-import { LOGIN_CREDENTIALS } from "../Config/Login.config";
+// ---------------------------------------------
+// LOGIN VALIDATION (Matches @urqr/types)
+// ---------------------------------------------
+const LoginFormSchema = z.object({
+  username: z.string().trim().min(1, "Enter your username."),
+  password: z.string().min(4, "Password must be at least 4 characters."),
+});
 
-import type {
-  LoginCredentials,
-  LoginFeedback,
-  ManagerLoginFormState,
-} from "../Types/Login.types";
+export type LoginFormValues = z.infer<typeof LoginFormSchema>;
 
-export const useManagerLogin = (): ManagerLoginFormState => {
-  // TanStack Router navigation
+// ---------------------------------------------
+// MANAGER LOGIN HOOK (Day 3 Final)
+// ---------------------------------------------
+export const useManagerLogin = () => {
   const navigate = useNavigate();
+  
+  // Grab the redirect URL from TanStack Router (Day 3 Afternoon Task 2)
+  const search = useSearch({ from: "/login" }) as { redirect?: string };
 
-  const [values, setValues] = useState<LoginCredentials>({
-    userName: "",
-    password: "",
-  });
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [feedback, setFeedback] = useState<LoginFeedback>({
     isOpen: false,
@@ -30,62 +37,88 @@ export const useManagerLogin = (): ManagerLoginFormState => {
     message: "",
   });
 
-  const dismissFeedback = useCallback(() => {
-    setFeedback((current) => ({
-      ...current,
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(LoginFormSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+    mode: "onSubmit",
+  });
+
+  const dismissFeedback = () => {
+    setFeedback((previous) => ({
+      ...previous,
       isOpen: false,
     }));
-  }, []);
-
-  const onUserNameChange: ChangeEventHandler<HTMLInputElement> = (
-    event
-  ) => {
-    setValues((current) => ({
-      ...current,
-      userName: event.target.value,
-    }));
-    dismissFeedback();
   };
 
-  const onPasswordChange: ChangeEventHandler<HTMLInputElement> = (
-    event
-  ) => {
-    setValues((current) => ({
-      ...current,
-      password: event.target.value,
-    }));
+  const onSubmit = form.handleSubmit(async (data) => {
+    setIsSubmitting(true);
     dismissFeedback();
-  };
 
-  const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
+    try {
+      // Day 3 Task 1: Live Backend Endpoint
+      const response = await apiClient.post<BackendAuthResponse>(
+        "/auth/login",
+        {
+          username: data.username.trim(),
+          password: data.password,
+        }
+      );
 
-    // Validate login credentials
-    const isValid =
-      values.userName === LOGIN_CREDENTIALS.userName &&
-      values.password === LOGIN_CREDENTIALS.password;
+      const { accessToken } = response.data;
 
-    setFeedback({
-      isOpen: true,
-      type: isValid ? "success" : "error",
-      message: isValid
-        ? "Login successful."
-        : "Login failed. Please check your user name and password.",
-    });
+      // Day 3 Task 2 & 3: Parse JWT and store securely in Zustand
+      setAuth(accessToken);
 
-    // Navigate only after successful login
-    if (isValid) {
-      void navigate({
-        to: "/dashboard",
+      setFeedback({
+        isOpen: true,
+        type: "success",
+        message: `Welcome, ${data.username}. Opening register…`,
       });
+
+      // Day 3 Task 5: Redirect to billing (or saved redirect URL)
+      setTimeout(() => {
+        void navigate({ to: search.redirect || "/pos/billing" });
+      }, 350);
+      
+    } catch (err: unknown) {
+      let errorMessage = "Unable to connect to authentication server.";
+
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401) {
+          errorMessage = "Unable to sign in. Check your credentials and try again.";
+          form.setValue("password", "", {
+            shouldValidate: false,
+            shouldDirty: false,
+            shouldTouch: false,
+          });
+        } else if (err.response?.data?.message) {
+          errorMessage = String(err.response.data.message);
+        } else if (err.code === "ECONNABORTED") {
+          errorMessage = "Connection timed out. Please try again.";
+        } else if (!err.response) {
+          errorMessage = "Connection unavailable. Please try again.";
+        }
+      }
+
+      setFeedback({
+        isOpen: true,
+        type: "error",
+        message: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  });
 
   return {
-    ...values,
+    form,
     feedback,
-    onUserNameChange,
-    onPasswordChange,
+    isSubmitting,
     onSubmit,
     dismissFeedback,
   };
