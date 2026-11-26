@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -7,6 +7,12 @@ import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Receipt } from "../../../../components/PopupModal/Receipt";
 import { Button } from "../../../../components/Buttons/Button";
 import { IconButton } from "../../../../components/Buttons/IconButton";
+import { useNotification } from "../../../../components/Notification/useNotification";
+import { useBridgeHeartbeat } from "../../Hooks/useBridgeHeartbeat";
+import {
+  RECEIPT_BUSINESS,
+  serializeReceiptForBridge,
+} from "../../../../lib/bridge/printPayload";
 
 import type { ReceiptData } from "../../Types/billing.types";
 
@@ -62,6 +68,54 @@ export function BillingReceiptModal({
   const bottomCloseRef = useRef<HTMLButtonElement>(null);
 
   const isPreview = Boolean(previewOrder);
+
+  const { printReceipt } = useBridgeHeartbeat(false);
+  const { success, error, info } = useNotification();
+  const [isReprinting, setIsReprinting] = useState(false);
+  const [reprintState, setReprintState] = useState<{ orderId: string; printedAt: string } | null>(null);
+  const currentReprint =
+    reprintState?.orderId === receipt?.orderId ? reprintState : null;
+
+  const handleReprint = async () => {
+    if (!receipt || isReprinting) return;
+
+    setIsReprinting(true);
+    try {
+      const request = serializeReceiptForBridge(
+        receipt,
+        localStorage.getItem("tenant_id"),
+      );
+      const response = await printReceipt(
+        { ...request, action: "reprint" },
+        performance.now(),
+      );
+
+      if (!response.success) {
+        error(
+          `Receipt reprint failed: ${response.message ?? response.status}`,
+        );
+        return;
+      }
+
+      if (["SPOOLED", "PRINTING"].includes(response.status.toUpperCase())) {
+        info("Receipt reprint queued.");
+        return;
+      }
+
+      const printedAt = new Date().toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setReprintState({ orderId: receipt.orderId, printedAt });
+      success("Receipt reprinted successfully.");
+    } catch (cause) {
+      const message =
+        cause instanceof Error ? cause.message : "Unknown bridge error";
+      error(`Receipt reprint failed: ${message}`);
+    } finally {
+      setIsReprinting(false);
+    }
+  };
 
   // Keyboard focus and background scroll lock
   useEffect(() => {
@@ -498,20 +552,17 @@ export function BillingReceiptModal({
 
           <Button
             variant="primary"
-            onClick={() => window.print()}
+            onClick={() => void handleReprint()}
+            disabled={!receipt || isReprinting}
           >
-            Print receipt
+            {isReprinting ? "Sending reprint..." : "Reprint receipt"}
           </Button>
         </>
       }
     >
       {receipt && (
         <Receipt
-          business={{
-            name: "Grand Horizon",
-            address: "18 Harbour View Road",
-            phone: "+91 98765 43210",
-          }}
+          business={RECEIPT_BUSINESS}
           orderId={receipt.orderId}
           date={receipt.date}
           time={receipt.time}
@@ -523,6 +574,8 @@ export function BillingReceiptModal({
           paymentMethod={receipt.paymentMethod}
           cashCollected={receipt.cashCollected}
           change={receipt.change}
+          isReprint={Boolean(currentReprint)}
+          reprintedAt={currentReprint?.printedAt}
         />
       )}
     </PopupModal>

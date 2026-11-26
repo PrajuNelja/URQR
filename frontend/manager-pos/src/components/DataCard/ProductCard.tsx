@@ -14,6 +14,7 @@ interface ProductCardProps {
   pricePaise: number;
   imageUrl?: string;
   stockState?: StockState;
+  stock?: number;
   inCartQuantity?: number;
   maxQuantity?: number;
   onAdd: () => void;
@@ -27,6 +28,7 @@ export function ProductCard({
   pricePaise,
   imageUrl,
   stockState,
+  stock,
   inCartQuantity = 0,
   maxQuantity = 15,
   onAdd,
@@ -53,9 +55,13 @@ export function ProductCard({
 
   const stockLabel =
     stockState === "in-stock"
-      ? "In stock"
+      ? stock !== undefined
+        ? `${stock} in stock`
+        : "In stock"
       : stockState === "low-stock"
-        ? "Low stock"
+        ? stock !== undefined
+          ? `Only ${stock} left`
+          : "Low stock"
         : "Sold out";
 
   const stockVariant =
@@ -105,7 +111,7 @@ export function ProductCard({
         className="pos-product-card__count"
         aria-hidden="true"
       >
-        {qtyLabel}
+        ×{qtyLabel}
       </span>
     </div>
   ) : null;
@@ -113,10 +119,18 @@ export function ProductCard({
   return (
     <Card
       padding="none"
+      role="button"
+      tabIndex={soldOut ? -1 : 0}
+      onClick={() => {
+        if (!soldOut && !maxed) {
+          onAdd();
+        }
+      }}
       className={[
         "pos-product-card",
         `pos-product-card--${state}`,
         compact ? "pos-product-card--compact" : "",
+        "cursor-pointer",
         className,
       ]
         .filter(Boolean)

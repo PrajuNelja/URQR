@@ -8,7 +8,6 @@ import {
 import { Button } from "../../../../components/Buttons/Button";
 import { OrderTotals } from "../../../../components/Cart/OrderTotals";
 import { useNotification } from "../../../../components/Notification/useNotification";
-import { formatINR } from "../../../../lib/money";
 import { TAX_RATE } from "../../Config/billing.config";
 import { useBilling } from "../../Hooks/useBilling";
 
