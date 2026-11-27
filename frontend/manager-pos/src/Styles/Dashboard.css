@@ -368,6 +368,7 @@
 
 .dashboard-kpi-card-heading h2,
 .dashboard-kpi-card-label {
+  min-width: 0;
   margin: 0;
   color: var(--dashboard-secondary);
   font-size: 12px;
@@ -1625,10 +1626,6 @@
     justify-content: flex-start;
   }
 
-  .dashboard-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .dashboard-breakdown-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1674,14 +1671,6 @@
 
   .dashboard-page-actions {
     width: 100%;
-  }
-
-  .dashboard-kpi-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .dashboard-kpi-card {
-    min-height: 154px;
   }
 
   .dashboard-panel {
