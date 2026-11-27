@@ -9,14 +9,13 @@ export const useNotification = (): NotificationContextValue => {
   if (!ctx) {
     // Fail-safe fallback for unit tests and isolated components
     return {
-      notifications: [],
-      addNotification: () => "",
-      removeNotification: () => {},
-      clearAll: () => {},
-      success: () => "",
-      error: () => "",
-      info: () => "",
-      warning: () => "",
+      notify: () => {},
+      success: () => {},
+      error: () => {},
+      info: () => {},
+      warning: () => {},
+      dismiss: () => {},
+      dismissAll: () => {},
     };
   }
 
