@@ -186,6 +186,10 @@ importers:
       zustand:
         specifier: ^5.1.0
         version: 5.1.0(@types/react@19.3.0)(immer@11.2.10)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+    devDependencies:
+      jsdom:
+        specifier: ^31.0.1
+        version: 31.0.1
 
   packages/types:
     dependencies:
