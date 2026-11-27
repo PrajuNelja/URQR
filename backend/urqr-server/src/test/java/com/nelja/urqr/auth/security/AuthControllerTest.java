@@ -51,7 +51,7 @@ class AuthControllerTest {
     @Mock private RoleRepository roles;
     @Mock private JwtDecoder jwtDecoder;
     @Mock private RedisAuthStateService authState;
-    @Mock private TenantRlsContext rls;
+    @Mock private HotelRlsContext rls;
 
     @InjectMocks private AuthController controller;
 
@@ -96,7 +96,7 @@ class AuthControllerTest {
         assertEquals("MANAGER", response.role());
         assertEquals(HOTEL_ID, response.hotelId());
         assertEquals(USER_ID, response.userId());
-        verify(rls).bindTenant(HOTEL_ID);
+        verify(rls).bindHotel(HOTEL_ID);
     }
 
     @Test

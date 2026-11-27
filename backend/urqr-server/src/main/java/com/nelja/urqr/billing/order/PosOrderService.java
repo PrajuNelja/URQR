@@ -167,8 +167,9 @@ public class PosOrderService {
         if (order.getStatus() != OrderStatus.OPEN) throw conflict("Payments can only be recorded for open orders");
         money(amount, "Payment amount");
         BigDecimal paid = payments.sumAmount(hotelId, orderId);
-        if (paid.add(amount).compareTo(order.getGrandTotal()) > 0) {
-            throw bad("Payment exceeds the outstanding order balance");
+        BigDecimal outstanding = order.getGrandTotal().subtract(paid);
+        if (amount.compareTo(outstanding) > 0) {
+            throw bad("Payment exceeds the outstanding order balance of " + outstanding.toPlainString());
         }
         Payment payment = payments.save(new Payment(hotelId, orderId, method, amount, reference));
         BigDecimal total = paid.add(amount);
@@ -209,11 +210,18 @@ public class PosOrderService {
             if (input.quantity() < 1 || input.quantity() > 999) throw bad("Quantity must be between 1 and 999");
             itemIds.add(input.menuItemId());
         }
+        List<MenuItem> hotelItems = menu.findAllByHotelIdAndIdIn(hotelId, itemIds);
+        if (hotelItems.size() != itemIds.size()) {
+            throw bad("One or more menu items were not found for this hotel");
+        }
+
         Map<UUID, MenuItem> items = new HashMap<>();
-        for (MenuItem item : menu.findAllByHotelIdAndIdIn(hotelId, itemIds)) {
+        for (MenuItem item : hotelItems) {
             if (item.isAvailable()) items.put(item.getId(), item);
         }
-        if (items.size() != itemIds.size()) throw bad("One or more menu items are unavailable or belong to another hotel");
+        if (items.size() != itemIds.size()) {
+            throw bad("One or more menu items are unavailable; choose an available item or enable it first");
+        }
 
         Set<UUID> categoryIds = items.values().stream().map(MenuItem::getCategoryId).collect(Collectors.toSet());
         if (categories.findAllByHotelIdAndIdInAndActiveTrue(hotelId, categoryIds).size() != categoryIds.size()) {

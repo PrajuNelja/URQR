@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserDetailsServiceImpl implements UserDetailsService {
     private final StaffUserRepository users;
     private final RoleRepository roles;
-    private final TenantRlsContext rls;
+    private final HotelRlsContext rls;
 
-    public UserDetailsServiceImpl(StaffUserRepository users, RoleRepository roles, TenantRlsContext rls) {
+    public UserDetailsServiceImpl(StaffUserRepository users, RoleRepository roles, HotelRlsContext rls) {
         this.users = users;
         this.roles = roles;
         this.rls = rls;
@@ -27,7 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UUID hotelId;
         try { hotelId=UUID.fromString(username.substring(0,separator)); }
         catch (IllegalArgumentException ex) { throw new UsernameNotFoundException("Invalid credentials"); }
-        rls.bindTenant(hotelId);
+        rls.bindHotel(hotelId);
         String staffName=username.substring(separator+1);
         var user=users.findByHotelIdAndUsernameIgnoreCase(hotelId,staffName)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));

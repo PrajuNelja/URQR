@@ -13,7 +13,7 @@ import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.billing.catalog.category.MenuCategory;
 import com.nelja.urqr.billing.catalog.category.MenuCategoryRepository;
 import com.nelja.urqr.billing.catalog.dto.CatalogProductDto;
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +40,7 @@ class MenuItemControllerTest {
     @Mock private MenuItemRepository items;
     @Mock private MenuCatalogCache catalog;
     @Mock private MenuCategoryRepository categories;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
     @Mock private AuditService audit;
     @Captor private ArgumentCaptor<MenuItem> itemCaptor;
     @InjectMocks private MenuItemController controller;

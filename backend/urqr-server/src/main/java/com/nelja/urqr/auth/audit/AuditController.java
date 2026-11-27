@@ -1,6 +1,6 @@
 package com.nelja.urqr.auth.audit;
 
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.time.Instant;
 import java.util.UUID;
@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuditController {
 
     private final AuditRecordRepository audit;
-    private final CurrentTenant tenant;
+    private final CurrentHotel tenant;
 
-    public AuditController(AuditRecordRepository audit, CurrentTenant tenant) {
+    public AuditController(AuditRecordRepository audit, CurrentHotel tenant) {
         this.audit = audit;
         this.tenant = tenant;
     }

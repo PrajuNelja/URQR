@@ -1,16 +1,16 @@
 package com.nelja.urqr.auth.access.role;
 import org.springframework.transaction.annotation.Transactional;import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import com.nelja.urqr.auth.audit.AuditService; import com.nelja.urqr.auth.security.CurrentTenant; import com.nelja.urqr.auth.security.RedisAuthStateService; import jakarta.validation.Valid; import jakarta.validation.constraints.NotBlank; import jakarta.validation.constraints.Size; import java.util.*; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.security.oauth2.jwt.Jwt; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*;
+import com.nelja.urqr.auth.audit.AuditService; import com.nelja.urqr.auth.security.CurrentHotel; import com.nelja.urqr.auth.security.RedisAuthStateService; import jakarta.validation.Valid; import jakarta.validation.constraints.NotBlank; import jakarta.validation.constraints.Size; import java.util.*; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.security.oauth2.jwt.Jwt; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/roles")
 @PreAuthorize("hasRole('MANAGER')")
 @Transactional @SecurityRequirement(name="bearerAuth")
 public class RoleController {
  private final RoleRepository roles;
- private final CurrentTenant tenant;
+ private final CurrentHotel tenant;
  private final AuditService audit;
  private final RedisAuthStateService authState;
- public RoleController(RoleRepository r,CurrentTenant t,AuditService a,RedisAuthStateService authState){
+ public RoleController(RoleRepository r,CurrentHotel t,AuditService a,RedisAuthStateService authState){
      roles=r;
      tenant=t;
      audit=a;

@@ -6,22 +6,21 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/** Sets PostgreSQL's RLS context on the same connection used by the current transaction. */
+/** Sets PostgreSQL's hotel RLS context on the current transaction connection. */
 @Component
-public class TenantRlsContext {
+public class HotelRlsContext {
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public void bindTenant(UUID tenantId) {
-        if (tenantId == null) {
-            throw new IllegalArgumentException("Tenant id is required for tenant-scoped database access");
+    public void bindHotel(UUID hotelId) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel id is required for hotel-scoped database access");
         }
         requireTransaction();
-        entityManager.createNativeQuery("select set_config('app.tenant_id', :tenantId, true)")
-                .setParameter("tenantId", tenantId.toString())
+        entityManager.createNativeQuery("select set_config('app.hotel_id', :hotelId, true)")
+                .setParameter("hotelId", hotelId.toString())
                 .getSingleResult();
-        // A tenant-scoped operation must not inherit the platform-admin RLS bypass.
         entityManager.createNativeQuery("select set_config('app.platform_admin', 'false', true)")
                 .getSingleResult();
     }
@@ -34,7 +33,7 @@ public class TenantRlsContext {
 
     private static void requireTransaction() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            throw new IllegalStateException("RLS tenant context must be set inside a database transaction");
+            throw new IllegalStateException("Hotel RLS context must be set inside a database transaction");
         }
     }
 }

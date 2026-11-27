@@ -2,7 +2,7 @@ package com.nelja.urqr.billing.outbox;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nelja.urqr.auth.security.TenantRlsContext;
+import com.nelja.urqr.auth.security.HotelRlsContext;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,9 +16,9 @@ public class OutboxTransactionService {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
-    private final TenantRlsContext rls;
+    private final HotelRlsContext rls;
 
-    public OutboxTransactionService(JdbcTemplate jdbc, ObjectMapper objectMapper, TenantRlsContext rls) {
+    public OutboxTransactionService(JdbcTemplate jdbc, ObjectMapper objectMapper, HotelRlsContext rls) {
         this.jdbc = jdbc;
         this.objectMapper = objectMapper;
         this.rls = rls;
@@ -30,7 +30,7 @@ public class OutboxTransactionService {
         rls.allowPlatformAdministration();
         List<PendingEvent> due = jdbc.query("""
                 WITH due AS MATERIALIZED (
-                    SELECT tenant_id, event_id, created_at
+                    SELECT hotel_id, event_id, created_at
                       FROM outbox_events
                      WHERE ((state = 'PENDING' AND next_attempt_at <= now())
                          OR (state = 'PROCESSING' AND locked_until <= now()))
@@ -43,12 +43,12 @@ public class OutboxTransactionService {
                            locked_until = clock_timestamp() + interval '30 seconds',
                            updated_at = clock_timestamp()
                       FROM due
-                     WHERE e.tenant_id = due.tenant_id AND e.event_id = due.event_id
-                    RETURNING e.event_id, e.tenant_id, e.event_type, e.payload::text AS payload, e.attempts
+                     WHERE e.hotel_id = due.hotel_id AND e.event_id = due.event_id
+                    RETURNING e.event_id, e.hotel_id, e.event_type, e.payload::text AS payload, e.attempts
                 )
-                SELECT updated.event_id, updated.tenant_id, updated.event_type, updated.payload, updated.attempts
+                SELECT updated.event_id, updated.hotel_id, updated.event_type, updated.payload, updated.attempts
                   FROM updated
-                  JOIN due USING (tenant_id, event_id)
+                  JOIN due USING (hotel_id, event_id)
                  ORDER BY due.created_at, due.event_id
                 """, (rs, row) -> new PendingEvent(
                         rs.getObject(1, UUID.class),
@@ -67,14 +67,14 @@ public class OutboxTransactionService {
                     UPDATE outbox_events
                        SET state = 'DELIVERED', delivered_at = now(), locked_until = NULL,
                            last_error = NULL, updated_at = now()
-                     WHERE tenant_id = ? AND event_id = ?
-                    """, event.tenantId(), event.eventId());
+                     WHERE hotel_id = ? AND event_id = ?
+                    """, event.hotelId(), event.eventId());
         }
     }
 
     @Transactional
     public void markFailed(PendingEvent event, Throwable failure, int maxAttempts) {
-        rls.bindTenant(event.tenantId());
+        rls.bindHotel(event.hotelId());
         String state = event.attempts() >= maxAttempts ? "DEAD" : "PENDING";
         long seconds = Math.min(300L, 1L << Math.min(event.attempts() - 1, 8));
         String message = failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage();
@@ -83,8 +83,8 @@ public class OutboxTransactionService {
                 UPDATE outbox_events
                    SET state = ?, next_attempt_at = now() + (? * interval '1 second'),
                        locked_until = NULL, last_error = ?, updated_at = now()
-                 WHERE tenant_id = ? AND event_id = ?
-                """, state, seconds, message, event.tenantId(), event.eventId());
+                 WHERE hotel_id = ? AND event_id = ?
+                """, state, seconds, message, event.hotelId(), event.eventId());
     }
 
     private Map<String, Object> readPayload(String json) {
@@ -95,6 +95,6 @@ public class OutboxTransactionService {
         }
     }
 
-    public record PendingEvent(UUID eventId, UUID tenantId, String eventType,
+    public record PendingEvent(UUID eventId, UUID hotelId, String eventType,
             Map<String, Object> payload, int attempts) { }
 }

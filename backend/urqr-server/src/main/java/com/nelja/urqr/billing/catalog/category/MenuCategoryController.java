@@ -2,7 +2,7 @@ package com.nelja.urqr.billing.catalog.category;
 
 import com.nelja.urqr.billing.catalog.item.MenuCatalogCache;
 import com.nelja.urqr.auth.audit.AuditService;
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -24,11 +24,11 @@ import org.springframework.web.server.ResponseStatusException;
 @SecurityRequirement(name = "bearerAuth")
 public class MenuCategoryController {
     private final MenuCategoryRepository categories;
-    private final CurrentTenant tenant;
+    private final CurrentHotel tenant;
     private final AuditService audit;
     private final MenuCatalogCache catalog;
 
-    public MenuCategoryController(MenuCategoryRepository categories, CurrentTenant tenant,
+    public MenuCategoryController(MenuCategoryRepository categories, CurrentHotel tenant,
             AuditService audit, MenuCatalogCache catalog) {
         this.categories = categories;
         this.tenant = tenant;

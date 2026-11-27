@@ -14,7 +14,7 @@ import com.nelja.urqr.auth.access.role.RoleRepository;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.hotel.Hotel;
 import com.nelja.urqr.auth.hotel.HotelRepository;
-import com.nelja.urqr.auth.security.TenantRlsContext;
+import com.nelja.urqr.auth.security.HotelRlsContext;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Optional;
@@ -40,7 +40,7 @@ class PlatformHotelStaffControllerTest {
     @Mock private RoleRepository roles;
     @Mock private StaffUserRepository users;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private TenantRlsContext rlsContext;
+    @Mock private HotelRlsContext rlsContext;
     @Mock private AuditService audit;
     @Captor private ArgumentCaptor<StaffUser> userCaptor;
     @InjectMocks private PlatformHotelStaffController controller;
@@ -123,7 +123,7 @@ class PlatformHotelStaffControllerTest {
                         "manager-2@example.test", "StrongPassword@123", PlatformHotelStaffController.ProvisionableStaffRole.MANAGER)));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        verify(rlsContext, never()).bindTenant(any());
+        verify(rlsContext, never()).bindHotel(any());
         verify(users, never()).saveAndFlush(any(StaffUser.class));
     }
 

@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.billing.catalog.category.MenuCategoryRepository;
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -28,10 +28,10 @@ public class MenuItemController {
     private final MenuItemRepository items;
     private final MenuCatalogCache catalog;
     private final MenuCategoryRepository categories;
-    private final CurrentTenant tenant;
+    private final CurrentHotel tenant;
     private final AuditService audit;
 
-    public MenuItemController(MenuItemRepository items, MenuCatalogCache catalog, MenuCategoryRepository categories, CurrentTenant tenant, AuditService audit) {
+    public MenuItemController(MenuItemRepository items, MenuCatalogCache catalog, MenuCategoryRepository categories, CurrentHotel tenant, AuditService audit) {
         this.items=items; this.catalog=catalog; this.categories=categories; this.tenant=tenant; this.audit=audit;
     }
 
@@ -61,7 +61,10 @@ public class MenuItemController {
 
     @GetMapping("/all")
     @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')")
-    @Operation(summary = "List active menu items across all active categories, including unavailable items")
+    @Operation(
+            summary = "List active menu items across all active categories, including unavailable items",
+            description = "Items with available=false are returned for visibility but cannot be added to an order. "
+                    + "A Manager can change availability through PATCH /api/v1/menu/items/{id}/availability.")
     public List<AllItemDto> listAll(@AuthenticationPrincipal Jwt jwt) {
         UUID hotel = tenant.hotelId(jwt);
         return items.findAllActiveWithCategory(hotel).stream()

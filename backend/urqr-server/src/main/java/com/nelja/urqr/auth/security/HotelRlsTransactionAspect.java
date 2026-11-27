@@ -16,11 +16,11 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE - 1)
-public class TenantRlsTransactionAspect {
+public class HotelRlsTransactionAspect {
 
-    private final TenantRlsContext rlsContext;
+    private final HotelRlsContext rlsContext;
 
-    public TenantRlsTransactionAspect(TenantRlsContext rlsContext) {
+    public HotelRlsTransactionAspect(HotelRlsContext rlsContext) {
         this.rlsContext = rlsContext;
     }
 
@@ -33,9 +33,9 @@ public class TenantRlsTransactionAspect {
             if (roles instanceof Collection<?> values && values.stream().anyMatch("PLATFORM_ADMIN"::equals)) {
                 rlsContext.allowPlatformAdministration();
             } else {
-                String tenantClaim = jwt.getToken().getClaimAsString("hotel_id");
-                if (tenantClaim != null && !tenantClaim.isBlank()) {
-                    rlsContext.bindTenant(UUID.fromString(tenantClaim));
+                String hotelClaim = jwt.getToken().getClaimAsString("hotel_id");
+                if (hotelClaim != null && !hotelClaim.isBlank()) {
+                    rlsContext.bindHotel(UUID.fromString(hotelClaim));
                 }
             }
         }

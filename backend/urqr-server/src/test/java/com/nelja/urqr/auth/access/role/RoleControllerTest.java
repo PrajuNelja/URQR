@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.nelja.urqr.auth.audit.AuditService;
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ class RoleControllerTest {
     private static final UUID USER_ID = UUID.randomUUID();
 
     @Mock private RoleRepository roles;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
     @Mock private AuditService audit;
     @Captor private ArgumentCaptor<Role> roleCaptor;
     @InjectMocks private RoleController controller;
