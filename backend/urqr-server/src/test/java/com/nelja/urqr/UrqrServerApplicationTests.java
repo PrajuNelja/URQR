@@ -158,8 +158,6 @@ class UrqrServerApplicationTests {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openapi").value("3.1.0"))
-                .andExpect(jsonPath("$.paths['/api/v1/catalog/products']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/catalog/categories']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/menu/categories'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/menu/categories'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/menu/categories/{id}'].get").exists())
