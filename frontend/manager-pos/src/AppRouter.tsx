@@ -19,6 +19,32 @@ import { useAuthStore } from "./lib/authStore";
 const loginSearchSchema = z.object({
   redirect: z.string().optional(),
 });
+const isValidDashboardDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+};
+const dashboardSearchSchema = z
+  .object({
+    from: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .refine(isValidDashboardDate)
+      .optional(),
+    to: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .refine(isValidDashboardDate)
+      .optional(),
+  })
+  .refine(({ from, to }) => !from || !to || from <= to, {
+    path: ["to"],
+    message: "The end date must be on or after the start date.",
+  });
 
 // 2. Root route
 const rootRoute = createRootRoute({
@@ -50,8 +76,9 @@ const loginRoute = createRoute({
 // 5. Dashboard route (PROTECTED)
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/dashboard",
+  path: "/pos/dashboard",
   component: Dashboard,
+  validateSearch: (search) => dashboardSearchSchema.parse(search),
   beforeLoad: ({ location }) => {
     // Guard + Redirect with query param
     if (!useAuthStore.getState().isAuthenticated()) {
@@ -63,12 +90,21 @@ const dashboardRoute = createRoute({
   },
 });
 
+const legacyDashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/dashboard",
+  beforeLoad: () => {
+    throw redirect({ to: "/pos/dashboard", replace: true });
+  },
+});
+
 // 6. Billing route (Accessible directly in POS standalone mode)
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pos/billing",
   component: Billing,
 });
+
 
 // 7. Showcase route
 const showcaseRoute = createRoute({
@@ -82,6 +118,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   dashboardRoute,
+  legacyDashboardRoute,
   billingRoute,
   showcaseRoute,
 ]);

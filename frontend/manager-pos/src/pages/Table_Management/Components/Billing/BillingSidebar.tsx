@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, LogOut, ReceiptText, X } from "lucide-react";
@@ -12,10 +11,7 @@ interface BillingSidebarProps {
   onClose: () => void;
 }
 
-export function BillingSidebar({
-  isOpen,
-  onClose,
-}: BillingSidebarProps) {
+export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
@@ -44,26 +40,19 @@ export function BillingSidebar({
 
       if (event.key !== "Tab") return;
 
-      const elements =
-        sidebarRef.current?.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled])'
-        );
+      const elements = sidebarRef.current?.querySelectorAll<HTMLElement>(
+        "a[href], button:not([disabled])",
+      );
 
       if (!elements?.length) return;
 
       const first = elements[0];
       const last = elements[elements.length - 1];
 
-      if (
-        event.shiftKey &&
-        document.activeElement === first
-      ) {
+      if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
-      } else if (
-        !event.shiftKey &&
-        document.activeElement === last
-      ) {
+      } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
         first.focus();
       }
@@ -158,7 +147,7 @@ export function BillingSidebar({
           </Link>
 
           <Link
-            to="/dashboard"
+            to="/pos/dashboard"
             onClick={onClose}
             className="
               flex min-h-[54px] items-center gap-4
