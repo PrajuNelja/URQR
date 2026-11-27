@@ -16,6 +16,7 @@ import { BillingHeader } from "./BillingHeader";
 import { BillingSidebar } from "./BillingSidebar";
 import { BillingCatalog } from "./BillingCatalog";
 import { BillingCart } from "./BillingCart";
+import { OrderSummarySkeleton } from "./BillingSkeleton";
 import { BillingReceiptModal } from "./BillingReceiptModal";
 import { PosCheckoutModal } from "./PosCheckoutModal";
 
@@ -38,6 +39,7 @@ export default function Billing() {
     setSearchQuery,
 
     filteredDishes,
+    isCatalogLoading,
 
     cart,
     addToCart,
@@ -64,8 +66,30 @@ export default function Billing() {
   // MODAL STATES
   // ==========================================
 
-  const [navOpen, setNavOpen] =
+  const [sidebarCollapsed, setSidebarCollapsed] =
     useState(false);
+
+  const [showSkeleton, setShowSkeleton] =
+    useState(false);
+
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+      root.classList.remove("light");
+    } else {
+      root.classList.add("light");
+      root.classList.remove("dark");
+    }
+  }, [isDark]);
 
   const [previewOpen, setPreviewOpen] =
     useState(false);
@@ -244,7 +268,9 @@ export default function Billing() {
   // ==========================================
 
   return (
-    <main className="urqr-billing-screen">
+    <main
+      className={`urqr-billing-screen dashboard-shell${sidebarCollapsed ? " dashboard-shell--collapsed" : ""}`}
+    >
 
       {/* =================================
           BILLING HEADER
@@ -259,32 +285,43 @@ export default function Billing() {
 
         onMenuClick={() => {
           if (!billingLocked) {
-            setNavOpen(true);
+            setSidebarCollapsed((collapsed) => !collapsed);
           }
         }}
 
-        menuOpen={navOpen}
+        menuOpen={!sidebarCollapsed}
 
         isKeyboardOpen={keyboardOpen}
 
         onToggleKeyboard={toggleKeyboard}
 
         onClearSearch={clearProductSearch}
+
+        isSkeletonPreview={showSkeleton}
+
+        onToggleSkeleton={() => setShowSkeleton((prev) => !prev)}
+
+        isDark={isDark}
+
+        onToggleTheme={() => setIsDark((prev) => !prev)}
       />
 
       {/* =================================
-          BILLING SIDEBAR
+          BILLING SIDEBAR (MATCHES DASHBOARD)
           ================================= */}
 
       <BillingSidebar
-        isOpen={navOpen}
-
-        onClose={() => {
-          setNavOpen(false);
-        }}
+        collapsed={sidebarCollapsed}
       />
 
-      <div className="urqr-billing-workspace">
+      <div
+        className="urqr-billing-workspace"
+        style={{
+          marginLeft: sidebarCollapsed ? "72px" : "240px",
+          width: sidebarCollapsed ? "calc(100% - 72px)" : "calc(100% - 240px)",
+          transition: "margin-left 180ms ease, width 180ms ease",
+        }}
+      >
 
         {/* =================================
             LEFT SECTION - PRODUCT CATALOG
@@ -309,6 +346,7 @@ export default function Billing() {
           >
             <BillingCatalog
               searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
 
               activeTab={activeTab}
 
@@ -323,6 +361,7 @@ export default function Billing() {
               }}
 
               cart={cart}
+              isLoading={isCatalogLoading || showSkeleton}
             />
           </div>
 
@@ -354,10 +393,13 @@ export default function Billing() {
             RIGHT SECTION - ORDER CART
             ================================= */}
 
-        <aside
-          className="urqr-billing-summary"
-          aria-label="Order Summary"
-        >
+        {showSkeleton ? (
+          <OrderSummarySkeleton itemCount={totals.items.length || 3} />
+        ) : (
+          <aside
+            className="urqr-billing-summary"
+            aria-label="Order Summary"
+          >
           <BillingCart
             orderId={orderId}
 
@@ -403,10 +445,11 @@ export default function Billing() {
 
                 className="
                   flex-1 text-xs py-2
-                  text-amber-700
-                  bg-amber-50
-                  hover:bg-amber-100
-                  border-amber-200
+                  text-amber-800 dark:text-[#E08A2E]
+                  bg-amber-50/80 dark:bg-[#332414]
+                  hover:bg-amber-100 dark:hover:bg-[#422E1A]
+                  border-amber-200 dark:border-[#5C3D26]
+                  transition-colors
                 "
 
                 disabled={
@@ -437,10 +480,11 @@ export default function Billing() {
 
                 className="
                   text-xs py-2
-                  text-rose-700
-                  bg-rose-50
-                  hover:bg-rose-100
-                  border-rose-200
+                  text-rose-700 dark:text-[#E55353]
+                  bg-rose-50/80 dark:bg-[#361A1A]
+                  hover:bg-rose-100 dark:hover:bg-[#4A2020]
+                  border-rose-200 dark:border-[#5C2626]
+                  transition-colors
                 "
 
                 disabled={
@@ -469,16 +513,16 @@ export default function Billing() {
             {heldCarts.length > 0 && (
               <div
                 className="
-                  rounded-md border
-                  border-amber-200
-                  bg-amber-50/60
-                  p-2 text-xs
+                  rounded-xl border
+                  border-amber-200 dark:border-[#5C3D26]
+                  bg-amber-50/60 dark:bg-[#2A1E14]
+                  p-2.5 text-xs
                 "
               >
                 <span
                   className="
                     font-semibold
-                    text-amber-800
+                    text-amber-900 dark:text-[#E08A2E]
                   "
                 >
                   Parked Orders (
@@ -487,8 +531,8 @@ export default function Billing() {
 
                 <div
                   className="
-                    mt-1 flex flex-col
-                    gap-1 max-h-24
+                    mt-1.5 flex flex-col
+                    gap-1.5 max-h-28
                     overflow-y-auto
                   "
                 >
@@ -499,14 +543,15 @@ export default function Billing() {
                       className="
                         flex items-center
                         justify-between
-                        rounded bg-white
-                        px-2 py-1
-                        shadow-xs
+                        rounded-lg bg-white dark:bg-[#1F1813]
+                        border border-amber-100 dark:border-[#43352A]
+                        px-2.5 py-1.5
+                        shadow-2xs
                       "
                     >
                       <span
                         className="
-                          text-text-muted
+                          text-[#7A6A5A] dark:text-[#BFAEA0] font-medium
                         "
                       >
                         {held.heldAt} •{" "}
@@ -532,10 +577,11 @@ export default function Billing() {
 
                         className="
                           font-semibold
-                          text-accent
+                          text-[#8B5E3C] dark:text-[#B07C54]
                           hover:underline
                           disabled:cursor-not-allowed
                           disabled:opacity-50
+                          cursor-pointer
                         "
                       >
                         Recall
@@ -599,6 +645,7 @@ export default function Billing() {
             </p>
           </div>
         </aside>
+        )}
       </div>
 
       {/* =====================================

@@ -32,7 +32,9 @@ export const QuantityStepper = ({
   // Determine if buttons should be disabled
   const canDecrease = !disabled && value > min;
   const canIncrease = !disabled && value < max;
-  const btnSizeClass = size === "sm" ? "p-0.5" : "p-1";
+  const isSm = size === "sm";
+  const btnSizeClass = isSm ? "w-6 h-6" : "w-7 h-7";
+  const iconSize = isSm ? 12 : 14;
 
   const handleDecrease = () => {
     if (canDecrease) {
@@ -93,17 +95,17 @@ export const QuantityStepper = ({
     <div
       role="group"
       aria-label="Quantity"
-      className={`flex items-center gap-1 ${disabled ? "opacity-50" : ""} ${className}`}
+      className={`pos-quantity-stepper inline-flex items-center gap-1 p-0.5 rounded-lg border border-[#E3D9CB] dark:border-[#43352A] bg-[#FFFDF8] dark:bg-[#1F1813] shadow-xs ${disabled ? "opacity-50 pointer-events-none" : ""} ${className}`}
     >
       {/* Minus Button */}
       <button
         type="button"
-        className={`flex items-center justify-center rounded ${btnSizeClass} hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none`}
+        className={`pos-quantity-stepper__button flex items-center justify-center rounded-md ${btnSizeClass} border border-transparent bg-transparent text-[#3B2A1E] dark:text-[#F5EEE0] hover:bg-[#F3EFE7] dark:hover:bg-[#2E241C] active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer`}
         aria-label="Decrease quantity"
         onClick={handleDecrease}
         disabled={!canDecrease}
       >
-        <Minus size={14} strokeWidth={2.5} />
+        <Minus size={iconSize} strokeWidth={2.5} />
       </button>
 
       {/* Input Field */}
@@ -117,19 +119,19 @@ export const QuantityStepper = ({
         onKeyDown={handleKeyDown}
         onFocus={(e) => e.target.select()}
         disabled={disabled}
-        className="w-10 text-center rounded border border-transparent bg-transparent font-bold text-[#2d241b] focus:border-[#a46714] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#a46714] transition-all"
+        className={`text-center font-bold font-mono tracking-tight text-[#3B2A1E] dark:text-[#F5EEE0] bg-transparent border-0 outline-none select-all ${isSm ? "w-6 text-xs" : "w-8 text-sm"}`}
         aria-label="Item quantity"
       />
 
       {/* Plus Button */}
       <button
         type="button"
-        className={`flex items-center justify-center rounded ${btnSizeClass} hover:bg-[#e9ddcc] transition-colors disabled:opacity-30 disabled:pointer-events-none`}
+        className={`pos-quantity-stepper__button flex items-center justify-center rounded-md ${btnSizeClass} border border-transparent bg-transparent text-[#3B2A1E] dark:text-[#F5EEE0] hover:bg-[#F3EFE7] dark:hover:bg-[#2E241C] active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer`}
         aria-label="Increase quantity"
         onClick={handleIncrease}
         disabled={!canIncrease}
       >
-        <Plus size={14} strokeWidth={2.5} />
+        <Plus size={iconSize} strokeWidth={2.5} />
       </button>
     </div>
   );

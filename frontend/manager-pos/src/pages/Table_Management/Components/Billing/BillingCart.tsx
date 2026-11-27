@@ -1,9 +1,9 @@
 
 import { useEffect, useRef, useState } from "react";
+import { ShoppingBag } from "lucide-react";
 
 import { Card } from "../../../../components/DataCard/Card";
 import { CartItemRow } from "../../../../components/Cart/CartItemRow";
-import { EmptyState } from "../../../../components/DataCard/EmptyState";
 
 import type { CartItem } from "../../Types/billing.types";
 
@@ -93,10 +93,15 @@ export function BillingCart({
       {/* REUSABLE CART ITEM ROWS */}
       <div className="urqr-billing-cart-items">
         {items.length === 0 ? (
-          <EmptyState
-            message="Cart is empty"
-            description="Add products from the catalog."
-          />
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center my-auto min-h-[260px]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-alt border border-border text-primary shadow-sm mb-4">
+              <ShoppingBag size={30} className="text-primary" strokeWidth={2.2} aria-hidden="true" />
+            </div>
+            <p className="text-base font-bold text-text">Your cart is empty</p>
+            <p className="mt-1.5 text-xs text-text-secondary max-w-[240px] leading-relaxed">
+              Select dishes from the menu catalog to begin adding items to this order.
+            </p>
+          </div>
         ) : (
           items.map(({ dish, quantity }) => (
             <CartItemRow
