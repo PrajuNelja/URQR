@@ -1,6 +1,14 @@
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Lock, CreditCard, CheckCircle2 } from "lucide-react";
+import {
+  ArrowRight,
+  CreditCard,
+} from "lucide-react";
 
 import {
   CheckoutRequestSchema,
@@ -8,6 +16,7 @@ import {
   type PaymentMode,
 } from "@urqr/types";
 
+// REUSABLE COMPONENTS
 import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Button } from "../../../../components/Buttons/Button";
 import { SelectableGroup } from "../../../../components/Header/SelectableGroup";
@@ -15,27 +24,87 @@ import { CashAmountInput } from "../../../../components/Payment/CashAmountInput"
 import { ChangeSummary } from "../../../../components/Payment/ChangeSummary";
 import { NumericKeypad } from "../../../../components/Keypad/NumericKeypad";
 
+// MONEY UTILITIES
 import {
   formatINR,
   parseINRToPaise,
 } from "../../../../lib/money";
 
+// BILLING TYPES
 import type { PaymentMethod } from "../../Types/billing.types";
+
+// CHECKOUT STATUS COMPONENT
+import {
+  CheckoutStatus,
+  type CheckoutStatusType,
+} from "./CheckoutStatus";
+
+// CENTRALIZED CHECKOUT ERROR HANDLER
+import {
+  getCheckoutError,
+  type CheckoutErrorDetails,
+} from "./checkoutErrors";
+
+// ==========================================
+// CHECKOUT PROPS
+// ==========================================
 
 interface PosCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+
   subtotal: number;
   tax: number;
   total: number;
+
   orderId?: string | number;
+
   initialMode?: PaymentMethod | PaymentMode;
+
   isSubmitting?: boolean;
-  onConfirmPayment:
-    (checkout: CheckoutRequest) => void | Promise<void>;
+
+  onConfirmPayment: (
+    checkout: CheckoutRequest
+  ) => Promise<boolean>;
+
+  onViewReceipt: () => void;
 }
 
-// Demo QR only — not valid for real payment
+// ==========================================
+// QUICK CASH BUTTON CONFIGURATION
+// ==========================================
+
+const QUICK_CASH_AMOUNTS = [
+  100,
+  500,
+  2000,
+];
+
+// Existing Style/Theme tokens.
+const QUICK_CASH_BUTTON_CLASS = `
+  !min-w-0
+  !min-h-12
+  !px-1
+  !py-2
+  !rounded-lg
+  !border
+  !border-primary
+  !bg-surface
+  !text-primary
+  !text-sm
+  !font-bold
+  whitespace-nowrap
+  hover:!bg-surface-alt
+  transition-colors
+`;
+
+// ==========================================
+// DEMO UPI QR
+// ==========================================
+
+// Demo QR illustration only.
+// Not valid for actual payment.
+
 const DEMO_DOTS = Array.from(
   { length: 29 * 29 },
   (_, index) => ({
@@ -118,7 +187,25 @@ function DemoUpiQR() {
   );
 }
 
-type LocalPaymentMode = PaymentMode | "Others";
+// ==========================================
+// PAYMENT MODE TYPES
+// ==========================================
+
+type LocalPaymentMode =
+  | "Cash"
+  | "Card"
+  | "UPI";
+
+const normalizePaymentMode = (
+  mode: PaymentMethod | PaymentMode | undefined
+): LocalPaymentMode =>
+  mode === "Card" || mode === "UPI"
+    ? mode
+    : "Cash";
+
+// ==========================================
+// MAIN CHECKOUT COMPONENT
+// ==========================================
 
 export function PosCheckoutModal({
   isOpen,
@@ -128,35 +215,88 @@ export function PosCheckoutModal({
   initialMode = "Cash",
   isSubmitting = false,
   onConfirmPayment,
+  onViewReceipt,
 }: PosCheckoutModalProps) {
-  // Payment mode state
+  // ==========================================
+  // PAYMENT STATES
+  // ==========================================
+
   const [method, setMethod] =
-    useState<LocalPaymentMode>((initialMode as LocalPaymentMode) || "Cash");
+    useState<LocalPaymentMode>(
+      normalizePaymentMode(initialMode)
+    );
 
-  // Initial cash amount is zero
   const [cashReceived, setCashReceived] =
-    useState(initialMode === "Cash" ? "0.00" : String(total));
+    useState(
+      normalizePaymentMode(initialMode) === "Cash"
+        ? "0.00"
+        : String(total)
+    );
 
-  const [error, setError] = useState("");
-  const [processing, setProcessing] = useState(false);
+  // Structured error details for scenario-based
+  // checkout messages.
+  const [error, setError] =
+    useState<CheckoutErrorDetails | null>(
+      null
+    );
 
+  const [checkoutStatus, setCheckoutStatus] =
+    useState<CheckoutStatusType>("idle");
+
+  // Preserve the original payable amount
+  // after successful checkout clears the cart.
+  const [
+    confirmedAmountPaise,
+    setConfirmedAmountPaise,
+  ] = useState(0);
+
+  // Immediate protection against repeated clicks.
   const submittingRef = useRef(false);
 
-  // Reset Cash / UPI states when modal opens
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  // Preserve tender details after an uncertain
+  // transaction so the cashier cannot change them.
+  const [
+    retryLocked,
+    setRetryLocked,
+  ] = useState(false);
+
+  // ==========================================
+  // RESET MODAL WHEN REOPENED
+  // ==========================================
+
+  const [prevIsOpen, setPrevIsOpen] =
+    useState(isOpen);
+
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
-    if (isOpen) {
-      setMethod((initialMode as PaymentMode) || "Cash");
-      setCashReceived(initialMode === "Cash" ? "0.00" : String(total));
-      setError("");
-      setProcessing(false);
+
+    if (isOpen && !retryLocked) {
+      const mode =
+        normalizePaymentMode(initialMode);
+
+      setMethod(mode);
+
+      setCashReceived(
+        mode === "Cash"
+          ? "0.00"
+          : String(total)
+      );
+
+      setError(null);
+      setCheckoutStatus("idle");
+      setConfirmedAmountPaise(0);
     }
   }
 
-  // Work in integer paise
+  // ==========================================
+  // INTEGER PAISE CALCULATIONS
+  // ==========================================
+
   const payablePaise = Number.isFinite(total)
-    ? Math.max(0, Math.round(total * 100))
+    ? Math.max(
+        0,
+        Math.round(total * 100)
+      )
     : 0;
 
   const receivedPaise =
@@ -164,29 +304,108 @@ export function PosCheckoutModal({
 
   const enoughCash =
     receivedPaise !== null &&
+    Number.isSafeInteger(receivedPaise) &&
     receivedPaise >= payablePaise;
 
-  const busy = processing || isSubmitting;
+  // ==========================================
+  // CHECKOUT LOADING STATE
+  // ==========================================
 
+  // Combine local processing state with
+  // TanStack Query mutation state.
+  const busy =
+    checkoutStatus === "processing" ||
+    isSubmitting;
+
+  const showStatusPopup =
+    busy ||
+    checkoutStatus !== "idle";
+
+  // Lock payment details while processing
+  // or while a previous result is unresolved.
+  const paymentDetailsLocked =
+    busy || retryLocked;
+
+  // Current mock API supports Cash only.
   const canConfirm =
-    method === "Cash"
-      ? payablePaise > 0 && enoughCash && !busy
-      : !busy;
+    isOpen &&
+    !busy &&
+    checkoutStatus === "idle" &&
+    method === "Cash" &&
+    Number.isSafeInteger(payablePaise) &&
+    payablePaise > 0 &&
+    enoughCash;
 
-  // Confirm demo payment
-  const confirmPayment = useCallback(async () => {
-    if (submittingRef.current || busy) {
+  // ==========================================
+  // UPDATE CASH AMOUNT
+  // ==========================================
+
+  const updateCashAmount = (
+    value: string
+  ) => {
+    if (
+      paymentDetailsLocked ||
+      submittingRef.current ||
+      checkoutStatus !== "idle"
+    ) {
       return;
     }
 
-    if (method === "Cash") {
-      if (!canConfirm) return;
-      const amountTendered = receivedPaise ?? 0;
+    setCashReceived(value);
+    setError(null);
+  };
 
-      const result = CheckoutRequestSchema.safeParse({
+  // ==========================================
+  // CONFIRM PAYMENT
+  // ==========================================
+
+  const confirmPayment = useCallback(async () => {
+    // Prevent duplicate payment submission.
+    if (
+      submittingRef.current ||
+      busy ||
+      !canConfirm
+    ) {
+      return;
+    }
+
+    // ======================================
+    // SCENARIO 1 - OFFLINE BEFORE SUBMISSION
+    // ======================================
+
+    if (!navigator.onLine) {
+      setError({
+        title: "No Internet Connection",
+
+        message: retryLocked
+          ? "Reconnect to the network. Your previous transaction is still unresolved."
+          : "Reconnect to the internet before submitting your payment.",
+
+        requiresVerification: retryLocked,
+      });
+
+      setCheckoutStatus("error");
+
+      return;
+    }
+
+    // ======================================
+    // SCENARIO 2 - VALIDATE PAYMENT DETAILS
+    // ======================================
+
+    const amountTendered =
+      receivedPaise ?? 0;
+
+    const parsed =
+      CheckoutRequestSchema.safeParse({
         paymentMode: "Cash",
-        payableAmount: payablePaise / 100,
-        amountTendered: amountTendered / 100,
+
+        payableAmount:
+          payablePaise / 100,
+
+        amountTendered:
+          amountTendered / 100,
+
         changeDue:
           Math.max(
             0,
@@ -194,494 +413,1040 @@ export function PosCheckoutModal({
           ) / 100,
       });
 
-      if (!result.success) {
-        setError("Invalid cash payment details.");
+    if (!parsed.success) {
+      setError({
+        title: "Invalid Payment Details",
+
+        message:
+          "Check the payable amount and cash collected.",
+
+        requiresVerification: retryLocked,
+      });
+
+      setCheckoutStatus("error");
+
+      return;
+    }
+
+    // ======================================
+    // SCENARIO 3 - PAYMENT PROCESSING
+    // ======================================
+
+    // Lock immediately before API submission.
+    submittingRef.current = true;
+
+    // Preserve original payment amount.
+    setConfirmedAmountPaise(
+      payablePaise
+    );
+
+    setError(null);
+
+    // Display centered processing popup.
+    setCheckoutStatus("processing");
+
+    try {
+      // Execute existing checkout mutation.
+      const completed =
+        await onConfirmPayment(
+          parsed.data
+        );
+
+      // Never display success without
+      // a confirmed checkout result.
+      if (completed !== true) {
+        throw new Error(
+          "Order confirmation was not completed."
+        );
+      }
+
+      // ====================================
+      // SCENARIO 4 - SUCCESSFUL PAYMENT
+      // ====================================
+
+      setRetryLocked(false);
+
+      setError(null);
+
+      // Success remains visible until
+      // View Receipt is clicked.
+      setCheckoutStatus("success");
+
+    } catch (err) {
+      // ====================================
+      // SCENARIO 5 - CHECKOUT FAILURE
+      // ====================================
+
+      // Detect actual HTTP, network, timeout,
+      // server or unresolved checkout errors.
+      const errorDetails =
+        getCheckoutError(err);
+
+      // Retain existing unresolved state.
+      const requiresVerification =
+        retryLocked ||
+        errorDetails.requiresVerification;
+
+      setError({
+        ...errorDetails,
+        requiresVerification,
+      });
+
+      // Prevent changing original payment
+      // details if transaction is uncertain.
+      if (requiresVerification) {
+        setRetryLocked(true);
+      }
+
+      // Display scenario-specific error popup.
+      setCheckoutStatus("error");
+
+    } finally {
+      // Always release the local submission lock.
+      submittingRef.current = false;
+    }
+  }, [
+    busy,
+    canConfirm,
+    payablePaise,
+    receivedPaise,
+    retryLocked,
+    onConfirmPayment,
+  ]);
+
+  // ==========================================
+  // VIEW RECEIPT AFTER SUCCESS
+  // ==========================================
+
+  const handleViewReceipt =
+    useCallback(() => {
+      if (
+        busy ||
+        submittingRef.current ||
+        checkoutStatus !== "success"
+      ) {
         return;
       }
 
-      submittingRef.current = true;
-      setProcessing(true);
-      setError("");
+      // Existing Billing.tsx function
+      // opens the confirmed receipt.
+      onViewReceipt();
 
-      try {
-        await onConfirmPayment(result.data);
-      } catch {
-        setError("Unable to complete payment.");
-      } finally {
-        submittingRef.current = false;
-        setProcessing(false);
-      }
-    } else {
-      const mode = method === "Card" ? "Card" : method === "UPI" ? "UPI" : "Others";
-      const result = CheckoutRequestSchema.safeParse({
-        paymentMode: mode,
-        payableAmount: payablePaise / 100,
-        amountTendered: payablePaise / 100,
-        changeDue: 0,
-      });
+    }, [
+      busy,
+      checkoutStatus,
+      onViewReceipt,
+    ]);
 
-      if (!result.success) return;
+  // ==========================================
+  // RETURN TO CHECKOUT AFTER ERROR
+  // ==========================================
 
-      submittingRef.current = true;
-      setProcessing(true);
-      setError("");
-
-      try {
-        await onConfirmPayment(result.data);
-      } catch {
-        setError("Unable to complete payment.");
-      } finally {
-        submittingRef.current = false;
-        setProcessing(false);
-      }
+  const handleBackToCheckout = () => {
+    if (
+      busy ||
+      submittingRef.current
+    ) {
+      return;
     }
-  }, [busy, canConfirm, method, onConfirmPayment, payablePaise, receivedPaise]);
 
-  // Keyboard shortcut listener: Enter to confirm
+    // Preserve error information.
+    // Preserve cash amount and retry protection.
+    // Never reset the Idempotency-Key here.
+    setCheckoutStatus("idle");
+  };
+
+  // ==========================================
+  // KEYBOARD SHORTCUT - ENTER
+  // ==========================================
+
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      // Prevent repeated Enter presses.
+      if (
+        busy ||
+        submittingRef.current ||
+        event.repeat
+      ) {
+        event.preventDefault();
+        return;
+      }
+
+      // Preserve normal keyboard behavior
+      // for focused interactive elements.
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest(
+          "button, [role='button'], [role='tab']"
+        )
+      ) {
+        return;
+      }
+
+      // Enter opens receipt after success.
+      if (checkoutStatus === "success") {
+        event.preventDefault();
+
+        handleViewReceipt();
+
+        return;
+      }
+
+      // Enter confirms valid cash checkout.
+      if (
+        checkoutStatus === "idle" &&
+        canConfirm
+      ) {
+        event.preventDefault();
+
         void confirmPayment();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, confirmPayment]);
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
 
-  // Handle payment method selection
-  const changePaymentMethod = (value: string) => {
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [
+    isOpen,
+    busy,
+    canConfirm,
+    checkoutStatus,
+    confirmPayment,
+    handleViewReceipt,
+  ]);
+
+  // ==========================================
+  // PAYMENT METHOD SELECTION
+  // ==========================================
+
+  const changePaymentMethod = (
+    value: string
+  ) => {
+    if (
+      paymentDetailsLocked ||
+      submittingRef.current ||
+      checkoutStatus !== "idle"
+    ) {
+      return;
+    }
+
     if (
       value === "Cash" ||
       value === "Card" ||
-      value === "UPI" ||
-      value === "Others"
+      value === "UPI"
     ) {
-      setMethod(value as LocalPaymentMode);
-      setError("");
-      if (value !== "Cash") {
-        setCashReceived(total.toFixed(2));
+      setMethod(value);
+
+      setError(null);
+
+      if (value === "Cash") {
+        setCashReceived("0.00");
+      } else {
+        setCashReceived(
+          total.toFixed(2)
+        );
       }
     }
   };
 
+  // ==========================================
+  // MODAL CLOSE HANDLER
+  // ==========================================
+
+  const handleClose = () => {
+    // Do not close during processing.
+    if (
+      busy ||
+      submittingRef.current
+    ) {
+      return;
+    }
+
+    // Open receipt after successful payment.
+    if (checkoutStatus === "success") {
+      handleViewReceipt();
+
+      return;
+    }
+
+    // Return to unchanged checkout when
+    // the previous transaction is unresolved.
+    if (retryLocked) {
+      setCheckoutStatus("idle");
+
+      return;
+    }
+
+    onClose();
+  };
+
+  // ==========================================
+  // CHECKOUT MODAL UI
+  // ==========================================
+
   return (
     <PopupModal
       isOpen={isOpen}
-      onClose={() => {
-        if (!busy) onClose();
-      }}
-      closeOnEscape={!busy}
-      closeOnBackdrop={!busy}
-      title="POS Checkout & Tender"
+
+      onClose={handleClose}
+
+      closeOnEscape={
+        !busy &&
+        !retryLocked &&
+        checkoutStatus !== "success"
+      }
+
+      closeOnBackdrop={
+        !busy &&
+        !retryLocked &&
+        checkoutStatus !== "success"
+      }
+
+      title={
+        showStatusPopup
+          ? "Checkout Status"
+          : "POS Checkout & Tender"
+      }
+
       size="md"
-      className="
+
+      className={`
         !min-w-0
         !max-w-md
-        !h-[670px]
         !max-h-[calc(100dvh-32px)]
-      "
+
+        ${
+          showStatusPopup
+            ? "!h-auto"
+            : "!h-[670px]"
+        }
+      `}
+
+      footer={
+        !showStatusPopup &&
+        method === "Cash" ? (
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            fullWidth
+
+            disabled={!canConfirm}
+
+            isLoading={busy}
+
+            className="!min-h-10"
+
+            onClick={() => {
+              void confirmPayment();
+            }}
+          >
+            {retryLocked
+              ? "Retry Original Checkout"
+              : "Confirm & Print Receipt (Enter)"}
+          </Button>
+        ) : undefined
+      }
     >
-      {/* MAIN CONTENT
-          20px bottom padding for Cash and UPI */}
-      <div
-        className="
-          flex h-full min-h-0
-          w-full min-w-0
-          flex-col gap-3
-          pb-5
-        "
-      >
+      {/* =====================================
+          CHECKOUT STATUS POPUP
+          ===================================== */}
 
-        {/* 1. ENTER TOTAL AMOUNT */}
-        {method === "Cash" && (
-          <section className="w-full min-w-0 shrink-0 space-y-1">
-
-            <label
-              className="
-                block text-xs font-bold
-                uppercase tracking-wide
-                text-primary
-              "
-            >
-              Enter Total Amount
-            </label>
-
-            <div
-              className="
-                flex min-h-10 w-full
-                items-center rounded-md
-                border border-border-subtle
-                bg-surface-alt px-3
-                font-bold text-primary
-              "
-              aria-label="Total payable, read only"
-            >
-              {formatINR(payablePaise)}
-            </div>
-
-            <p className="text-[11px] text-text-muted">
-              {orderId !== undefined
-                ? `Order #${orderId} · `
-                : ""}
-              Same payable total · Read-only
-            </p>
-          </section>
-        )}
-
-        {/* 2. PAYMENT METHOD
-            Aligned with other sections */}
-        <section
+      {showStatusPopup ? (
+        <div
           className="
-            w-full min-w-0 shrink-0
-            pt-3 pb-3
+            flex w-full min-w-0
+            flex-col items-center
+            justify-center
+            overflow-y-auto
           "
         >
-          <h3
-            className="
-              mb-2 text-xs font-bold
-              uppercase tracking-wide
-              text-primary
-            "
-          >
-            Payment Method
-          </h3>
+          <CheckoutStatus
+            status={
+              busy
+                ? "processing"
+                : checkoutStatus
+            }
 
-          {/* REUSABLE SELECTABLE GROUP */}
-          <SelectableGroup
-            options={[
-              { value: "Cash", label: "Cash" },
-              { value: "Card", label: "Card" },
-              { value: "UPI", label: "UPI" },
-              { value: "Others", label: "Others" },
-            ]}
-            value={method}
-            onChange={changePaymentMethod}
-            className="
-              !my-0 w-full
-              [&>button]:!min-h-9
-              [&>button]:!py-2
-            "
+            amountPaise={
+              confirmedAmountPaise
+            }
+
+            error={error}
+
+            onViewReceipt={
+              handleViewReceipt
+            }
+
+            onBackToCheckout={
+              handleBackToCheckout
+            }
           />
-        </section>
+        </div>
+      ) : (
+        /* ===================================
+           NORMAL CHECKOUT CONTENT
+           =================================== */
 
-        {/* 3. CASH PAYMENT */}
-        {method === "Cash" && (
-          <>
+        <div
+          className="
+            flex h-full min-h-0
+            w-full min-w-0
+            flex-col gap-3
+            pb-5
+          "
+        >
+          {/* =================================
+              1. TOTAL AMOUNT
+              ================================= */}
+
+          {method === "Cash" && (
             <section
               className="
-                w-full min-w-0 shrink-0
-                rounded-lg border
-                border-border-subtle
-                bg-surface-alt p-3
-
-                [&_.pos-cash-input__field]:!h-10
-                [&_.pos-cash-input__quick]:!mt-2
-                [&_.pos-cash-input__quick]:!gap-2
-                [&_.pos-cash-input__button]:!min-h-9
-                [&_.pos-change-summary]:!min-h-[54px]
-                [&_.pos-change-summary]:!p-2
-                [&_.pos-change-summary_strong]:!text-xl
+                w-full min-w-0
+                shrink-0 space-y-1
               "
             >
+              <label
+                className="
+                  block text-xs
+                  font-bold uppercase
+                  tracking-wide
+                  text-primary
+                "
+              >
+                Total Amount
+              </label>
 
-              {/* CASH COLLECTED HEADER */}
               <div
                 className="
-                  mb-2 flex items-center
-                  justify-between gap-3
+                  flex min-h-10 w-full
+                  items-center rounded-md
+                  border border-border-subtle
+                  bg-surface-alt px-3
+                  font-bold text-primary
                 "
-              >
-                <h3 className="text-sm font-bold text-primary">
-                  Cash Collected
-                </h3>
 
-                {/* REUSABLE CLEAR BUTTON */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => {
-                    setCashReceived("0.00");
-                    setError("");
-                  }}
-                >
-                  Clear
-                </Button>
-              </div>
-
-              {/* REUSABLE CASH INPUT
-                  Includes +₹50, +₹100, +₹200 */}
-              <CashAmountInput
-                value={cashReceived}
-                onChange={(value) => {
-                  if (!busy) {
-                    setCashReceived(value);
-                    setError("");
-                  }
-                }}
-              />
-
-              {/* Quick Cash Presets */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setCashReceived((payablePaise / 100).toFixed(2))}
-                  className="shrink-0 px-3 py-1.5 rounded-lg border border-[#2d241b] bg-[#2d241b] text-white text-xs font-bold hover:bg-[#433628]"
-                >
-                  Exact (₹{(payablePaise / 100).toFixed(2)})
-                </button>
-                {[50, 100, 200, 500, 2000].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setCashReceived(amt.toFixed(2))}
-                    className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#e4d5bd] bg-white text-[#705e4b] text-xs font-bold hover:bg-[#f5efe6]"
-                  >
-                    ₹{amt}
-                  </button>
-                ))}
-              </div>
-
-              {/* Touch Numeric Keypad */}
-              <div className="mt-2 scale-90 origin-top">
-                <NumericKeypad
-                  onDigit={(d) => {
-                    setCashReceived((prev) => {
-                      if (prev === "0.00" || prev === "0") return d;
-                      return prev + d;
-                    });
-                  }}
-                  onBackspace={() => {
-                    setCashReceived((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0"));
-                  }}
-                  onClear={() => setCashReceived("0.00")}
-                />
-              </div>
-
-              {/* REUSABLE CHANGE SUMMARY */}
-              <div className="mt-2">
-                <div className="text-xs font-bold text-primary mb-1">
-                  Change Due
-                </div>
-                <ChangeSummary
-                  amountDuePaise={payablePaise}
-                  amountReceivedPaise={receivedPaise}
-                />
-              </div>
-            </section>
-
-            {/* AMOUNT TO PAY */}
-            <div
-              className="
-                flex w-full shrink-0
-                items-center justify-between gap-3
-              "
-            >
-              <span
-                className="
-                  text-sm font-semibold text-primary
-                "
-              >
-                Amount to pay
-              </span>
-
-              <strong
-                className="
-                  whitespace-nowrap
-                  text-xl font-bold text-primary
-                "
+                aria-label="Total payable, read only"
               >
                 {formatINR(payablePaise)}
-              </strong>
-            </div>
-
-            {/* INSUFFICIENT CASH WARNING */}
-            {!enoughCash && (
-              <p
-                role="status"
-                className="
-                  shrink-0 text-[11px]
-                  text-warning-text
-                "
-              >
-                Insufficient cash tendered. Negative balance submission prevented.
-              </p>
-            )}
-
-            {/* ERROR MESSAGE */}
-            {error && (
-              <p
-                role="alert"
-                className="
-                  shrink-0 text-xs text-error-text
-                "
-              >
-                {error}
-              </p>
-            )}
-
-            {/* REUSABLE CONFIRM BUTTON */}
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              fullWidth
-              isLoading={busy}
-              disabled={!canConfirm}
-              className="
-                mt-auto !min-h-10
-                shrink-0
-              "
-              onClick={() => {
-                void confirmPayment();
-              }}
-            >
-              Confirm & Print Receipt (Enter)
-            </Button>
-          </>
-        )}
-
-        {/* 4. CARD PAYMENT */}
-        {method === "Card" && (
-          <div className="flex flex-col items-center justify-center p-6 text-center rounded-xl border border-border-subtle bg-surface-alt flex-1 gap-3">
-            <CreditCard size={48} className="text-primary mb-2" />
-            <h4 className="font-sans text-base font-bold text-primary">Card Payment EDC Terminal</h4>
-            <p className="text-xs text-text-muted max-w-xs">
-              Swipe, tap, or insert customer card on external terminal.
-            </p>
-            <div className="rounded-lg bg-surface border border-border-subtle px-6 py-2 mt-2">
-              <span className="text-xs font-bold text-primary">{formatINR(payablePaise)}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#2f7a45] font-semibold mt-2">
-              <CheckCircle2 size={16} />
-              <span>Ready for 1-Tap instant authorization</span>
-            </div>
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              fullWidth
-              isLoading={busy}
-              className="mt-auto !min-h-10 shrink-0"
-              onClick={() => void confirmPayment()}
-            >
-              Confirm & Print Receipt (Enter)
-            </Button>
-          </div>
-        )}
-
-        {/* 5. UPI PAYMENT */}
-        {method === "UPI" && (
-          <>
-            <section
-              className="
-                flex w-full min-h-0 flex-1
-                flex-col items-center
-                justify-center gap-3
-                rounded-lg border
-                border-border-subtle
-                bg-surface-alt p-3
-              "
-            >
-
-              {/* DEMO QR */}
-              <div className="rounded-md bg-white p-3">
-                <DemoUpiQR />
-              </div>
-
-              {/* BORDERLESS PROVIDER LABELS */}
-              <div
-                className="
-                  flex flex-wrap items-center
-                  justify-center gap-x-4 gap-y-1
-                "
-              >
-                {[
-                  "GPay",
-                  "PhonePe",
-                  "Paytm",
-                  "BHIM",
-                ].map((provider) => (
-                  <span
-                    key={provider}
-                    className="
-                      text-[11px] font-medium
-                      text-text-muted
-                    "
-                  >
-                    {provider}
-                  </span>
-                ))}
               </div>
 
               <p
                 className="
-                  text-center text-[11px]
+                  text-[11px]
                   text-text-muted
                 "
               >
-                Demo QR only — not valid for payment.
+                {orderId !== undefined
+                  ? `Order #${orderId} · `
+                  : ""}
+
+                Same payable total · Read-only
               </p>
             </section>
+          )}
 
-            {/* UPI BUTTON DISABLED UNTIL
-                REAL PAYMENT INTEGRATION */}
-            <Button
-              type="button"
-              variant="primary"
-              fullWidth
-              disabled
-              rightIcon={
-                <ArrowRight size={15} />
-              }
-              className="
-                !min-h-10 shrink-0
-              "
-            >
-              COMPLETE PAYMENT (
-              {formatINR(payablePaise)})
-            </Button>
+          {/* =================================
+              2. UNRESOLVED TRANSACTION WARNING
+              ================================= */}
 
-            {/* UPI FOOTER */}
+          {retryLocked && (
             <div
+              role="alert"
               className="
-                flex shrink-0 items-center
-                justify-center gap-1.5
-                border-t border-border-subtle
-                pt-2 text-center
-                text-[10px] text-text-muted
+                shrink-0 rounded-lg
+                border border-border-subtle
+                bg-surface-alt p-3
+                text-xs leading-relaxed
+                text-primary
               "
             >
-              <Lock size={12} />
+              <p className="font-bold">
+                Previous Order Pending
+              </p>
 
-              <span>
-                Demo mode · Payment verification unavailable
-              </span>
+              <p className="mt-1">
+                Payment details are locked to
+                prevent duplicate orders.
+                Verify the previous transaction
+                before retrying the original
+                checkout.
+              </p>
             </div>
-          </>
-        )}
+          )}
 
-        {/* 5. OTHERS
-            No payment functionality */}
-        {method === "Others" && (
-          <div
-            className="
-              flex w-full flex-1
-              items-center justify-center
-            "
+          {/* =================================
+              3. PAYMENT METHOD
+              ================================= */}
+
+          <fieldset
+            disabled={paymentDetailsLocked}
+
+            className={`
+              m-0 w-full min-w-0
+              shrink-0 border-0
+              px-0 pt-3 pb-3
+
+              ${
+                paymentDetailsLocked
+                  ? "pointer-events-none opacity-60"
+                  : ""
+              }
+            `}
           >
-            <p className="text-sm text-text-muted">
-              Others payment is not configured yet.
-            </p>
-          </div>
-        )}
+            <legend
+              className="
+                mb-2 text-xs
+                font-bold uppercase
+                tracking-wide
+                text-primary
+              "
+            >
+              Payment Method
+            </legend>
 
-      </div>
+            {/* REUSABLE SELECTABLE GROUP */}
+
+            <SelectableGroup
+              options={[
+                {
+                  value: "Cash",
+                  label: "Cash",
+                },
+                {
+                  value: "Card",
+                  label: "Card",
+                },
+                {
+                  value: "UPI",
+                  label: "UPI",
+                },
+              ]}
+
+              value={method}
+
+              onChange={
+                changePaymentMethod
+              }
+
+              className="
+                !my-0 w-full
+                [&>button]:!min-h-9
+                [&>button]:!py-2
+              "
+            />
+          </fieldset>
+
+          {/* =================================
+              4. CASH PAYMENT
+              ================================= */}
+
+          {method === "Cash" && (
+            <>
+              <fieldset
+                disabled={paymentDetailsLocked}
+
+                className={`
+                  m-0 w-full min-w-0
+                  shrink-0 rounded-lg
+                  border border-border-subtle
+                  bg-surface-alt p-3
+
+                  [&_.pos-cash-input__field]:!h-10
+
+                  [&_.pos-change-summary]:!min-h-[54px]
+                  [&_.pos-change-summary]:!p-2
+                  [&_.pos-change-summary_strong]:!text-xl
+
+                  ${
+                    paymentDetailsLocked
+                      ? "pointer-events-none opacity-60"
+                      : ""
+                  }
+                `}
+              >
+                {/* CASH COLLECTED HEADER */}
+
+                <div
+                  className="
+                    mb-2 flex items-center
+                    justify-between gap-3
+                  "
+                >
+                  <h3
+                    className="
+                      text-sm font-bold
+                      text-primary
+                    "
+                  >
+                    Cash Collected
+                  </h3>
+
+                  {/* REUSABLE CLEAR BUTTON */}
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+
+                    disabled={
+                      paymentDetailsLocked
+                    }
+
+                    onClick={() => {
+                      updateCashAmount(
+                        "0.00"
+                      );
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+
+                {/* REUSABLE CASH AMOUNT INPUT */}
+
+                <div
+                  className="
+                    w-full min-w-0
+                    [&_.pos-cash-input__quick]:!hidden
+                    [&_.pos-cash-input__button]:!hidden
+                    [&_button]:!hidden
+                  "
+                >
+                  <CashAmountInput
+                    value={cashReceived}
+
+                    onChange={
+                      updateCashAmount
+                    }
+                  />
+                </div>
+
+                {/* =================================
+                    FOUR OUTLINED QUICK CASH BUTTONS
+                    ================================= */}
+
+                <div
+                  className="
+                    mt-3 mb-3
+                    grid w-full min-w-0
+                    grid-cols-4 gap-2
+                  "
+                >
+                  {/* EXACT CASH */}
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    fullWidth
+
+                    disabled={
+                      paymentDetailsLocked ||
+                      payablePaise <= 0
+                    }
+
+                    className={`
+                      ${QUICK_CASH_BUTTON_CLASS}
+                      !text-xs
+                    `}
+
+                    onClick={() => {
+                      updateCashAmount(
+                        (
+                          payablePaise / 100
+                        ).toFixed(2)
+                      );
+                    }}
+                  >
+                    Exact Cash
+                  </Button>
+
+                  {/* ₹100, ₹500, ₹2000 */}
+
+                  {QUICK_CASH_AMOUNTS.map(
+                    (amount) => (
+                      <Button
+                        key={amount}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        fullWidth
+
+                        disabled={
+                          paymentDetailsLocked
+                        }
+
+                        className={
+                          QUICK_CASH_BUTTON_CLASS
+                        }
+
+                        onClick={() => {
+                          updateCashAmount(
+                            amount.toFixed(2)
+                          );
+                        }}
+                      >
+                        ₹{amount}
+                      </Button>
+                    )
+                  )}
+                </div>
+
+                {/* =================================
+                    REUSABLE NUMERIC KEYPAD
+                    ================================= */}
+
+                <div
+                  className="
+                    mt-2 scale-90 origin-top
+                  "
+                >
+                  <NumericKeypad
+                    onDigit={(digit) => {
+                      if (
+                        paymentDetailsLocked ||
+                        submittingRef.current ||
+                        checkoutStatus !== "idle"
+                      ) {
+                        return;
+                      }
+
+                      setCashReceived(
+                        (previous) => {
+                          if (
+                            previous === "0.00" ||
+                            previous === "0"
+                          ) {
+                            return digit;
+                          }
+
+                          return previous + digit;
+                        }
+                      );
+
+                      setError(null);
+                    }}
+
+                    onBackspace={() => {
+                      if (
+                        paymentDetailsLocked ||
+                        submittingRef.current ||
+                        checkoutStatus !== "idle"
+                      ) {
+                        return;
+                      }
+
+                      setCashReceived(
+                        (previous) =>
+                          previous.length > 1
+                            ? previous.slice(
+                                0,
+                                -1
+                              )
+                            : "0"
+                      );
+
+                      setError(null);
+                    }}
+
+                    onClear={() => {
+                      updateCashAmount(
+                        "0.00"
+                      );
+                    }}
+                  />
+                </div>
+
+                {/* =================================
+                    REUSABLE CHANGE SUMMARY
+                    ================================= */}
+
+                <div className="mt-2">
+                  <div
+                    className="
+                      mb-1 text-xs
+                      font-bold
+                      text-primary
+                    "
+                  >
+                    Change Due
+                  </div>
+
+                  <ChangeSummary
+                    amountDuePaise={
+                      payablePaise
+                    }
+
+                    amountReceivedPaise={
+                      receivedPaise
+                    }
+                  />
+                </div>
+              </fieldset>
+
+              {/* AMOUNT TO PAY */}
+
+              <div
+                className="
+                  flex w-full shrink-0
+                  items-center
+                  justify-between gap-3
+                "
+              >
+                <span
+                  className="
+                    text-sm font-semibold
+                    text-primary
+                  "
+                >
+                  Amount to pay
+                </span>
+
+                <strong
+                  className="
+                    whitespace-nowrap
+                    text-xl font-bold
+                    text-primary
+                  "
+                >
+                  {formatINR(payablePaise)}
+                </strong>
+              </div>
+
+              {/* INSUFFICIENT CASH WARNING */}
+
+              {!enoughCash && (
+                <p
+                  role="status"
+
+                  className="
+                    shrink-0 text-[11px]
+                    text-warning-text
+                  "
+                >
+                  Insufficient cash tendered.
+                  Negative balance submission
+                  prevented.
+                </p>
+              )}
+
+              {/* PREVIOUS CHECKOUT ERROR */}
+
+              {error && (
+                <div
+                  role="alert"
+
+                  className="
+                    shrink-0 rounded-md
+                    border border-red-200
+                    p-3 text-xs
+                    text-red-700
+                  "
+                >
+                  <p className="font-semibold">
+                    {error.title}
+                  </p>
+
+                  <p className="mt-1 break-words">
+                    {error.message}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* =================================
+              5. CARD PAYMENT
+              ================================= */}
+
+          {method === "Card" && (
+            <section
+              className="
+                flex flex-1 flex-col
+                items-center justify-center
+                gap-4 rounded-xl
+                border border-border-subtle
+                bg-surface-alt
+                p-6 text-center
+              "
+            >
+              <CreditCard
+                size={48}
+                className="text-primary"
+                aria-hidden="true"
+              />
+
+              <h4
+                className="
+                  text-base font-bold
+                  text-primary
+                "
+              >
+                Card Payment EDC Terminal
+              </h4>
+
+              <p
+                className="
+                  max-w-xs text-xs
+                  text-text-muted
+                "
+              >
+                Card terminal integration
+                is currently unavailable.
+              </p>
+
+              <div
+                className="
+                  rounded-lg
+                  border border-border-subtle
+                  bg-surface px-6 py-3
+                "
+              >
+                <strong
+                  className="
+                    text-lg font-bold
+                    text-primary
+                  "
+                >
+                  {formatINR(payablePaise)}
+                </strong>
+              </div>
+
+              <p
+                className="
+                  text-xs text-warning-text
+                "
+              >
+                Do not collect card payment
+                through this demo checkout.
+              </p>
+
+              <Button
+                type="button"
+                variant="primary"
+                fullWidth
+                disabled
+              >
+                Confirm Card Payment
+              </Button>
+            </section>
+          )}
+
+          {/* =================================
+              6. UPI PAYMENT
+              ================================= */}
+
+          {method === "UPI" && (
+            <>
+              <section
+                className="
+                  flex w-full min-h-0
+                  flex-1 flex-col
+                  items-center justify-center
+                  gap-4 rounded-lg
+                  border border-border-subtle
+                  bg-surface-alt p-3
+                "
+              >
+                {/* DEMO QR IMAGE */}
+
+                <div
+                  className="
+                    rounded-md bg-white p-3
+                  "
+                >
+                  <DemoUpiQR />
+                </div>
+
+                <strong
+                  className="
+                    text-xl font-bold
+                    text-primary
+                  "
+                >
+                  {formatINR(payablePaise)}
+                </strong>
+
+                {/* UPI PROVIDER LABELS */}
+
+                <div
+                  className="
+                    flex flex-wrap
+                    items-center justify-center
+                    gap-x-4 gap-y-1
+                  "
+                >
+                  {[
+                    "GPay",
+                    "PhonePe",
+                    "Paytm",
+                    "BHIM",
+                  ].map((provider) => (
+                    <span
+                      key={provider}
+
+                      className="
+                        text-[11px]
+                        font-medium
+                        text-text-muted
+                      "
+                    >
+                      {provider}
+                    </span>
+                  ))}
+                </div>
+
+                <p
+                  className="
+                    text-center
+                    text-[11px]
+                    text-text-muted
+                  "
+                >
+                  Demo QR only — not valid
+                  for payment.
+                </p>
+              </section>
+
+              <Button
+                type="button"
+                variant="primary"
+                fullWidth
+                disabled
+
+                rightIcon={
+                  <ArrowRight size={15} />
+                }
+
+                className="
+                  !min-h-10 shrink-0
+                "
+              >
+                COMPLETE PAYMENT (
+                {formatINR(payablePaise)})
+              </Button>
+            </>
+          )}
+        </div>
+      )}
     </PopupModal>
   );
 }

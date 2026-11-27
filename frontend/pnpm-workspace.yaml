@@ -11,3 +11,5 @@ packages:
   - "manager-pos"
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  protobufjs: set this to true or false
