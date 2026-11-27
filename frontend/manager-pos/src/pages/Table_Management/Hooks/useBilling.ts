@@ -25,17 +25,35 @@ import {
   CATEGORIES,
 } from "../Config/billing.config";
 
-import { POS_CATALOG_QUERY_KEY } from "../../../queryClient";
+import {
+  POS_CATALOG_QUERY_KEY,
+} from "../../../queryClient";
 
-import { usePosHotkeys } from "./usePosHotkeys";
+import {
+  usePosHotkeys,
+} from "./usePosHotkeys";
 
-import { useCartStore } from "../../../lib/cartStore";
+import {
+  useCartStore,
+} from "../../../lib/cartStore";
 
 // DAY 5 MORNING TASK 3
-import { useCheckoutIdempotency } from "./useCheckoutIdempotency";
+
+import {
+  useCheckoutIdempotency,
+} from "./useCheckoutIdempotency";
 
 // DAY 5 MORNING TASK 4
-import { useOrderMutation } from "./useOrderMutation";
+
+import {
+  useOrderMutation,
+} from "./useOrderMutation";
+
+// DAY 5 AFTERNOON TASK 1
+
+import {
+  useAutoReceiptPrint,
+} from "./useAutoReceiptPrint";
 
 import type {
   OrderPayload,
@@ -64,15 +82,25 @@ export const useBilling = () => {
     isPending: isCheckoutSubmitting,
   } = useOrderMutation();
 
-  // Prevent duplicate checkout submissions.
+  // ==========================================
+  // AUTOMATIC RECEIPT PRINTING
+  // ==========================================
+
+  const {
+    printConfirmedReceipt,
+  } = useAutoReceiptPrint();
+
+  // Prevent duplicate checkout submission.
+
   const checkoutLock = useRef(false);
 
-  // Preserve request payload during checkout retries.
+  // Preserve payload during checkout retries.
+
   const pendingPayload =
     useRef<string | null>(null);
 
   // ==========================================
-  // EXISTING BILLING STATES
+  // BILLING STATES
   // ==========================================
 
   const [activeTab, setActiveTab] =
@@ -97,7 +125,7 @@ export const useBilling = () => {
     useState(false);
 
   // ==========================================
-  // EXISTING TANSTACK QUERY CATALOG
+  // TANSTACK QUERY CATALOG
   // ==========================================
 
   const {
@@ -171,7 +199,7 @@ export const useBilling = () => {
           }
         }
       } catch {
-        // Retain existing static catalog fallback.
+        // Existing static catalog fallback.
       }
 
       return DISHES;
@@ -290,8 +318,6 @@ export const useBilling = () => {
   // ==========================================
 
   const clearCart = useCallback(() => {
-    // Prevent cart clearance during payment
-    // or when a previous result is unresolved.
     if (
       checkoutLock.current ||
       pendingPayload.current !== null
@@ -309,14 +335,14 @@ export const useBilling = () => {
   }, []);
 
   // ==========================================
-  // EXISTING HOLD AND RECALL CART
+  // HOLD AND RECALL CART
   // ==========================================
 
   const heldCarts = useCartStore(
     (state) => state.heldCarts
   );
 
-  // HOLD CURRENT CART
+  // HOLD CART
 
   const holdCurrentCart = useCallback(() => {
     if (
@@ -341,7 +367,7 @@ export const useBilling = () => {
     setCashCollected("");
   }, [cart]);
 
-  // RECALL HELD CART
+  // RECALL CART
 
   const recallCart = useCallback(
     (id: string) => {
@@ -390,7 +416,7 @@ export const useBilling = () => {
   );
 
   // ==========================================
-  // EXISTING CART TOTAL CALCULATIONS
+  // CART TOTAL CALCULATIONS
   // ==========================================
 
   const totals = useMemo(() => {
@@ -451,7 +477,7 @@ export const useBilling = () => {
   }, [cart, dishes]);
 
   // ==========================================
-  // EXISTING CHANGE DUE CALCULATION
+  // CHANGE DUE CALCULATION
   // ==========================================
 
   const change = useMemo(() => {
@@ -478,7 +504,6 @@ export const useBilling = () => {
   ]);
 
   // ==========================================
-  // DAY 5 MORNING TASK 4
   // CHECKOUT BACKEND API INTEGRATION
   // ==========================================
 
@@ -487,12 +512,15 @@ export const useBilling = () => {
       checkout: CheckoutRequest
     ): Promise<boolean> => {
       // Prevent double submission.
+
       if (checkoutLock.current) {
         return false;
       }
 
-      // Validate checkout details using
-      // existing shared Zod schema.
+      // ======================================
+      // VALIDATE CHECKOUT
+      // ======================================
+
       const parsed =
         CheckoutRequestSchema.safeParse(
           checkout
@@ -509,7 +537,8 @@ export const useBilling = () => {
 
       const payment = parsed.data;
 
-      // Cash-only development API integration.
+      // Existing Cash-only development flow.
+
       if (
         payment.paymentMode !== "Cash"
       ) {
@@ -518,8 +547,10 @@ export const useBilling = () => {
         );
       }
 
-      // Convert payment amounts into
-      // integer paise.
+      // ======================================
+      // INTEGER PAISE VALIDATION
+      // ======================================
+
       const payablePaise = Math.round(
         totals.total * 100
       );
@@ -528,7 +559,6 @@ export const useBilling = () => {
         payment.amountTendered * 100
       );
 
-      // Verify payment amount and change due.
       if (
         !Number.isSafeInteger(
           payablePaise
@@ -551,7 +581,10 @@ export const useBilling = () => {
         );
       }
 
-      // Validate order quantities.
+      // ======================================
+      // VALIDATE ORDER QUANTITIES
+      // ======================================
+
       if (
         totals.items.length > 100 ||
         totals.items.some(
@@ -566,12 +599,16 @@ export const useBilling = () => {
         );
       }
 
-      // Prepare order request payload.
+      // ======================================
+      // PREPARE ORDER PAYLOAD
+      // ======================================
+
       const payload: OrderPayload = {
         items: totals.items.map(
           ({ dish, quantity }) => ({
-            // Numeric IDs are for
-            // MSW fixtures only.
+            // Numeric IDs are currently
+            // used for MSW fixtures.
+
             menuItemId: String(dish.id),
 
             quantity,
@@ -588,8 +625,10 @@ export const useBilling = () => {
         ],
       };
 
-      // Preserve the same request payload
-      // across checkout retries.
+      // ======================================
+      // PRESERVE PAYLOAD FOR SAFE RETRY
+      // ======================================
+
       const fingerprint = JSON.stringify({
         payload,
 
@@ -610,10 +649,22 @@ export const useBilling = () => {
       pendingPayload.current = fingerprint;
 
       try {
-        // =====================================
-        // SEND POST REQUEST
-        // WITH IDEMPOTENCY-KEY
-        // =====================================
+        // ====================================
+        // RECORD CHECKOUT START TIME
+        // ====================================
+
+        const checkoutStartedAt =
+          performance.now();
+
+        if (import.meta.env.DEV) {
+          console.log(
+            "[CHECKOUT] Submitting order"
+          );
+        }
+
+        // ====================================
+        // POST ORDER REQUEST
+        // ====================================
 
         const result = await submitOrder({
           payload,
@@ -621,10 +672,28 @@ export const useBilling = () => {
           headers: getCheckoutHeaders(),
         });
 
+        // ====================================
+        // CHECKOUT SUCCESS DEBUGGING
+        // ====================================
+
+        if (import.meta.env.DEV) {
+          console.log(
+            "[CHECKOUT] Order confirmed:",
+            result.orderNumber
+          );
+
+          console.log(
+            "[CHECKOUT] Is demo order:",
+            result.demo
+          );
+        }
+
         const now = new Date();
 
-        // Generate receipt only after
-        // successful mock API confirmation.
+        // ====================================
+        // GENERATE CONFIRMED RECEIPT
+        // ====================================
+
         const newReceipt: ReceiptData = {
           orderId:
             `#${result.orderNumber}`,
@@ -682,25 +751,79 @@ export const useBilling = () => {
             100,
         };
 
-        // Store receipt data.
+        // ====================================
+        // STORE RECEIPT DATA
+        // ====================================
+
         setReceipt(newReceipt);
 
-        // Preserve existing receipt behavior.
-        setIsReceiptOpen(true);
+        // Receipt opens when the cashier
+        // clicks the View Receipt button.
 
-        // Reset UUID only after
-        // successful order confirmation.
+        setIsReceiptOpen(false);
+
+        if (import.meta.env.DEV) {
+          console.log(
+            "[PRINT] Receipt generated:",
+            newReceipt.orderId
+          );
+        }
+
+        // ====================================
+        // RESET CHECKOUT STATE
+        // ====================================
+
         resetIdempotencyKey();
 
-        // Release checkout lock.
         pendingPayload.current = null;
 
         checkoutLock.current = false;
 
         // Clear cart only after confirmation.
+
         clearCart();
 
+        // ====================================
+        // DAY 5 AFTERNOON TASK 1
+        // AUTOMATIC RECEIPT PRINTING
+        // ====================================
+
+        // Physical printing is allowed only
+        // for explicitly confirmed non-demo orders.
+
+        if (result.demo === false) {
+          if (import.meta.env.DEV) {
+            console.log(
+              "[PRINT] Automatic printing triggered"
+            );
+          }
+
+          // CORRECTED:
+          // Only two arguments are passed.
+
+          void printConfirmedReceipt(
+            newReceipt,
+            checkoutStartedAt
+          ).catch((cause: unknown) => {
+            console.error(
+              "[PRINT] Receipt printing failed:",
+              cause
+            );
+          });
+
+        } else {
+          if (import.meta.env.DEV) {
+            console.log(
+              "[PRINT] Demo or unverified order - physical printing skipped"
+            );
+          }
+        }
+
+        // Printing failure does not change
+        // successful checkout confirmation.
+
         return true;
+
       } finally {
         checkoutLock.current = false;
       }
@@ -711,21 +834,17 @@ export const useBilling = () => {
       getCheckoutHeaders,
       resetIdempotencyKey,
       clearCart,
+      printConfirmedReceipt,
     ]
   );
 
   // ==========================================
   // DAY 5 AFTERNOON TASK 2
-  // POS KEYBOARD SHORTCUT FUNCTIONALITY
+  // F4 QUICK CASH PAYMENT
   // ==========================================
-
-  // Reuse the existing checkout button.
-  // Do not create another payment function.
 
   const openCheckoutFromHotkey =
     useCallback(() => {
-      // Prevent checkout during processing
-      // or unresolved transactions.
       if (
         checkoutLock.current ||
         isCheckoutSubmitting ||
@@ -735,7 +854,6 @@ export const useBilling = () => {
         return;
       }
 
-      // Prevent checkout with empty cart.
       if (
         totals.items.length === 0 ||
         totals.total <= 0
@@ -743,14 +861,11 @@ export const useBilling = () => {
         return;
       }
 
-      // Find existing checkout button.
       const paymentButton =
         document.getElementById(
           "billing-select-payment"
         );
 
-      // Verify that the button is available
-      // and enabled.
       if (
         !(paymentButton instanceof HTMLButtonElement) ||
         paymentButton.disabled
@@ -758,10 +873,8 @@ export const useBilling = () => {
         return;
       }
 
-      // Select Cash payment method.
       setPaymentMethod("Cash");
 
-      // Open existing checkout modal.
       paymentButton.click();
     }, [
       isCheckoutSubmitting,
@@ -771,14 +884,11 @@ export const useBilling = () => {
     ]);
 
   // ==========================================
-  // REGISTER EXISTING POS KEYBOARD SHORTCUTS
+  // POS KEYBOARD SHORTCUTS
   // ==========================================
 
   usePosHotkeys({
-    // ======================================
-    // F2 - FOCUS PRODUCT SEARCH
-    // EXISTING WORKING FUNCTIONALITY
-    // ======================================
+    // F2 - Focus Search
 
     onSearchFocus: () => {
       const searchInput =
@@ -789,9 +899,7 @@ export const useBilling = () => {
       searchInput?.focus();
     },
 
-    // ======================================
-    // F3 - NEXT PRODUCT CATEGORY
-    // ======================================
+    // F3 - Next Category
 
     onNextCategory: () => {
       if (CATEGORIES.length === 0) {
@@ -814,16 +922,12 @@ export const useBilling = () => {
       );
     },
 
-    // ======================================
-    // F4 - QUICK CASH PAY
-    // ======================================
+    // F4 - Quick Cash Pay
 
     onQuickCashPay:
       openCheckoutFromHotkey,
 
-    // ======================================
-    // CLEAR ACTIVE CART
-    // ======================================
+    // Clear active cart
 
     onClearCart: () => {
       if (
@@ -837,9 +941,7 @@ export const useBilling = () => {
       clearCart();
     },
 
-    // ======================================
-    // F5 - REFRESH PRODUCT CATALOG
-    // ======================================
+    // F5 - Refresh Catalog
 
     onRefreshCatalog: () => {
       if (
@@ -853,9 +955,7 @@ export const useBilling = () => {
       void refreshCatalog();
     },
 
-    // ======================================
-    // F7 - SELECT CASH
-    // ======================================
+    // F7 - Cash
 
     onSelectCash: () => {
       if (
@@ -868,9 +968,7 @@ export const useBilling = () => {
       setPaymentMethod("Cash");
     },
 
-    // ======================================
-    // F8 - SELECT UPI
-    // ======================================
+    // F8 - UPI
 
     onSelectUPI: () => {
       if (
@@ -883,9 +981,7 @@ export const useBilling = () => {
       setPaymentMethod("UPI");
     },
 
-    // ======================================
-    // F9 - SELECT CARD
-    // ======================================
+    // F9 - Card
 
     onSelectCard: () => {
       if (
@@ -898,9 +994,7 @@ export const useBilling = () => {
       setPaymentMethod("Others");
     },
 
-    // ======================================
-    // F10 - OPEN CHECKOUT
-    // ======================================
+    // F10 - Checkout
 
     onCheckout: () => {
       if (
@@ -925,12 +1019,9 @@ export const useBilling = () => {
       }
     },
 
-    // ======================================
-    // ESC - CLEAR ACTIVE CART
-    // ======================================
+    // ESC - Clear active cart
 
     onEscape: () => {
-      // Prevent cart clearance during payment.
       if (
         checkoutLock.current ||
         isCheckoutSubmitting ||
@@ -939,22 +1030,18 @@ export const useBilling = () => {
         return;
       }
 
-      // Preserve receipt handling.
       if (isReceiptOpen) {
         setIsReceiptOpen(false);
 
         return;
       }
 
-      // No action required when cart is empty.
       if (
         Object.keys(cart).length === 0
       ) {
         return;
       }
 
-      // Clear current active cart.
-      // Held carts remain unchanged.
       clearCart();
     },
   });
