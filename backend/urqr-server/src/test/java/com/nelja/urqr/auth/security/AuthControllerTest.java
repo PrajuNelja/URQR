@@ -51,7 +51,7 @@ class AuthControllerTest {
     @Mock private RoleRepository roles;
     @Mock private JwtDecoder jwtDecoder;
     @Mock private RedisAuthStateService authState;
-    @Mock private TenantRlsContext rls;
+    @Mock private HotelRlsContext rls;
 
     @InjectMocks private AuthController controller;
 

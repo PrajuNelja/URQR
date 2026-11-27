@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -23,7 +23,7 @@ class DailySalesControllerTest {
     private static final UUID HOTEL_ID = UUID.randomUUID();
 
     @Mock private DailySalesService service;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
     @InjectMocks private DailySalesController controller;
 
     private Jwt jwt;

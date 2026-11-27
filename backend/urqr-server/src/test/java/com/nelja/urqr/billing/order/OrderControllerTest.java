@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import com.nelja.urqr.billing.payment.PaymentMethod;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -33,7 +33,7 @@ class OrderControllerTest {
     private static final UUID ITEM_ID = UUID.randomUUID();
 
     @Mock private PosOrderService service;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
 
     @InjectMocks private OrderController controller;
 
