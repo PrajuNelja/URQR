@@ -14,13 +14,8 @@ export const Receipt = ({
   time,
   items,
   subtotal,
-  taxRate,
-  tax,
   total,
   paymentMethod,
-  cashCollected,
-  change,
-  status = "Completed",
   isReprint = false,
   reprintedAt,
   className = "",
@@ -85,6 +80,12 @@ export const Receipt = ({
             <span className="font-semibold">Order No.</span><span>:</span><span className="text-right tabular-nums font-bold">{orderId}</span>
           </div>
         </div>
+
+        {isReprint && (
+          <div className="text-center font-bold text-xs tracking-wider uppercase py-1 border-t border-dashed border-[#9ca3af] mb-1">
+            Receipt reprint
+          </div>
+        )}
 
         <div className="border-t border-dashed border-[#9ca3af] mb-3"></div>
 

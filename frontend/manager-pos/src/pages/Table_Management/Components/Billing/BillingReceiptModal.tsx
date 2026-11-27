@@ -6,6 +6,7 @@ import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Receipt } from "../../../../components/PopupModal/Receipt";
 import { Button } from "../../../../components/Buttons/Button";
 import { IconButton } from "../../../../components/Buttons/IconButton";
+import { useNotification } from "../../../../components/Notification/useNotification";
 import { useBridgeHeartbeat } from "../../Hooks/useBridgeHeartbeat";
 import {
   RECEIPT_BUSINESS,
@@ -68,22 +69,12 @@ export function BillingReceiptModal({
   const isPreview = Boolean(previewOrder);
 
   const { printReceipt } = useBridgeHeartbeat(false);
+  const { success, error, info } = useNotification();
   const [isPrinting, setIsPrinting] = useState(false);
-  
-  // Track whether the receipt has been printed at least once
-  const [hasPrinted, setHasPrinted] = useState(false);
   const [reprintState, setReprintState] = useState<{ orderId: string; printedAt: string } | null>(null);
   
   const currentReprint =
     reprintState?.orderId === receipt?.orderId ? reprintState : null;
-
-  // Reset the printed state if the modal is closed or the order changes
-  useEffect(() => {
-    if (!isOpen) {
-      setHasPrinted(false);
-      setReprintState(null);
-    }
-  }, [isOpen]);
 
   const handlePrintAction = async () => {
     if (!receipt || isPrinting) return;
@@ -95,31 +86,31 @@ export function BillingReceiptModal({
         localStorage.getItem("tenant_id"),
       );
       
-      // Use "print" for the first time, "reprint" for subsequent clicks
-      const action = hasPrinted ? "reprint" : "print";
-      
       const response = await printReceipt(
-        { ...request, action },
+        { ...request, action: "reprint" },
         performance.now(),
       );
 
       if (!response.success) {
-        // Silent fail or handle differently since notifications are removed
-        console.error(`Receipt print failed: ${response.message ?? response.status}`);
+        error(`Receipt reprint failed: ${response.message ?? response.status}`);
         return;
       }
 
-      // If the print request was successful, update the UI state
-      if (["SPOOLED", "PRINTING", "SUCCESS"].includes(response.status.toUpperCase())) {
-        setHasPrinted(true);
-        const printedAt = new Date().toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        setReprintState({ orderId: receipt.orderId, printedAt });
+      if (["SPOOLED", "PRINTING"].includes(response.status.toUpperCase())) {
+        info("Receipt reprint queued.");
+        return;
       }
+
+      const printedAt = new Date().toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setReprintState({ orderId: receipt.orderId, printedAt });
+      success("Receipt reprinted successfully.");
     } catch (cause) {
-      console.error("Bridge error:", cause);
+      const message =
+        cause instanceof Error ? cause.message : "Unknown bridge error";
+      error(`Receipt reprint failed: ${message}`);
     } finally {
       setIsPrinting(false);
     }
@@ -470,23 +461,16 @@ export function BillingReceiptModal({
       size="lg"
       footer={
         <>
-          {/* Show Close button ONLY after it's been printed */}
-          {hasPrinted && (
-            <Button variant="ghost" onClick={onClose}>
-              Close
-            </Button>
-          )}
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
 
           <Button
             variant="primary"
             onClick={() => void handlePrintAction()}
             disabled={!receipt || isPrinting}
           >
-            {isPrinting 
-              ? "Sending to printer..." 
-              : hasPrinted 
-                ? "Reprint receipt" 
-                : "Print receipt"}
+            {isPrinting ? "Sending to printer..." : "Reprint receipt"}
           </Button>
         </>
       }

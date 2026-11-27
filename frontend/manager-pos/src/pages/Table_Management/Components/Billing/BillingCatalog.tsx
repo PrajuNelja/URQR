@@ -14,7 +14,7 @@ interface BillingCatalogProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
   filteredDishes: Dish[];
-  addToCart: (dishId: number) => Promise<void>;
+  addToCart: (dishId: number) => void | Promise<void>;
   cart: Record<number, number>;
 }
 
