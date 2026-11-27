@@ -1,12 +1,8 @@
 // src/components/DataCard/Avatar.tsx
-
 import { useState } from "react";
 import type { AvatarProps } from "./DataCard.types";
 import { AVATAR_SIZES, AVATAR_BASE } from "./DataCard.config";
 
-/**
- * getInitials — turns "John Doe" → "JD", "Manager" → "M"
- */
 const getInitials = (name?: string): string => {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -17,13 +13,13 @@ const getInitials = (name?: string): string => {
   ).toUpperCase();
 };
 
-/**
- * Avatar — circular user badge (image or initials).
- *
- * <Avatar name="John Doe" />
- * <Avatar name="Manager" size="lg" />
- * <Avatar src="/user.jpg" name="Jane" size="sm" />
- */
+// Map exact pixel sizes based on your design system
+const sizeMap = {
+  sm: { width: "32px", height: "32px" },
+  md: { width: "40px", height: "40px" },
+  lg: { width: "48px", height: "48px" },
+};
+
 export const Avatar = ({
   name,
   src,
@@ -45,6 +41,15 @@ export const Avatar = ({
   return (
     <div
       className={classes}
+      // FORCING exact size and perfect flex centering via inline styles
+      style={{
+        width: sizeMap[size].width,
+        height: sizeMap[size].height,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
       title={name}
       aria-label={name ? `Avatar for ${name}` : "Avatar"}
       role="img"
@@ -53,7 +58,7 @@ export const Avatar = ({
         <img
           src={src}
           alt={name ?? "User"}
-          className="w-full h-full object-cover"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
           onError={() => setImgError(true)}
         />
       ) : (

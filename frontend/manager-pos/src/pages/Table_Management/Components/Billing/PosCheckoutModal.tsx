@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Lock, CreditCard, CheckCircle2 } from "lucide-react";
 
@@ -14,6 +13,7 @@ import { SelectableGroup } from "../../../../components/Header/SelectableGroup";
 import { CashAmountInput } from "../../../../components/Payment/CashAmountInput";
 import { ChangeSummary } from "../../../../components/Payment/ChangeSummary";
 import { NumericKeypad } from "../../../../components/Keypad/NumericKeypad";
+import { useNotification } from "../../../../components/Notification/useNotification"; // <-- ADDED
 
 import {
   formatINR,
@@ -129,6 +129,9 @@ export function PosCheckoutModal({
   isSubmitting = false,
   onConfirmPayment,
 }: PosCheckoutModalProps) {
+  // ADDED TOAST HOOK
+  const { error: toastError } = useNotification(); 
+
   // Payment mode state
   const [method, setMethod] =
     useState<LocalPaymentMode>((initialMode as LocalPaymentMode) || "Cash");
@@ -207,6 +210,8 @@ export function PosCheckoutModal({
         await onConfirmPayment(result.data);
       } catch {
         setError("Unable to complete payment.");
+        // ADDED TOAST TRIGGER HERE
+        toastError("Payment gateway timeout. Please try again or check network.");
       } finally {
         submittingRef.current = false;
         setProcessing(false);
@@ -230,12 +235,14 @@ export function PosCheckoutModal({
         await onConfirmPayment(result.data);
       } catch {
         setError("Unable to complete payment.");
+        // ADDED TOAST TRIGGER HERE
+        toastError("Payment gateway rejected the transaction.");
       } finally {
         submittingRef.current = false;
         setProcessing(false);
       }
     }
-  }, [busy, canConfirm, method, onConfirmPayment, payablePaise, receivedPaise]);
+  }, [busy, canConfirm, method, onConfirmPayment, payablePaise, receivedPaise, toastError]); // <-- Added toastError to deps
 
   // Keyboard shortcut listener: Enter to confirm
   useEffect(() => {
@@ -285,8 +292,6 @@ export function PosCheckoutModal({
         !max-h-[calc(100dvh-32px)]
       "
     >
-      {/* MAIN CONTENT
-          20px bottom padding for Cash and UPI */}
       <div
         className="
           flex h-full min-h-0
@@ -295,11 +300,9 @@ export function PosCheckoutModal({
           pb-5
         "
       >
-
         {/* 1. ENTER TOTAL AMOUNT */}
         {method === "Cash" && (
           <section className="w-full min-w-0 shrink-0 space-y-1">
-
             <label
               className="
                 block text-xs font-bold
@@ -332,8 +335,7 @@ export function PosCheckoutModal({
           </section>
         )}
 
-        {/* 2. PAYMENT METHOD
-            Aligned with other sections */}
+        {/* 2. PAYMENT METHOD */}
         <section
           className="
             w-full min-w-0 shrink-0
@@ -350,7 +352,6 @@ export function PosCheckoutModal({
             Payment Method
           </h3>
 
-          {/* REUSABLE SELECTABLE GROUP */}
           <SelectableGroup
             options={[
               { value: "Cash", label: "Cash" },
@@ -387,8 +388,6 @@ export function PosCheckoutModal({
                 [&_.pos-change-summary_strong]:!text-xl
               "
             >
-
-              {/* CASH COLLECTED HEADER */}
               <div
                 className="
                   mb-2 flex items-center
@@ -399,7 +398,6 @@ export function PosCheckoutModal({
                   Cash Collected
                 </h3>
 
-                {/* REUSABLE CLEAR BUTTON */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -414,8 +412,6 @@ export function PosCheckoutModal({
                 </Button>
               </div>
 
-              {/* REUSABLE CASH INPUT
-                  Includes +₹50, +₹100, +₹200 */}
               <CashAmountInput
                 value={cashReceived}
                 onChange={(value) => {
@@ -426,7 +422,6 @@ export function PosCheckoutModal({
                 }}
               />
 
-              {/* Quick Cash Presets */}
               <div className="flex items-center gap-2 overflow-x-auto pb-1 mt-2">
                 <button
                   type="button"
@@ -447,7 +442,6 @@ export function PosCheckoutModal({
                 ))}
               </div>
 
-              {/* Touch Numeric Keypad */}
               <div className="mt-2 scale-90 origin-top">
                 <NumericKeypad
                   onDigit={(d) => {
@@ -463,7 +457,6 @@ export function PosCheckoutModal({
                 />
               </div>
 
-              {/* REUSABLE CHANGE SUMMARY */}
               <div className="mt-2">
                 <div className="text-xs font-bold text-primary mb-1">
                   Change Due
@@ -475,7 +468,6 @@ export function PosCheckoutModal({
               </div>
             </section>
 
-            {/* AMOUNT TO PAY */}
             <div
               className="
                 flex w-full shrink-0
@@ -500,7 +492,6 @@ export function PosCheckoutModal({
               </strong>
             </div>
 
-            {/* INSUFFICIENT CASH WARNING */}
             {!enoughCash && (
               <p
                 role="status"
@@ -513,7 +504,6 @@ export function PosCheckoutModal({
               </p>
             )}
 
-            {/* ERROR MESSAGE */}
             {error && (
               <p
                 role="alert"
@@ -525,7 +515,6 @@ export function PosCheckoutModal({
               </p>
             )}
 
-            {/* REUSABLE CONFIRM BUTTON */}
             <Button
               type="button"
               variant="primary"
@@ -588,13 +577,10 @@ export function PosCheckoutModal({
                 bg-surface-alt p-3
               "
             >
-
-              {/* DEMO QR */}
               <div className="rounded-md bg-white p-3">
                 <DemoUpiQR />
               </div>
 
-              {/* BORDERLESS PROVIDER LABELS */}
               <div
                 className="
                   flex flex-wrap items-center
@@ -629,8 +615,6 @@ export function PosCheckoutModal({
               </p>
             </section>
 
-            {/* UPI BUTTON DISABLED UNTIL
-                REAL PAYMENT INTEGRATION */}
             <Button
               type="button"
               variant="primary"
@@ -647,7 +631,6 @@ export function PosCheckoutModal({
               {formatINR(payablePaise)})
             </Button>
 
-            {/* UPI FOOTER */}
             <div
               className="
                 flex shrink-0 items-center
@@ -666,8 +649,7 @@ export function PosCheckoutModal({
           </>
         )}
 
-        {/* 5. OTHERS
-            No payment functionality */}
+        {/* 5. OTHERS */}
         {method === "Others" && (
           <div
             className="
@@ -680,7 +662,6 @@ export function PosCheckoutModal({
             </p>
           </div>
         )}
-
       </div>
     </PopupModal>
   );

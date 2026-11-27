@@ -15,7 +15,7 @@ import type {
 
 /** Always-applied base classes */
 export const CARD_BASE_CLASSES =
-  "bg-[#fffaf1] border border-[#e8d9bf] rounded-lg shadow-[0_2px_0_#e5d7bf] transition-colors";
+  "bg-surface border border-border rounded-lg shadow-sm transition-colors";
 
 /** Padding presets */
 export const CARD_PADDING: Record<CardPadding, string> = {
@@ -27,14 +27,14 @@ export const CARD_PADDING: Record<CardPadding, string> = {
 
 /** Visual variants */
 export const CARD_VARIANTS: Record<CardVariant, string> = {
-  default: "bg-[#fffaf1] border-[#e8d9bf]",
-  outline: "!bg-transparent border-[#e8d9bf]",
-  elevated: "bg-[#fffaf1] border-[#e8d9bf] shadow-[0_4px_12px_rgba(74,54,30,0.08)]",
+  default: "bg-surface border-border",
+  outline: "!bg-transparent border-border",
+  elevated: "bg-surface border-border shadow-md",
 };
 
 /** Hover behaviour for interactive cards */
 export const CARD_INTERACTIVE =
-  "cursor-pointer transition-transform hover:-translate-y-[3px] hover:border-accent-gold";
+  "cursor-pointer transition-transform hover:-translate-y-[3px] hover:border-primary/50";
 
 // ═══════════════════════════════════════════
 // ICON
@@ -57,25 +57,25 @@ export const ICON_DEFAULT_STROKE = 1.8;
 // ═══════════════════════════════════════════
 
 export const dataCardConfig = {
-  /** Wrapper — matches reference `.card` */
-  base: "!bg-[#fffaf1] border !border-[#e8d9bf] rounded-lg shadow-[0_2px_0_#e5d7bf] p-[18px]",
+  /** Wrapper */
+  base: "!bg-surface border !border-border rounded-lg shadow-sm p-[18px]",
 
   /** Header row (icon + title) */
   header: "flex items-center gap-3 mb-3",
 
-  /** Circular icon wrapper (gold accent on ivory) */
+  /** Circular icon wrapper */
   iconWrapper:
-    "w-12 h-12 rounded-full bg-white text-accent-gold flex items-center justify-center flex-none",
+    "w-12 h-12 rounded-full bg-surface-alt text-primary flex items-center justify-center flex-none",
 
   /** Title */
-  title: "font-serif text-lg text-primary m-0",
+  title: "font-serif text-lg text-text m-0",
 
   /** Body */
   body: "",
 
   /** Summary variant (big value + trend) */
   summary: {
-    value: "font-serif text-3xl font-bold text-primary leading-tight",
+    value: "font-serif text-3xl font-bold text-text leading-tight",
     trend: "inline-block text-xs font-semibold text-success mt-1",
   },
 } as const;
@@ -86,16 +86,16 @@ export const dataCardConfig = {
 
 export const kpiStatConfig = {
   wrapper:
-    "!bg-[#fffaf1] border !border-[#e8d9bf] rounded-lg shadow-[0_2px_0_#e5d7bf] p-5 flex items-center gap-4",
+    "!bg-surface border !border-border rounded-lg shadow-sm p-5 flex items-center gap-4",
 
   iconWrapper:
-    "w-12 h-12 rounded-full bg-white text-accent-gold flex items-center justify-center flex-none",
+    "w-12 h-12 rounded-full bg-surface-alt text-primary flex items-center justify-center flex-none",
 
   textCol: "flex flex-col leading-tight",
 
   label: "text-[13px] font-medium text-text-secondary",
 
-  value: "font-serif text-3xl font-bold text-primary mt-0.5",
+  value: "font-serif text-3xl font-bold text-text mt-0.5",
 
   trend: {
     up: "inline-flex w-fit items-center rounded-md bg-success-bg px-2 py-0.5 text-xs font-semibold text-success mt-1",
@@ -110,24 +110,24 @@ export const kpiStatConfig = {
 
 /** Chart palette (Recharts expects actual color strings or CSS vars) */
 export const CHART_COLORS = [
-  "var(--color-primary)",
-  "var(--color-primary-dark)",
-  "var(--color-warning)",
-  "var(--color-success)",
-  "var(--color-error)",
+  "var(--primary)",
+  "var(--primary-dark)",
+  "var(--warning)",
+  "var(--success)",
+  "var(--error)",
 ] as const;
 
 export const CHART_WRAPPER = "w-full";
 
-export const CHART_AXIS_TEXT = "var(--color-text-secondary)";
-export const CHART_GRID_COLOR = "var(--color-border)";
+export const CHART_AXIS_TEXT = "var(--text-secondary)";
+export const CHART_GRID_COLOR = "var(--border)";
 
 export const CHART_TOOLTIP_STYLE = {
-  backgroundColor: "var(--color-surface)",
-  border: "1px solid var(--color-border)",
+  backgroundColor: "var(--surface)",
+  border: "1px solid var(--border)",
   borderRadius: "8px",
   fontSize: "12px",
-  color: "var(--color-text)",
+  color: "var(--text)",
   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)",
 } as const;
 
@@ -154,7 +154,7 @@ export const dividerConfig = {
 export const emptyStateConfig = {
   wrapper: "flex flex-col items-center justify-center py-8 px-4 text-center gap-2",
   icon: "text-text-secondary opacity-60 mb-1",
-  message: "text-sm font-semibold text-primary",
+  message: "text-sm font-semibold text-text",
   description: "text-xs text-text-secondary",
 } as const;
 
@@ -162,11 +162,13 @@ export const emptyStateConfig = {
 // AVATAR
 // ═══════════════════════════════════════════
 
+// 1. We remove the width/height from here and put them in the component 
+// so they can't be overridden by flexbox.
 export const AVATAR_SIZES: Record<AvatarSize, string> = {
-  sm: "w-8 h-8 text-xs",
-  md: "w-10 h-10 text-sm",
-  lg: "w-12 h-12 text-base",
+  sm: "text-[12px]",
+  md: "text-[14px]",
+  lg: "text-[16px]",
 };
 
 export const AVATAR_BASE =
-  "rounded-full bg-primary text-on-primary flex items-center justify-center font-semibold flex-none overflow-hidden";
+  "rounded-full bg-primary text-on-primary font-semibold overflow-hidden tracking-tight";
