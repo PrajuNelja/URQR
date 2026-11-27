@@ -25,6 +25,407 @@
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
+
+  /* ── Enhanced Payment Methods & Checkout Modal ── */
+  .pos-checkout-modal-panel,
+  .pos-checkout-modal-panel * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .pos-checkout-modal-panel::-webkit-scrollbar,
+  .pos-checkout-modal-panel *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .dark .pos-checkout-modal-panel {
+    background-color: #140E0A !important;
+  }
+  .pos-checkout-modal-panel [role="radiogroup"] button {
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  .pos-checkout-modal-panel [role="radiogroup"] button[aria-checked="false"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #E2D5C3 !important;
+    color: #5C4A3A !important;
+    box-shadow: 0 1px 3px rgba(92, 74, 58, 0.06) !important;
+  }
+  .pos-checkout-modal-panel [role="radiogroup"] button[aria-checked="false"]:hover {
+    background-color: #F8F4EE !important;
+    border-color: #D4C3AC !important;
+    color: #2D241B !important;
+  }
+  .pos-checkout-modal-panel [role="radiogroup"] button[aria-checked="true"] {
+    background: linear-gradient(180deg, #C0824E 0%, #A86D3C 100%) !important;
+    border: 1px solid #8F572A !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 3px 10px rgba(168, 109, 60, 0.3) !important;
+  }
+  .dark .pos-checkout-modal-panel [role="radiogroup"] button[aria-checked="false"] {
+    background-color: #1C1510 !important;
+    border: 1px solid #382B20 !important;
+    color: #C5B5A4 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  }
+  .dark .pos-checkout-modal-panel [role="radiogroup"] button[aria-checked="false"]:hover {
+    background-color: #261D16 !important;
+    border-color: #4D392B !important;
+    color: #FFF9F0 !important;
+  }
+  .dark .pos-checkout-modal-panel [role="radiogroup"] button[aria-checked="true"] {
+    background: linear-gradient(180deg, #D49860 0%, #B8763E 100%) !important;
+    border: 1px solid #E2A66D !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(212, 152, 96, 0.35) !important;
+  }
+  .dark .pos-change-summary--warning {
+    background: #2E1A0E !important;
+    color: #FBBF24 !important;
+    border: 1px solid #573315 !important;
+  }
+  .dark .pos-change-summary--warning strong {
+    color: #FCD34D !important;
+  }
+  .pos-cash-input__field {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .pos-cash-input__field::placeholder {
+    color: #8C7B6D !important;
+    opacity: 0.85 !important;
+    font-weight: 600 !important;
+  }
+  .dark .pos-cash-input__field::placeholder {
+    color: #9C8B7C !important;
+    opacity: 0.85 !important;
+  }
+  .dark .pos-cash-input__field {
+    background: #1F1813 !important;
+    color: #F5EEE0 !important;
+    border-color: #43352A !important;
+  }
+  .dark .pos-cash-input__field:focus {
+    border-color: #B07C54 !important;
+    box-shadow: 0 0 0 2px rgb(176 124 84 / 20%) !important;
+  }
+  .dark .pos-change-summary--empty {
+    border-color: #43352A !important;
+    color: #BFAEA0 !important;
+  }
+
+  /* ── POS Modal Header, Footer & Close Button ── */
+  .pos-modal-header {
+    background-color: #FAF3E6 !important;
+    border-bottom: 1px solid #E4D8C3 !important;
+  }
+  .pos-modal-footer {
+    background-color: #FAF3E6 !important;
+    border-top: 1px solid #E4D8C3 !important;
+  }
+  .pos-modal-close-btn {
+    background-color: #FFFDF8 !important;
+    border: 1px solid #D8C7B0 !important;
+    color: #4A382A !important;
+  }
+  .pos-modal-close-btn:hover {
+    background-color: #EFE5D5 !important;
+  }
+
+  .dark .pos-modal-header {
+    background-color: #1A130D !important;
+    border-bottom: 1px solid #382B20 !important;
+  }
+  .dark .pos-modal-header .pos-modal-title,
+  .dark .pos-modal-header h2 {
+    color: #F5EEE0 !important;
+  }
+  .dark .pos-modal-footer {
+    background-color: #1A130D !important;
+    border-top: 1px solid #382B20 !important;
+  }
+  .dark .pos-modal-close-btn {
+    background-color: #251D17 !important;
+    border: 1px solid #4A3728 !important;
+    color: #E8DEC8 !important;
+  }
+  .dark .pos-modal-close-btn:hover {
+    background-color: #32271F !important;
+    color: #FFFFFF !important;
+  }
+
+  /* ── Numeric Keypad Theming ── */
+  .pos-keypad-digit-btn {
+    background-color: #FFFFFF !important;
+    color: #2D241B !important;
+    border: 1px solid #DFCDB4 !important;
+  }
+  .pos-keypad-digit-btn:hover {
+    background-color: #FCFAF6 !important;
+  }
+  .pos-keypad-digit-btn:active {
+    background-color: #E9DDCC !important;
+  }
+
+  .dark .pos-keypad-digit-btn {
+    background-color: #221A14 !important;
+    color: #F5EEE0 !important;
+    border: 1px solid #3E2F23 !important;
+  }
+  .dark .pos-keypad-digit-btn:hover {
+    background-color: #2C211A !important;
+  }
+  .dark .pos-keypad-digit-btn:active {
+    background-color: #382A20 !important;
+  }
+
+  .dark [role="group"][aria-label="Touch Numeric Keypad"] {
+    background-color: #18110B !important;
+    border: 1px solid #3E2F23 !important;
+  }
+  .dark .pos-change-summary--success {
+    background: #1E2E1D !important;
+    color: #68A362 !important;
+    border: 1px solid #2B452A !important;
+  }
+  .dark .pos-change-summary--warning {
+    background: #332414 !important;
+    color: #E08A2E !important;
+    border: 1px solid #5C3D26 !important;
+  }
+
+  /* POS Payment Method Selector Cards */
+  [role="radiogroup"] [role="radio"] {
+    position: relative;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    transition: all 0.15s ease;
+  }
+  [role="radiogroup"] [role="radio"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgb(0 0 0 / 5%);
+  }
+  [role="radiogroup"] [role="radio"][aria-checked="true"] {
+    box-shadow: 0 4px 12px rgb(139 94 60 / 18%) !important;
+  }
+  .dark [role="radiogroup"] [role="radio"] {
+    background: #251D17 !important;
+    border-color: #43352A !important;
+    color: #BFAEA0 !important;
+  }
+  .dark [role="radiogroup"] [role="radio"]:hover {
+    background: #2E241C !important;
+    color: #F5EEE0 !important;
+  }
+  .dark [role="radiogroup"] [role="radio"][aria-checked="true"] {
+    background: #B07C54 !important;
+    border-color: #B07C54 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgb(176 124 84 / 25%) !important;
+  }
+
+  /* Quick Cash Presets */
+  .dark button[class*="border-primary"] {
+    border-color: #5C3D26 !important;
+    color: #B07C54 !important;
+    background: #251D17 !important;
+  }
+  .dark button[class*="border-primary"]:hover {
+    background: #2E241C !important;
+    border-color: #B07C54 !important;
+    color: #F5EEE0 !important;
+  }
+
+  /* Numeric Keypad in Dark Mode */
+  .dark .pos-keypad-button,
+  .dark [aria-label*="Digit"],
+  .dark [aria-label*="Backspace"],
+  .dark [aria-label*="Clear"] {
+    background: #251D17;
+    border-color: #43352A;
+    color: #F5EEE0;
+  }
+  .dark .pos-keypad-button:hover,
+  .dark [aria-label*="Digit"]:hover,
+  .dark [aria-label*="Backspace"]:hover,
+  .dark [aria-label*="Clear"]:hover {
+    background: #2E241C;
+  }
+
+  /* ── Custom Adaptive Scrollbars for POS Billing ── */
+  .urqr-billing-product-grid::-webkit-scrollbar,
+  .urqr-billing-cart-items::-webkit-scrollbar,
+  .urqr-billing-screen *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .urqr-billing-product-grid::-webkit-scrollbar-track,
+  .urqr-billing-cart-items::-webkit-scrollbar-track,
+  .urqr-billing-screen *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .urqr-billing-product-grid::-webkit-scrollbar-thumb,
+  .urqr-billing-cart-items::-webkit-scrollbar-thumb,
+  .urqr-billing-screen *::-webkit-scrollbar-thumb {
+    background-color: #D4C7B5;
+    border-radius: 9999px;
+  }
+  .urqr-billing-product-grid::-webkit-scrollbar-thumb:hover,
+  .urqr-billing-cart-items::-webkit-scrollbar-thumb:hover,
+  .urqr-billing-screen *::-webkit-scrollbar-thumb:hover {
+    background-color: #B8A895;
+  }
+
+  /* Dark mode scrollbar */
+  .dark .urqr-billing-product-grid::-webkit-scrollbar-thumb,
+  .dark .urqr-billing-cart-items::-webkit-scrollbar-thumb,
+  .dark .urqr-billing-screen *::-webkit-scrollbar-thumb {
+    background-color: #43352A !important;
+  }
+  .dark .urqr-billing-product-grid::-webkit-scrollbar-thumb:hover,
+  .dark .urqr-billing-cart-items::-webkit-scrollbar-thumb:hover,
+  .dark .urqr-billing-screen *::-webkit-scrollbar-thumb:hover {
+    background-color: #5C4A3B !important;
+  }
+
+  /* Firefox scrollbar-color support */
+  .urqr-billing-product-grid,
+  .urqr-billing-cart-items {
+    scrollbar-width: thin;
+    scrollbar-color: #D4C7B5 transparent;
+  }
+  .dark .urqr-billing-product-grid,
+  .dark .urqr-billing-cart-items {
+    scrollbar-color: #43352A transparent;
+  }
+
+  /* ── Dashboard Sidebar Integration in Billing ── */
+  .urqr-billing-screen .dashboard-sidebar {
+    top: 64px;
+  }
+  .dashboard-sidebar--collapsed {
+    width: 72px !important;
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+  }
+  .dashboard-sidebar--collapsed .dashboard-nav-link {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+  .dashboard-sidebar--collapsed .dashboard-nav-link span {
+    display: none !important;
+  }
+
+  /* ── Billing Skeleton Floating Shimmer ── */
+  @keyframes billing-shimmer-sweep {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .billing-skeleton-pulse {
+    position: relative;
+    overflow: hidden;
+    background-color: #ECE5D8;
+    border-radius: var(--skeleton-radius, 8px);
+  }
+
+  .dark .billing-skeleton-pulse {
+    background-color: #2E241C !important;
+  }
+
+  .billing-skeleton-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+    animation: billing-shimmer-sweep 1.4s infinite ease-in-out;
+  }
+
+  .dark .billing-skeleton-pulse::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 100%
+    ) !important;
+  }
+
+  /* ── Dark Theme for Billing Screen ── */
+  .dark .urqr-billing-screen,
+  .dark.urqr-billing-screen {
+    --bill-bg: var(--color-bg, #1B1511);
+    --bill-surface: var(--color-surface, #251D17);
+    --bill-card: #201712;
+    --bill-alt: var(--color-surface-alt, #2E241C);
+    --bill-border: var(--color-border, #43352A);
+    --bill-soft-border: #382A20;
+    --bill-primary: var(--color-primary, #B07C54);
+    --bill-dark: var(--color-text, #F5EEE0);
+    --bill-muted: var(--color-text-secondary, #BFAEA0);
+    --bill-success: var(--color-success, #68A362);
+    background: var(--bill-bg) !important;
+    color: var(--bill-dark) !important;
+  }
+
+  .dark .urqr-billing-screen .urqr-billing-header {
+    background: var(--color-surface, #251D17) !important;
+    border-bottom: 1px solid var(--color-border, #43352A) !important;
+  }
+
+  .dark .urqr-billing-screen .urqr-billing-catalog {
+    background: var(--color-bg, #1B1511) !important;
+  }
+
+  .dark .urqr-billing-screen .urqr-billing-tabs [role="tab"] {
+    background: var(--color-surface, #251D17) !important;
+    color: var(--color-text, #F5EEE0) !important;
+    border-color: var(--color-border, #43352A) !important;
+  }
+
+  .dark .urqr-billing-screen .urqr-billing-tabs [aria-selected="true"] {
+    background: var(--color-primary, #B07C54) !important;
+    color: #FFFFFF !important;
+    border-color: var(--color-primary, #B07C54) !important;
+  }
+
+  .dark .urqr-billing-screen .pos-product-card {
+    background: #201712 !important;
+    border-color: var(--color-border, #43352A) !important;
+  }
+
+  .dark .urqr-billing-screen .pos-product-card__image {
+    background: #2A1F18 !important;
+    color: #7A6A5A !important;
+  }
+
+  .dark .urqr-billing-screen .pos-product-card__name {
+    color: var(--color-text, #F5EEE0) !important;
+  }
+
+  .dark .urqr-billing-screen .pos-product-card__price {
+    color: var(--color-primary, #B07C54) !important;
+  }
+
+  .dark .urqr-billing-summary {
+    background: var(--color-surface, #251D17) !important;
+    border-left: 1px solid var(--color-border, #43352A) !important;
+  }
+
+  .dark .urqr-billing-summary-footer {
+    background: #201712 !important;
+    border-top: 1px solid var(--color-border, #43352A) !important;
+  }
 }
 /* ═══════════════════════════════════════════════════════════
    URQR BILLING — reusable components & showcase
@@ -624,7 +1025,7 @@
 
   .urqr-billing-workspace {
     display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 1fr) 380px;
     flex: 1;
     min-height: 0;
     min-width: 0;
@@ -857,9 +1258,10 @@
   }
   .urqr-billing-summary .pos-cart-row__info h4 { font-size: 12px; }
   .urqr-billing-summary .pos-cart-row__info span { font-size: 11px; }
-  .urqr-billing-summary .pos-cart-row__controls { gap: 4px; }
-  .urqr-billing-summary .pos-quantity-stepper__button { width: 22px; height: 22px; }
-  .urqr-billing-summary .pos-quantity-stepper input { width: 24px !important; padding: 0; }
+  .urqr-billing-summary .pos-cart-row__controls { gap: 6px; }
+  .urqr-billing-summary .pos-quantity-stepper { display: inline-flex; align-items: center; border-radius: 8px; }
+  .urqr-billing-summary .pos-quantity-stepper__button { width: 24px; height: 24px; }
+  .urqr-billing-summary .pos-quantity-stepper input { width: 24px !important; padding: 0 !important; }
 
   .urqr-billing-cart-extras {
     display: flex;
@@ -1706,7 +2108,197 @@
 @layer components {
   .urqr-billing-screen { --bill-bg: #F4EFE6; --bill-surface: var(--color-surface, #FFFDF8); --bill-card: #FCFAF7; --bill-alt: var(--color-surface-alt, #FAF3E6); --bill-border: #E3D9CB; --bill-soft-border: #EFE8DE; --bill-primary: #80583B; --bill-dark: #49382E; --bill-muted: #81776E; --bill-success: var(--color-success, #3F6B3A); display: flex; flex-direction: column; width: 100%; min-width: 0; height: 100dvh; overflow: hidden; background: var(--bill-bg); color: var(--bill-dark); font-family: var(--font-sans, Inter, sans-serif); }
 
-  .urqr-billing-screen .urqr-billing-header { display: grid !important; grid-template-columns: auto minmax(180px, 1fr) auto; align-items: center; gap: 18px; width: 100%; min-height: 64px; padding: 8px 24px !important; margin: 0 !important; border: 0 !important; border-bottom: 1px solid var(--bill-border) !important; border-radius: 0 !important; background: #F8F5EE !important; }
+  /* Dark Theme Tokens for Billing POS Screen & Dashboard Sidebar */
+  .dark .urqr-billing-screen,
+  .dark.urqr-billing-screen {
+    --bill-bg: #1B1511;
+    --bill-surface: #251D17;
+    --bill-card: #251D17;
+    --bill-alt: #2E241C;
+    --bill-border: #43352A;
+    --bill-soft-border: #3A2F27;
+    --bill-primary: #B07C54;
+    --bill-dark: #F5EEE0;
+    --bill-muted: #BFAEA0;
+    --bill-success: #68A362;
+    background: var(--bill-bg) !important;
+    color: var(--bill-dark) !important;
+  }
+
+  /* Dark Theme Sidebar Overrides */
+  .dark .dashboard-sidebar {
+    background: #251D17 !important;
+    border-right-color: #43352A !important;
+  }
+  .dark .dashboard-sidebar-footer {
+    border-top-color: #43352A !important;
+  }
+  .dark .dashboard-nav-link {
+    color: #BFAEA0 !important;
+  }
+  .dark .dashboard-nav-link:hover {
+    background: #2E241C !important;
+    color: #F5EEE0 !important;
+  }
+  .dark .dashboard-nav-link--active,
+  .dark .dashboard-nav-link--active:hover {
+    background: #B07C54 !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Dark Theme Header & Search Bar */
+  .dark .urqr-billing-screen .urqr-billing-header {
+    background: #251D17 !important;
+    border-bottom-color: #43352A !important;
+  }
+  .dark .urqr-billing-header .urqr-billing-brand-name {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-header .urqr-billing-hotel-icon {
+    background: #B07C54 !important;
+    color: #FFFFFF !important;
+  }
+  .dark .urqr-billing-header .pos-search-input {
+    background: #1F1813 !important;
+    color: #F5EEE0 !important;
+    border-color: #43352A !important;
+  }
+  .dark .urqr-billing-header .pos-search-input::placeholder {
+    color: #857467 !important;
+  }
+  .dark .urqr-billing-header .pos-search-input:focus {
+    border-color: #B07C54 !important;
+    box-shadow: 0 0 0 2px rgb(176 124 84 / 22%) !important;
+  }
+
+  /* Dark Theme Catalog & Category Tabs */
+  .dark .urqr-billing-screen .urqr-billing-catalog {
+    background: #1B1511 !important;
+  }
+  .dark .urqr-billing-screen .urqr-billing-tabs [role="tab"] {
+    background: #251D17 !important;
+    color: #BFAEA0 !important;
+    border-color: #43352A !important;
+  }
+  .dark .urqr-billing-screen .urqr-billing-tabs [aria-selected="true"] {
+    background: #B07C54 !important;
+    color: #FFFFFF !important;
+    border-color: #B07C54 !important;
+  }
+  .dark .urqr-billing-catalog-heading h2 {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-catalog-heading span {
+    color: #BFAEA0 !important;
+  }
+
+  /* Dark Theme Product Card & Hover Readability Fixes */
+  .dark .urqr-billing-screen .pos-product-card {
+    background: #251D17 !important;
+    border-color: #43352A !important;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 25%) !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card__name {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card__price {
+    color: #B07C54 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card__image {
+    background: #2E241C !important;
+    color: #857467 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card--default:hover {
+    border-color: #B07C54 !important;
+    background: #2E241C !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card--default:hover .pos-product-card__name {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card--default:hover .pos-product-card__price {
+    color: #B07C54 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card--default:hover .pos-product-card__status {
+    background: #361A1A !important;
+    color: #E55353 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card--active {
+    border: 2px solid #B07C54 !important;
+    background: #312116 !important;
+  }
+  .dark .urqr-billing-screen .pos-product-card--sold-out {
+    background: #201712 !important;
+    border-color: #3A2F27 !important;
+    opacity: 0.65;
+  }
+  .dark .urqr-billing-screen .pos-product-card--sold-out .pos-product-card__action {
+    background: #3A2F27 !important;
+    border-color: #3A2F27 !important;
+    color: #857467 !important;
+  }
+
+  /* Dark Theme Cart Order Summary */
+  .dark .urqr-billing-summary {
+    background: #251D17 !important;
+    border-left-color: #43352A !important;
+  }
+  .dark .urqr-billing-screen .urqr-billing-cart {
+    background: #251D17 !important;
+  }
+  .dark .urqr-billing-cart-heading {
+    border-bottom-color: #3A2F27 !important;
+  }
+  .dark .urqr-billing-cart-heading h2 {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-cart-heading p {
+    color: #BFAEA0 !important;
+  }
+  .dark .urqr-billing-draft-badge {
+    background: #2E241C !important;
+    color: #F5EEE0 !important;
+    border-color: #43352A !important;
+  }
+  .dark .urqr-billing-summary .pos-cart-row {
+    border-bottom-color: #3A2F27 !important;
+  }
+  .dark .urqr-billing-summary .pos-cart-row__thumbnail {
+    background: #2E241C !important;
+    border-color: #3A2F27 !important;
+  }
+  .dark .urqr-billing-summary .pos-cart-row__info h4 {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-summary .pos-cart-row__info span {
+    color: #BFAEA0 !important;
+  }
+  .dark .urqr-billing-cart-extras {
+    color: #BFAEA0 !important;
+  }
+  .dark .urqr-billing-summary-footer {
+    background: #201712 !important;
+    border-top-color: #43352A !important;
+  }
+  .dark .urqr-billing-summary-footer .pos-order-totals__tax-rows {
+    background: #1B1511 !important;
+    border-color: #43352A !important;
+  }
+  .dark .urqr-billing-summary-footer .pos-total-row--grand strong {
+    color: #F5EEE0 !important;
+  }
+  .dark .urqr-billing-preview-button {
+    background: #2E241C !important;
+    color: #F5EEE0 !important;
+    border-color: #43352A !important;
+  }
+  .dark .urqr-billing-preview-button:hover {
+    background: #3A2F27 !important;
+  }
+  .dark .urqr-billing-pay-hint {
+    color: #857467 !important;
+  }
+
+  .urqr-billing-screen .urqr-billing-header { display: grid !important; grid-template-columns: auto minmax(180px, 1fr) auto; align-items: center; gap: 18px; width: 100%; min-height: 64px; padding: 8px 24px 8px 12px !important; margin: 0 !important; border: 0 !important; border-bottom: 1px solid var(--bill-border) !important; border-radius: 0 !important; background: #F8F5EE !important; }
   .urqr-billing-header > :first-child { grid-column: 1; min-width: 0; }
   .urqr-billing-header > :nth-child(2) { grid-column: 2; order: initial !important; min-width: 0; width: 100% !important; }
   .urqr-billing-header > :last-child { grid-column: 3; justify-self: end; }
@@ -1718,7 +2310,7 @@
   .urqr-billing-header .pos-search-input:focus { border-color: var(--bill-primary) !important; box-shadow: 0 0 0 2px rgb(128 88 59 / 18%) !important; }
   .urqr-billing-header .urqr-billing-header-actions { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 
-  .urqr-billing-workspace { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); flex: 1; min-height: 0; min-width: 0; }
+  .urqr-billing-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 380px; flex: 1; min-height: 0; min-width: 0; }
 
   .urqr-billing-screen .urqr-billing-catalog { display: flex !important; flex-direction: column !important; min-width: 0; min-height: 0; width: 100%; height: 100%; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: #F3EFE7 !important; }
   .urqr-billing-catalog-head { flex: none; padding: 20px 24px 14px; }
@@ -1761,9 +2353,10 @@
   .urqr-billing-summary .pos-cart-row__thumbnail { width: 36px; height: 36px; border-radius: 8px; background: #F7F4EE; border: 1px solid var(--bill-soft-border); }
   .urqr-billing-summary .pos-cart-row__info h4 { font-size: 12px; }
   .urqr-billing-summary .pos-cart-row__info span { font-size: 11px; }
-  .urqr-billing-summary .pos-cart-row__controls { gap: 4px; }
-  .urqr-billing-summary .pos-quantity-stepper__button { width: 22px; height: 22px; }
-  .urqr-billing-summary .pos-quantity-stepper input { width: 24px !important; padding: 0; }
+  .urqr-billing-summary .pos-cart-row__controls { gap: 6px; }
+  .urqr-billing-summary .pos-quantity-stepper { display: inline-flex; align-items: center; border-radius: 8px; }
+  .urqr-billing-summary .pos-quantity-stepper__button { width: 24px; height: 24px; }
+  .urqr-billing-summary .pos-quantity-stepper input { width: 24px !important; padding: 0 !important; }
 
   .urqr-billing-cart-extras { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 8px 24px; font-size: 12px; color: var(--bill-muted); }
   .urqr-billing-cart-extras details { flex: 1; min-width: 0; }

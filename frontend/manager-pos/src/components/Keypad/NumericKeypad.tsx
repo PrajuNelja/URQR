@@ -20,7 +20,6 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
   onDigit,
   onBackspace,
   onClear,
-  showDecimal = true,
   className = "",
   buttonClassName = "",
 }) => {
@@ -37,13 +36,15 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
     { label: "CLR", type: "clear", icon: RotateCcw },
     { label: "0", type: "digit" },
     { label: "DEL", type: "backspace", icon: Delete },
-    { label: "00", type: "digit" },
-    { label: showDecimal ? "." : "000", type: "digit" },
   ];
 
   return (
     <div
-      className={`grid grid-cols-3 gap-3 p-4 bg-[#fbf8f2] rounded-2xl border border-[#e4d5bd] shadow-sm ${className}`}
+      className={
+        className
+          ? `grid grid-cols-3 ${className}`
+          : "grid grid-cols-3 gap-3 p-4 bg-[#fbf8f2] rounded-2xl border border-[#e4d5bd] shadow-sm dark:!bg-[#18110B] dark:!border-[#3E2F23]"
+      }
       aria-label="Touch Numeric Keypad"
       role="group"
     >
@@ -52,7 +53,7 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
           key={btn.label}
           type="button"
           onClick={() => onDigit(btn.label)}
-          className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-2xl font-bold bg-white text-[#2d241b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#fcfaf6] active:scale-95 active:bg-[#e9ddcc] focus:outline-none focus:ring-2 focus:ring-[#a46714] ${buttonClassName}`}
+          className={`pos-keypad-digit-btn min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-2xl font-bold bg-white text-[#2d241b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#fcfaf6] active:scale-95 active:bg-[#e9ddcc] focus:outline-none focus:ring-2 focus:ring-[#a46714] dark:!bg-[#221A14] dark:!text-[#F5EEE0] dark:!border-[#3E2F23] dark:hover:!bg-[#2C211A] ${buttonClassName}`}
           aria-label={`Digit ${btn.label}`}
         >
           {btn.label}
@@ -63,7 +64,7 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
       <button
         type="button"
         onClick={onClear}
-        className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center gap-1 rounded-xl text-base font-bold bg-[#f3eae0] text-[#705e4b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#ebdccb] active:scale-95 active:bg-[#dfcdb4] focus:outline-none focus:ring-2 focus:ring-[#a46714] ${buttonClassName}`}
+        className={`pos-keypad-clr-btn min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center gap-1 rounded-xl text-base font-bold bg-[#f3eae0] text-[#705e4b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#ebdccb] active:scale-95 active:bg-[#dfcdb4] focus:outline-none focus:ring-2 focus:ring-[#a46714] dark:!bg-[#2E241C] dark:!text-[#D4C3B3] dark:!border-[#4D392B] dark:hover:!bg-[#382C22] ${buttonClassName}`}
         aria-label="Clear input"
         title="Clear all"
       >
@@ -74,7 +75,7 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
       <button
         type="button"
         onClick={() => onDigit("0")}
-        className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-2xl font-bold bg-white text-[#2d241b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#fcfaf6] active:scale-95 active:bg-[#e9ddcc] focus:outline-none focus:ring-2 focus:ring-[#a46714] ${buttonClassName}`}
+        className={`pos-keypad-digit-btn min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-2xl font-bold bg-white text-[#2d241b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#fcfaf6] active:scale-95 active:bg-[#e9ddcc] focus:outline-none focus:ring-2 focus:ring-[#a46714] dark:!bg-[#221A14] dark:!text-[#F5EEE0] dark:!border-[#3E2F23] dark:hover:!bg-[#2C211A] ${buttonClassName}`}
         aria-label="Digit 0"
       >
         0
@@ -83,40 +84,12 @@ export const NumericKeypad: React.FC<NumericKeypadProps> = ({
       <button
         type="button"
         onClick={onBackspace}
-        className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center gap-1 rounded-xl text-base font-bold bg-[#fbe7e5] text-[#b3402a] border border-[#f5c2be] shadow-xs transition-all duration-100 select-none hover:bg-[#f7d6d3] active:scale-95 active:bg-[#f0b5b0] focus:outline-none focus:ring-2 focus:ring-[#b3402a] ${buttonClassName}`}
+        className={`pos-keypad-del-btn min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center gap-1 rounded-xl text-base font-bold bg-[#fbe7e5] text-[#b3402a] border border-[#f5c2be] shadow-xs transition-all duration-100 select-none hover:bg-[#f7d6d3] active:scale-95 active:bg-[#f0b5b0] focus:outline-none focus:ring-2 focus:ring-[#b3402a] dark:!bg-[#351C1A] dark:!text-[#F87171] dark:!border-[#4E2421] dark:hover:!bg-[#40201D] ${buttonClassName}`}
         aria-label="Backspace"
         title="Delete last digit"
       >
         <Delete size={20} />
         <span className="text-xs">DEL</span>
-      </button>
-
-      {/* Row 5: 00, Decimal (.), Confirm / Custom */}
-      <button
-        type="button"
-        onClick={() => onDigit("00")}
-        className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-xl font-bold bg-white text-[#2d241b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#fcfaf6] active:scale-95 active:bg-[#e9ddcc] focus:outline-none focus:ring-2 focus:ring-[#a46714] ${buttonClassName}`}
-        aria-label="Double zero"
-      >
-        00
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onDigit(".")}
-        className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-2xl font-bold bg-white text-[#2d241b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#fcfaf6] active:scale-95 active:bg-[#e9ddcc] focus:outline-none focus:ring-2 focus:ring-[#a46714] ${buttonClassName}`}
-        aria-label="Decimal point"
-      >
-        .
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onDigit("5")}
-        className={`min-h-[64px] min-w-[64px] h-16 w-full flex items-center justify-center rounded-xl text-sm font-bold bg-[#f3efe8] text-[#705e4b] border border-[#dfcdb4] shadow-xs transition-all duration-100 select-none hover:bg-[#ebdccb] active:scale-95 active:bg-[#dfcdb4] focus:outline-none focus:ring-2 focus:ring-[#a46714] ${buttonClassName}`}
-        aria-label="Plus 5 quick increment"
-      >
-        +5
       </button>
     </div>
   );

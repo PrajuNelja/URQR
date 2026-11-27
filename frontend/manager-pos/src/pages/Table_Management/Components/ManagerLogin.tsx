@@ -32,21 +32,6 @@ const ManagerLogin = () => {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    const handleFocusIn = (event: globalThis.FocusEvent) => {
-      const target = event.target;
-      if (target instanceof HTMLInputElement && formRef.current?.contains(target)) {
-        window.setTimeout(() => {
-          target.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 150);
-      }
-    };
-    const currentForm = formRef.current;
-    if (!currentForm) return;
-    currentForm.addEventListener("focusin", handleFocusIn);
-    return () => currentForm.removeEventListener("focusin", handleFocusIn);
-  }, []);
-
-  useEffect(() => {
     const interval = window.setInterval(() => setToday(formatToday()), 60_000);
     return () => window.clearInterval(interval);
   }, []);
@@ -73,14 +58,14 @@ const ManagerLogin = () => {
 
       {/* HEADER */}
       <header className="sticky top-0 z-30 h-[72px] shrink-0 border-b border-border bg-surface">
-        <div className="mx-auto flex h-full max-w-[1920px] items-center justify-between gap-4 px-6">
+        <div className="mx-auto flex h-full max-w-[1920px] items-center justify-between gap-4 px-6 sm:px-10 lg:px-16">
           
           {/* LOGO & BRAND */}
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-dashed border-primary/50 text-[10px] font-medium text-text-secondary">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-dashed border-primary/60 bg-surface-alt/60 text-[11px] font-semibold text-text-secondary">
               Logo
             </div>
-            <span className="text-[18px] font-bold leading-[22px] tracking-tight text-text">
+            <span className="text-[19px] font-bold leading-[22px] tracking-tight text-text">
               URQR
             </span>
           </div>
@@ -104,6 +89,7 @@ const ManagerLogin = () => {
               Timeout Modal
             </button>
 
+            
             <button
               type="button"
               onClick={() => setIsDark((previous) => !previous)}
@@ -118,38 +104,61 @@ const ManagerLogin = () => {
       </header>
 
       {/* MAIN LAYOUT WITH EXACT CURVE */}
-      <div className="relative flex-1 overflow-y-auto">
+      <div className="grand-horizon-curve relative flex-1 overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-bg">
         <div
-          className="pointer-events-none absolute left-[-26%] top-[-22%] hidden h-[158%] w-[82%] bg-primary-dark lg:block"
-          style={{ borderRadius: "0 52% 48% 0 / 0 68% 60% 0" }}
+          className="grand-horizon-brand-bg pointer-events-none absolute left-[-26%] top-[-22%] hidden h-[158%] w-[82%] lg:block"
+          style={{
+            backgroundColor: "var(--color-brand-panel, #5C3D26)",
+            borderRadius: "0 52% 48% 0 / 0 68% 60% 0",
+          }}
           aria-hidden="true"
         />
 
-        <div className="relative z-10 mx-auto grid min-h-full max-w-[1920px] grid-cols-1 lg:grid-cols-12">
+        <div className="relative z-10 mx-auto grid h-full min-h-full w-full max-w-[1920px] grid-cols-1 lg:grid-cols-12">
           
           {/* LEFT SECTION */}
-          <section className="flex flex-col justify-center bg-primary-dark px-6 py-12 text-white sm:px-10 lg:col-span-6 lg:bg-transparent lg:px-16 lg:py-20">
-            <div className="max-w-lg space-y-6">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
-                <span className="h-1.5 w-1.5 rounded-full bg-white" />
+          <section
+            className="grand-horizon-brand-col flex flex-col justify-between px-6 pt-8 pb-16 sm:px-10 sm:pt-10 sm:pb-20 lg:col-span-6 lg:bg-transparent lg:pl-[72px] lg:pr-14 lg:pt-12 lg:pb-24 xl:pl-[76px] xl:pr-16 xl:pt-16 xl:pb-28"
+            style={{ color: "var(--color-brand-text, #FFFFFF)" }}
+          >
+            <div className="max-w-lg space-y-4 lg:space-y-4 xl:space-y-6">
+              <div
+                className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]"
+                style={{ color: "var(--color-brand-muted, #E6D8C8)" }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: "var(--color-brand-muted, #E6D8C8)" }}
+                />
                 <span>{LOGIN_COPY.brand}</span>
               </div>
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-[56px] sm:leading-[68px]">
+              <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-[44px] lg:leading-[54px] xl:text-[56px] xl:leading-[68px]">
                 {LOGIN_COPY.headline}
               </h1>
-              <p className="text-lg font-normal leading-relaxed text-white/90 sm:text-[22px] sm:leading-[34px]">
+              <p
+                className="text-base font-normal leading-relaxed text-white/90 sm:text-lg lg:text-[18px] lg:leading-[28px] xl:text-[22px] xl:leading-[34px]"
+                style={{ color: "var(--color-brand-muted, #E6D8C8)" }}
+              >
                 {LOGIN_COPY.description}
               </p>
             </div>
 
-            <div className="mt-10 flex flex-col items-start gap-4 lg:mt-16">
+            {/* THREE INFORMATIONAL METRIC PILLS */}
+            <div
+              className="mt-10 flex flex-col items-start gap-4 sm:gap-4.5 lg:gap-5"
+              aria-label="Operational highlights"
+            >
               {LOGIN_HIGHLIGHTS.map((highlight) => (
                 <div
                   key={highlight}
-                  className="inline-flex min-h-[52px] items-center gap-3 rounded-full border border-white/10 bg-white/15 px-5 text-[14px] font-semibold leading-[24px] text-white sm:text-[16px]"
+                  className="inline-flex h-[52px] items-center gap-3.5 rounded-full border border-white/20 px-6 text-[15px] sm:text-[16px] font-semibold leading-[24px] shadow-sm backdrop-blur-sm transition-transform hover:translate-x-1"
+                  style={{
+                    backgroundColor: "var(--color-brand-pill, rgba(139, 94, 60, 0.55))",
+                    color: "var(--color-brand-text, #FFFFFF)",
+                  }}
                 >
-                  <Sparkles size={16} className="text-white" aria-hidden="true" />
-                  <span className="text-white">{highlight}</span>
+                  <Sparkles size={18} className="text-white shrink-0" aria-hidden="true" />
+                  <span className="text-white whitespace-nowrap">{highlight}</span>
                 </div>
               ))}
             </div>
@@ -157,18 +166,17 @@ const ManagerLogin = () => {
 
           {/* RIGHT SECTION (FORM) */}
           <section
-            className="flex items-center justify-center px-6 py-10 sm:px-8 lg:col-span-6 lg:py-12"
-            style={{ paddingBottom: "max(40px, env(safe-area-inset-bottom))" }}
+            className="flex items-center justify-center px-6 py-8 sm:px-8 lg:col-span-6 lg:py-4 xl:py-8"
           >
             <div className="w-full max-w-[360px]">
               <div className="flex flex-col items-center text-center">
-                <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[12px] bg-primary text-2xl text-on-primary" aria-hidden="true">
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[12px] bg-primary text-xl text-on-primary lg:h-[56px] lg:w-[56px] lg:text-2xl" aria-hidden="true">
                   ✦
                 </div>
-                <h2 className="mt-4 whitespace-pre-line text-[28px] font-semibold leading-[36px] tracking-tight text-text">
+                <h2 className="mt-3 whitespace-pre-line text-[24px] font-semibold leading-[32px] tracking-tight text-text lg:mt-4 lg:text-[28px] lg:leading-[36px]">
                   {LOGIN_COPY.welcome}
                 </h2>
-                <p className="mt-4 text-[14px] font-normal leading-[22px] text-text-secondary">
+                <p className="mt-2 text-[13px] font-normal leading-[20px] text-text-secondary lg:mt-3 lg:text-[14px] lg:leading-[22px]">
                   {LOGIN_COPY.instructions}
                 </p>
               </div>
@@ -178,7 +186,7 @@ const ManagerLogin = () => {
                 onSubmit={onSubmit}
                 noValidate
                 aria-busy={isSubmitting}
-                className="mt-[40px] space-y-[24px]"
+                className="mt-[28px] space-y-[20px] lg:mt-[28px] xl:mt-[40px] xl:space-y-[24px]"
               >
                 {/* MANAGER ID */}
                 <InputField
@@ -188,7 +196,6 @@ const ManagerLogin = () => {
                   placeholder={LOGIN_COPY.usernamePlaceholder}
                   fieldSize="lg"
                   error={errors.username?.message}
-                  disabled={isSubmitting}
                   {...form.register("username")}
                 />
 
@@ -200,7 +207,6 @@ const ManagerLogin = () => {
                   placeholder={LOGIN_COPY.passwordPlaceholder}
                   fieldSize="lg"
                   error={errors.password?.message}
-                  disabled={isSubmitting}
                   suffix={
                     <button
                       type="button"
@@ -208,10 +214,9 @@ const ManagerLogin = () => {
                       onMouseDown={(e) => e.preventDefault()}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       aria-pressed={showPassword}
-                      disabled={isSubmitting}
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-text-secondary hover:text-text transition-colors"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-secondary hover:text-text transition-colors"
                     >
-                      {showPassword ? <EyeOff size={22} strokeWidth={1.8} /> : <Eye size={22} strokeWidth={1.8} />}
+                      {showPassword ? <EyeOff size={20} strokeWidth={1.8} /> : <Eye size={20} strokeWidth={1.8} />}
                     </button>
                   }
                   {...form.register("password")}

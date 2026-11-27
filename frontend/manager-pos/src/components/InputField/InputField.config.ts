@@ -16,7 +16,7 @@ export const FIELD_ERROR =
 // Removed focus-visible outline and replaced it with a clean focus border
 export const INPUT_BASE =
   "w-full bg-input-bg text-text border border-primary rounded-[8px] " +
-  "outline-none transition-all duration-200 placeholder:text-text-secondary font-medium " +
+  "outline-none transition-all duration-200 placeholder:font-sans placeholder:text-text-secondary font-medium " +
   "focus:border-primary focus:ring-1 focus:ring-primary " +
   "disabled:bg-disabled disabled:text-disabled-text disabled:border-border disabled:cursor-not-allowed";
 
@@ -30,7 +30,7 @@ export const INPUT_VARIANTS = {
 export const INPUT_SIZES: Record<FieldSize, string> = {
   sm: "text-[14px] leading-[20px] px-3 h-10",        // 40px
   md: "text-[14px] leading-[20px] px-3.5 h-11",      // 44px
-  lg: "text-[14px] leading-[20px] px-4 h-[52px]",    // 52px (Login Spec)
+  lg: "text-[14px] leading-[20px] pl-5 pr-4 h-[52px]", // 52px (Login Spec: exact pl-5 pr-4 spacing)
 };
 
 // ICON WRAPPERS
@@ -46,7 +46,7 @@ export const INPUT_RIGHT_ICON =
 export const TEXTAREA_BASE =
   "w-full bg-input-bg text-text border border-primary rounded-[8px] " +
   "outline-none transition-all duration-200 resize-none font-medium " +
-  "placeholder:text-text-secondary px-4 py-3 text-[14px] leading-[20px] " +
+  "placeholder:font-sans placeholder:text-text-secondary px-4 py-3 text-[14px] leading-[20px] " +
   "focus:border-primary focus:ring-1 focus:ring-primary " +
   "disabled:bg-disabled disabled:text-disabled-text disabled:border-border disabled:cursor-not-allowed";
 

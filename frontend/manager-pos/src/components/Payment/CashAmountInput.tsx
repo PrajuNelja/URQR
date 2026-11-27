@@ -6,6 +6,8 @@ interface CashAmountInputProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  placeholder?: string;
+  label?: string;
 }
 
 const QUICK_AMOUNTS = [50, 100, 200] as const;
@@ -14,6 +16,8 @@ export function CashAmountInput({
   value,
   onChange,
   disabled = false,
+  placeholder = "Enter cash amount",
+  label = "CASH RECEIVED (₹)",
 }: CashAmountInputProps) {
   function addCash(rupees: number) {
     const currentPaise = parseINRToPaise(value) ?? 0;
@@ -27,13 +31,13 @@ export function CashAmountInput({
   return (
     <div className="pos-cash-input">
       <InputField
-        label="CASH RECEIVED (₹)"
+        label={label}
         type="text"
         inputMode="decimal"
         autoComplete="off"
         value={value}
         disabled={disabled}
-        placeholder="Enter cash amount"
+        placeholder={placeholder}
         onChange={(event) => {
           const next = event.target.value;
           if (/^\d*(?:\.\d{0,2})?$/.test(next)) {

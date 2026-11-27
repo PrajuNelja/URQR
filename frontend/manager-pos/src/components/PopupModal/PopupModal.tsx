@@ -109,26 +109,36 @@ export const PopupModal = ({
         aria-labelledby={title ? "modal-title" : undefined}
         aria-label={title ? undefined : "Dialog"}
       >
-        {/* If there is a title, show the header */}
-        {title && (
+        {/* Header with Title and seamlessly aligned Close Button */}
+        {title ? (
           <div className={MODAL_HEADER}>
             <h2 id="modal-title" className={MODAL_TITLE}>
               {title}
             </h2>
+            {!hideCloseButton && (
+              <button
+                type="button"
+                className={MODAL_CLOSE_BTN}
+                onClick={onClose}
+                aria-label="Close modal"
+                title="Close"
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+            )}
           </div>
-        )}
-
-        {/* Absolute positioned Close Button for all cases */}
-        {!hideCloseButton && (
-          <button
-            type="button"
-            className={`${MODAL_CLOSE_BTN} absolute right-4 top-4`}
-            onClick={onClose}
-            aria-label="Close modal"
-            title="Close"
-          >
-            <X size={24} strokeWidth={2} />
-          </button>
+        ) : (
+          !hideCloseButton && (
+            <button
+              type="button"
+              className={`${MODAL_CLOSE_BTN} absolute right-4 top-4 z-10`}
+              onClick={onClose}
+              aria-label="Close modal"
+              title="Close"
+            >
+              <X size={18} strokeWidth={2.5} />
+            </button>
+          )
         )}
 
         {/* Add padding-top if no title, so content doesn't overlap the X */}

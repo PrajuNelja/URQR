@@ -1,12 +1,10 @@
 // src/components/Buttons/Button.tsx
 import { forwardRef } from "react";
-import { Loader2 } from "lucide-react";
 import {
   BUTTON_BASE,
   BUTTON_VARIANTS,
   BUTTON_SIZES,
   BUTTON_FULL_WIDTH,
-  SPINNER_CLASSES,
 } from "./Button.config";
 import type { ButtonProps } from "./Button.types";
 
@@ -28,8 +26,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const classes = [
-      BUTTON_BASE, // <-- FIXED: Added the base styles back
+      BUTTON_BASE,
       BUTTON_VARIANTS[variant],
+      isLoading
+        ? "!bg-primary !text-on-primary opacity-90 cursor-wait pointer-events-none"
+        : "",
       BUTTON_SIZES[size],
       fullWidth ? BUTTON_FULL_WIDTH : "",
       className,
@@ -49,13 +50,31 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...rest}
       >
         {isLoading ? (
-          <Loader2 size={16} className={SPINNER_CLASSES} aria-hidden="true" />
+          <svg
+            className={`${size === "login" ? "h-[22px] w-[22px]" : "h-5 w-5"} animate-spin shrink-0 text-current`}
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="3.5"
+            />
+            <path
+              className="opacity-90"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
         ) : (
           leftIcon
         )}
         
-        {/* Using flex-1 for text to center it properly when icon is present */}
-        <span className="flex-1 text-center">
+        <span className="inline-flex items-center justify-center font-semibold">
           {children}
         </span>
         

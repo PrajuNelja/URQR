@@ -40,7 +40,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       INPUT_SIZES[fieldSize],
       leftIcon ? "pl-7" : "",
       rightIcon ? "pr-12" : "",
-      suffix ? "pr-14" : "",
+      suffix ? "!pr-12" : "",
       fullWidth ? "w-full" : "",
       className,
     ]
@@ -89,7 +89,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           )}
 
           {suffix && (
-            <span className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center">
+            <span className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center">
               {suffix}
             </span>
           )}

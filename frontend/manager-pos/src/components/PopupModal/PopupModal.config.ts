@@ -14,24 +14,24 @@ export const MODAL_SIZES: Record<PopupModalSize, string> = {
   xl: "max-w-4xl min-w-[600px]",
 };
 
-// NO BORDERS (removed border-b)
+// Header & Footer with distinct background tint and clean separator borders
 export const MODAL_HEADER =
-  "flex items-center justify-between gap-4 px-6 pt-5 pb-2 bg-surface shrink-0";
+  "pos-modal-header flex items-center justify-between gap-4 px-6 py-3.5 bg-surface-alt border-b border-border shrink-0 dark:bg-[#1A130D] dark:border-[#382B20]";
 
 export const MODAL_TITLE =
-  "font-sans text-lg font-semibold text-text m-0 truncate";
+  "pos-modal-title font-sans text-base sm:text-lg font-bold text-text dark:text-[#F5EEE0] m-0 truncate";
 
-// Bigger button area (w-10 h-10) so the X icon never squishes
+// Prominent, tactile circular close button cleanly aligned inside header
 export const MODAL_CLOSE_BTN =
-  "w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-text hover:bg-surface-alt transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "pos-modal-close-btn w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-[#D8C7B0] bg-surface hover:bg-surface-alt active:scale-95 text-[#4A382A] shadow-xs dark:bg-[#251D17] dark:border-[#4A3728] dark:text-[#E8DEC8] dark:hover:bg-[#32271F] dark:hover:text-white transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer shrink-0";
 
 // Body: flex-1 fills the space
 export const MODAL_BODY = 
   "px-6 py-4 overflow-y-auto bg-surface grow flex flex-col";
 
-// NO BORDERS (removed border-t), nice bottom padding
+// Distinct footer background and top border for clear visual separation
 export const MODAL_FOOTER =
-  "flex items-center justify-end gap-3 px-6 pt-2 pb-6 bg-surface shrink-0";
+  "pos-modal-footer flex items-center justify-end gap-3 px-6 py-3.5 bg-surface-alt border-t border-border shrink-0 dark:bg-[#1A130D] dark:border-[#382B20]";
 
 // ═══════════════════════════════════════════
 // RECEIPT (Thermal Paper Style)

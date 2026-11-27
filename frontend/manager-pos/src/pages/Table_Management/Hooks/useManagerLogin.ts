@@ -80,10 +80,9 @@ export const useManagerLogin = () => {
         message: `Welcome, ${data.username}. Opening register…`,
       });
 
-      // Day 3 Task 5: Redirect to billing (or saved redirect URL)
-      setTimeout(() => {
-        void navigate({ to: search.redirect || "/pos/billing" });
-      }, 350);
+      // Keep isSubmitting = true and spin for ~1.4 seconds before navigating
+      await new Promise((resolve) => setTimeout(resolve, 1400));
+      void navigate({ to: search.redirect || "/pos/billing" });
       
     } catch (err: unknown) {
       let errorMessage = "Unable to connect to authentication server.";
@@ -96,10 +95,13 @@ export const useManagerLogin = () => {
             shouldDirty: false,
             shouldTouch: false,
           });
+          setIsSubmitting(false);
         } else if (err.response?.data?.message) {
           errorMessage = String(err.response.data.message);
+          setIsSubmitting(false);
         } else if (err.code === "ECONNABORTED") {
           errorMessage = "Connection timed out. Please try again.";
+          setIsSubmitting(false);
         } else if (!err.response) {
           // Backend is offline/unreachable: activate standalone demo mode
           const DEMO_JWT =
@@ -110,13 +112,17 @@ export const useManagerLogin = () => {
             type: "success",
             message: `Welcome, ${data.username || "Manager"}. Opening register…`,
           });
-          setTimeout(() => {
-            void navigate({ to: search.redirect || "/pos/billing" }).catch(() => {
-              window.location.href = "/pos/billing";
-            });
-          }, 350);
+          // Spin for ~1.4s in demo mode before redirecting
+          await new Promise((resolve) => setTimeout(resolve, 1400));
+          void navigate({ to: search.redirect || "/pos/billing" }).catch(() => {
+            window.location.href = "/pos/billing";
+          });
           return;
+        } else {
+          setIsSubmitting(false);
         }
+      } else {
+        setIsSubmitting(false);
       }
 
       setFeedback({
@@ -124,8 +130,6 @@ export const useManagerLogin = () => {
         type: "error",
         message: errorMessage,
       });
-    } finally {
-      setIsSubmitting(false);
     }
   });
 
