@@ -1,7 +1,13 @@
+
 import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, LogOut, ReceiptText, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  ReceiptText,
+  X,
+} from "lucide-react";
 
 import { IconButton } from "../../../../components/Buttons/IconButton";
 import { Button } from "../../../../components/Buttons/Button";
@@ -12,14 +18,25 @@ interface BillingSidebarProps {
   onClose: () => void;
 }
 
-export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
+export function BillingSidebar({
+  isOpen,
+  onClose,
+}: BillingSidebarProps) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const clearAuth = useAuthStore((state) => state.clearAuth);
 
+  // QUERY CLIENT
+  const queryClient = useQueryClient();
+
+  // AUTH STORE
+  const clearAuth = useAuthStore(
+    (state) => state.clearAuth
+  );
+
+  // REFS
   const sidebarRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  // SIDEBAR ACCESSIBILITY
   useEffect(() => {
     if (!isOpen) return;
 
@@ -29,32 +46,42 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
         : null;
 
     const previousOverflow = document.body.style.overflow;
+
     document.body.style.overflow = "hidden";
 
     closeRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // CLOSE USING ESCAPE
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
         return;
       }
 
+      // KEYBOARD FOCUS TRAP
       if (event.key !== "Tab") return;
 
-      const elements = sidebarRef.current?.querySelectorAll<HTMLElement>(
-        "a[href], button:not([disabled])",
-      );
+      const elements =
+        sidebarRef.current?.querySelectorAll<HTMLElement>(
+          "a[href], button:not([disabled])"
+        );
 
       if (!elements?.length) return;
 
       const first = elements[0];
       const last = elements[elements.length - 1];
 
-      if (event.shiftKey && document.activeElement === first) {
+      if (
+        event.shiftKey &&
+        document.activeElement === first
+      ) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (
+        !event.shiftKey &&
+        document.activeElement === last
+      ) {
         event.preventDefault();
         first.focus();
       }
@@ -63,17 +90,27 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
       document.body.style.overflow = previousOverflow;
+
       previousFocus?.focus();
     };
   }, [isOpen, onClose]);
 
+  // LOGOUT HANDLER
   const handleLogout = () => {
     clearAuth();
+
+    // CLEAR REACT QUERY CACHE
     queryClient.clear();
+
     onClose();
 
+    // NAVIGATE TO LOGIN
     void navigate({
       to: "/login",
       replace: true,
@@ -87,15 +124,18 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
       id="urqr-billing-drawer"
       className="urqr-billing-drawer fixed inset-0 z-[100]"
     >
-      {/* Overlay */}
+      {/* OVERLAY */}
       <button
         type="button"
-        className="urqr-billing-backdrop absolute inset-0 bg-black/40"
+        className="
+          urqr-billing-backdrop
+          absolute inset-0 bg-black/40
+        "
         aria-label="Close navigation"
         onClick={onClose}
       />
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <aside
         ref={sidebarRef}
         role="dialog"
@@ -104,11 +144,15 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
         className="
           urqr-billing-drawer-panel
           absolute inset-y-0 left-0
-          flex w-[350px] max-w-[90vw] flex-col
-          bg-surface px-6 py-6 shadow-xl
+          flex w-[350px] max-w-[90vw]
+          flex-col
+          bg-surface
+          px-6 py-6
+          shadow-xl
         "
       >
-        {/* Hotel name and close button */}
+
+        {/* HOTEL NAME AND CLOSE BUTTON */}
         <div
           className="
             urqr-billing-drawer-head
@@ -116,7 +160,10 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
             border-b border-border pb-6
           "
         >
-          <h2 className="text-[19px] font-bold tracking-wide text-text">
+          <h2 className="
+            text-[19px] font-bold
+            tracking-wide text-text
+          ">
             GRAND HORIZON
           </h2>
 
@@ -130,55 +177,88 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
           />
         </div>
 
-        {/* Top navigation */}
+        {/* TOP NAVIGATION */}
         <nav
           aria-label="Main navigation"
-          className="urqr-billing-drawer-links mt-6 flex flex-col gap-3"
+          className="
+            urqr-billing-drawer-links
+            mt-6 flex flex-col gap-3
+          "
         >
+          {/* BILLING */}
           <Link
             to="/pos/billing"
             aria-current="page"
             onClick={onClose}
             className="
-              flex min-h-[54px] items-center gap-4
-              rounded-xl bg-primary px-4 py-3
-              text-[15px] font-semibold !text-white
+              flex min-h-[54px]
+              items-center gap-4
+              rounded-xl
+              bg-primary
+              px-4 py-3
+              text-[15px]
+              font-semibold
+              !text-white
             "
           >
-            <ReceiptText size={21} aria-hidden="true" />
+            <ReceiptText
+              size={21}
+              aria-hidden="true"
+            />
             <span>Billing</span>
           </Link>
 
+          {/* DASHBOARD */}
           <Link
             to="/pos/dashboard"
             onClick={onClose}
             className="
-              flex min-h-[54px] items-center gap-4
-              rounded-xl px-4 py-3 text-[15px]
-              font-medium text-text hover:bg-surface-alt
+              flex min-h-[54px]
+              items-center gap-4
+              rounded-xl
+              px-4 py-3
+              text-[15px]
+              font-medium
+              text-text
+              hover:bg-surface-alt
             "
           >
-            <LayoutDashboard size={21} aria-hidden="true" />
+            <LayoutDashboard
+              size={21}
+              aria-hidden="true"
+            />
             <span>Dashboard</span>
           </Link>
         </nav>
 
-        {/* Bottom — Logout only */}
+        {/* BOTTOM LOGOUT */}
         <div
           className="
             urqr-billing-drawer-bottom
-            mt-auto border-t border-border pt-5
+            mt-auto
+            border-t border-border
+            pt-5
           "
         >
           <Button
             type="button"
             variant="ghost"
             fullWidth
-            leftIcon={<LogOut size={20} aria-hidden="true" />}
+            leftIcon={
+              <LogOut
+                size={20}
+                aria-hidden="true"
+              />
+            }
             className="
-              !min-h-[50px] !justify-start !gap-4
-              !rounded-xl !px-4 !text-[15px]
-              !font-semibold !text-text
+              !min-h-[50px]
+              !justify-start
+              !gap-4
+              !rounded-xl
+              !px-4
+              !text-[15px]
+              !font-semibold
+              !text-text
               hover:!bg-surface-alt
             "
             onClick={handleLogout}
@@ -186,7 +266,10 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
             Logout
           </Button>
         </div>
+
       </aside>
     </div>
   );
 }
+
+export default BillingSidebar;

@@ -38,7 +38,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       INPUT_BASE,
       INPUT_VARIANTS[error ? "error" : "default"],
       INPUT_SIZES[fieldSize],
-      leftIcon ? "pl-10" : "",
+      leftIcon ? "pl-7" : "",
       rightIcon ? "pr-12" : "",
       suffix ? "pr-14" : "",
       fullWidth ? "w-full" : "",
