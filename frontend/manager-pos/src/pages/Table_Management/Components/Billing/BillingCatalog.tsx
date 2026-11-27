@@ -1,4 +1,6 @@
 
+import { useRef, useState } from "react";
+
 import { Card } from "../../../../components/DataCard/Card";
 import { Tabs } from "../../../../components/Header/Tabs";
 import { ProductCard } from "../../../../components/DataCard/ProductCard";
@@ -12,7 +14,7 @@ interface BillingCatalogProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
   filteredDishes: Dish[];
-  addToCart: (dishId: number) => void;
+  addToCart: (dishId: number) => void | Promise<void>;
   cart: Record<number, number>;
 }
 
@@ -28,14 +30,54 @@ export function BillingCatalog({
     (category) => category.key === activeTab
   );
 
+  // LOADING STATE
+  const [loadingIds, setLoadingIds] = useState<number[]>([]);
+
+  // PREVENT DUPLICATE API REQUESTS
+  const pendingRequests = useRef(new Set<number>());
+
+  // ADD PRODUCT TO CART
+  const handleAddToCart = async (dishId: number) => {
+    if (pendingRequests.current.has(dishId)) return;
+
+    // Mark request as pending immediately
+    pendingRequests.current.add(dishId);
+
+    // SHOW LOADING BUTTON
+    setLoadingIds((prev) => [...prev, dishId]);
+
+    try {
+      // WAIT FOR ACTUAL BACKEND RESPONSE
+      await addToCart(dishId);
+
+      // Cart update should happen after successful API response
+    } catch (error) {
+      console.error(
+        `Failed to add product ${dishId} to cart:`,
+        error
+      );
+
+      // Request failed. User can try adding again.
+    } finally {
+      // REMOVE LOADING STATE
+      pendingRequests.current.delete(dishId);
+
+      setLoadingIds((prev) =>
+        prev.filter((id) => id !== dishId)
+      );
+    }
+  };
+
   return (
     <Card
       as="section"
       padding="none"
       className="urqr-billing-catalog"
     >
+
       {/* CATEGORY TABS */}
       <div className="urqr-billing-catalog-head">
+
         <nav
           className="urqr-billing-category-scroll"
           aria-label="Dish categories"
@@ -62,11 +104,14 @@ export function BillingCatalog({
         </div>
       </div>
 
-      {/* REUSABLE PRODUCT CARDS */}
+      {/* PRODUCT GRID */}
       <div
         role="region"
         aria-label="Product Catalog Grid"
-        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 urqr-billing-product-grid"
+        className="
+          grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4
+          urqr-billing-product-grid
+        "
       >
         {filteredDishes.length === 0 ? (
           <p
@@ -81,7 +126,7 @@ export function BillingCatalog({
           filteredDishes.map((dish) => {
             const availableStock = dish.stock;
 
-            // Determine stock status
+            // STOCK STATUS
             const stockState =
               availableStock === 0
                 ? "sold-out"
@@ -91,7 +136,7 @@ export function BillingCatalog({
                   ? "low-stock"
                   : "in-stock";
 
-            // Maximum allowed cart quantity
+            // MAXIMUM CART QUANTITY
             const maxQuantity = Math.min(
               15,
               availableStock ?? 15
@@ -107,11 +152,14 @@ export function BillingCatalog({
                 imageUrl={dish.imageUrl}
                 stockState={stockState}
                 stock={dish.stock}
-                inCartQuantity={
-                  cart[dish.id] ?? 0
-                }
+                inCartQuantity={cart[dish.id] ?? 0}
                 maxQuantity={maxQuantity}
-                onAdd={() => addToCart(dish.id)}
+
+                // LOADING STATE FOR EACH PRODUCT
+                isLoading={loadingIds.includes(dish.id)}
+
+                // ACTUAL API HANDLER
+                onAdd={() => handleAddToCart(dish.id)}
               />
             );
           })

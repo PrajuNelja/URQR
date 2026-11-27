@@ -577,6 +577,7 @@ export function PosCheckoutModal({
       receivedPaise,
       retryLocked,
       onConfirmPayment,
+      method,
     ]);
 
   // ========================================
