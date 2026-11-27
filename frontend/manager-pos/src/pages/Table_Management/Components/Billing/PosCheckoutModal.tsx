@@ -39,14 +39,14 @@ import {
   type CheckoutStatusType,
 } from "./CheckoutStatus";
 
-// CENTRALIZED CHECKOUT ERROR HANDLER
+// CHECKOUT ERROR HANDLER
 import {
   getCheckoutError,
   type CheckoutErrorDetails,
 } from "./checkoutErrors";
 
 // ==========================================
-// CHECKOUT PROPS
+// CHECKOUT MODAL PROPS
 // ==========================================
 
 interface PosCheckoutModalProps {
@@ -67,11 +67,13 @@ interface PosCheckoutModalProps {
     checkout: CheckoutRequest
   ) => Promise<boolean>;
 
-  onViewReceipt: () => void;
+  // Optional for backward compatibility
+  // with existing components and tests.
+  onViewReceipt?: () => void;
 }
 
 // ==========================================
-// QUICK CASH BUTTON CONFIGURATION
+// QUICK CASH CONFIGURATION
 // ==========================================
 
 const QUICK_CASH_AMOUNTS = [
@@ -80,7 +82,6 @@ const QUICK_CASH_AMOUNTS = [
   2000,
 ];
 
-// Existing Style/Theme tokens.
 const QUICK_CASH_BUTTON_CLASS = `
   !min-w-0
   !min-h-12
@@ -99,11 +100,11 @@ const QUICK_CASH_BUTTON_CLASS = `
 `;
 
 // ==========================================
-// DEMO UPI QR
+// DEMO UPI QR CONFIGURATION
 // ==========================================
 
-// Demo QR illustration only.
-// Not valid for actual payment.
+// Demo illustration only.
+// Not valid for actual UPI payments.
 
 const DEMO_DOTS = Array.from(
   { length: 29 * 29 },
@@ -218,7 +219,7 @@ export function PosCheckoutModal({
   onViewReceipt,
 }: PosCheckoutModalProps) {
   // ==========================================
-  // PAYMENT STATES
+  // CHECKOUT STATES
   // ==========================================
 
   const [method, setMethod] =
@@ -233,8 +234,6 @@ export function PosCheckoutModal({
         : String(total)
     );
 
-  // Structured error details for scenario-based
-  // checkout messages.
   const [error, setError] =
     useState<CheckoutErrorDetails | null>(
       null
@@ -243,22 +242,18 @@ export function PosCheckoutModal({
   const [checkoutStatus, setCheckoutStatus] =
     useState<CheckoutStatusType>("idle");
 
-  // Preserve the original payable amount
-  // after successful checkout clears the cart.
   const [
     confirmedAmountPaise,
     setConfirmedAmountPaise,
   ] = useState(0);
 
-  // Immediate protection against repeated clicks.
+  // Prevent duplicate submissions.
   const submittingRef = useRef(false);
 
-  // Preserve tender details after an uncertain
-  // transaction so the cashier cannot change them.
-  const [
-    retryLocked,
-    setRetryLocked,
-  ] = useState(false);
+  // Preserve original payment details
+  // if an earlier transaction is unresolved.
+  const [retryLocked, setRetryLocked] =
+    useState(false);
 
   // ==========================================
   // RESET MODAL WHEN REOPENED
@@ -283,7 +278,9 @@ export function PosCheckoutModal({
       );
 
       setError(null);
+
       setCheckoutStatus("idle");
+
       setConfirmedAmountPaise(0);
     }
   }
@@ -308,11 +305,9 @@ export function PosCheckoutModal({
     receivedPaise >= payablePaise;
 
   // ==========================================
-  // CHECKOUT LOADING STATE
+  // CHECKOUT PROCESSING STATE
   // ==========================================
 
-  // Combine local processing state with
-  // TanStack Query mutation state.
   const busy =
     checkoutStatus === "processing" ||
     isSubmitting;
@@ -321,12 +316,11 @@ export function PosCheckoutModal({
     busy ||
     checkoutStatus !== "idle";
 
-  // Lock payment details while processing
-  // or while a previous result is unresolved.
   const paymentDetailsLocked =
     busy || retryLocked;
 
-  // Current mock API supports Cash only.
+  // Only Cash is supported by the current
+  // development checkout integration.
   const canConfirm =
     isOpen &&
     !busy &&
@@ -352,6 +346,7 @@ export function PosCheckoutModal({
     }
 
     setCashReceived(value);
+
     setError(null);
   };
 
@@ -359,163 +354,154 @@ export function PosCheckoutModal({
   // CONFIRM PAYMENT
   // ==========================================
 
-  const confirmPayment = useCallback(async () => {
-    // Prevent duplicate payment submission.
-    if (
-      submittingRef.current ||
-      busy ||
-      !canConfirm
-    ) {
-      return;
-    }
-
-    // ======================================
-    // SCENARIO 1 - OFFLINE BEFORE SUBMISSION
-    // ======================================
-
-    if (!navigator.onLine) {
-      setError({
-        title: "No Internet Connection",
-
-        message: retryLocked
-          ? "Reconnect to the network. Your previous transaction is still unresolved."
-          : "Reconnect to the internet before submitting your payment.",
-
-        requiresVerification: retryLocked,
-      });
-
-      setCheckoutStatus("error");
-
-      return;
-    }
-
-    // ======================================
-    // SCENARIO 2 - VALIDATE PAYMENT DETAILS
-    // ======================================
-
-    const amountTendered =
-      receivedPaise ?? 0;
-
-    const parsed =
-      CheckoutRequestSchema.safeParse({
-        paymentMode: "Cash",
-
-        payableAmount:
-          payablePaise / 100,
-
-        amountTendered:
-          amountTendered / 100,
-
-        changeDue:
-          Math.max(
-            0,
-            amountTendered - payablePaise
-          ) / 100,
-      });
-
-    if (!parsed.success) {
-      setError({
-        title: "Invalid Payment Details",
-
-        message:
-          "Check the payable amount and cash collected.",
-
-        requiresVerification: retryLocked,
-      });
-
-      setCheckoutStatus("error");
-
-      return;
-    }
-
-    // ======================================
-    // SCENARIO 3 - PAYMENT PROCESSING
-    // ======================================
-
-    // Lock immediately before API submission.
-    submittingRef.current = true;
-
-    // Preserve original payment amount.
-    setConfirmedAmountPaise(
-      payablePaise
-    );
-
-    setError(null);
-
-    // Display centered processing popup.
-    setCheckoutStatus("processing");
-
-    try {
-      // Execute existing checkout mutation.
-      const completed =
-        await onConfirmPayment(
-          parsed.data
-        );
-
-      // Never display success without
-      // a confirmed checkout result.
-      if (completed !== true) {
-        throw new Error(
-          "Order confirmation was not completed."
-        );
+  const confirmPayment =
+    useCallback(async () => {
+      // Prevent double submission.
+      if (
+        submittingRef.current ||
+        busy ||
+        !canConfirm
+      ) {
+        return;
       }
 
-      // ====================================
-      // SCENARIO 4 - SUCCESSFUL PAYMENT
-      // ====================================
+      // ======================================
+      // OFFLINE CONNECTION CHECK
+      // ======================================
 
-      setRetryLocked(false);
+      if (!navigator.onLine) {
+        setError({
+          title: "No Internet Connection",
+
+          message: retryLocked
+            ? "Reconnect to the network. Your previous transaction is still unresolved."
+            : "Reconnect to the internet before submitting your payment.",
+
+          requiresVerification: retryLocked,
+        });
+
+        setCheckoutStatus("error");
+
+        return;
+      }
+
+      // ======================================
+      // VALIDATE CHECKOUT DETAILS
+      // ======================================
+
+      const amountTendered =
+        receivedPaise ?? 0;
+
+      const parsed =
+        CheckoutRequestSchema.safeParse({
+          paymentMode: "Cash",
+
+          payableAmount:
+            payablePaise / 100,
+
+          amountTendered:
+            amountTendered / 100,
+
+          changeDue:
+            Math.max(
+              0,
+              amountTendered - payablePaise
+            ) / 100,
+        });
+
+      if (!parsed.success) {
+        setError({
+          title: "Invalid Payment Details",
+
+          message:
+            "Check the payable amount and cash collected.",
+
+          requiresVerification: retryLocked,
+        });
+
+        setCheckoutStatus("error");
+
+        return;
+      }
+
+      // ======================================
+      // START PAYMENT PROCESSING
+      // ======================================
+
+      submittingRef.current = true;
+
+      setConfirmedAmountPaise(
+        payablePaise
+      );
 
       setError(null);
 
-      // Success remains visible until
-      // View Receipt is clicked.
-      setCheckoutStatus("success");
+      setCheckoutStatus("processing");
 
-    } catch (err) {
-      // ====================================
-      // SCENARIO 5 - CHECKOUT FAILURE
-      // ====================================
+      try {
+        // Execute existing payment mutation.
+        const completed =
+          await onConfirmPayment(
+            parsed.data
+          );
 
-      // Detect actual HTTP, network, timeout,
-      // server or unresolved checkout errors.
-      const errorDetails =
-        getCheckoutError(err);
+        // Do not display success until
+        // actual checkout confirmation.
+        if (completed !== true) {
+          throw new Error(
+            "Order confirmation was not completed."
+          );
+        }
 
-      // Retain existing unresolved state.
-      const requiresVerification =
-        retryLocked ||
-        errorDetails.requiresVerification;
+        // ====================================
+        // PAYMENT SUCCESS
+        // ====================================
 
-      setError({
-        ...errorDetails,
-        requiresVerification,
-      });
+        setRetryLocked(false);
 
-      // Prevent changing original payment
-      // details if transaction is uncertain.
-      if (requiresVerification) {
-        setRetryLocked(true);
+        setError(null);
+
+        setCheckoutStatus("success");
+
+      } catch (err) {
+        // ====================================
+        // PAYMENT FAILURE
+        // ====================================
+
+        const errorDetails =
+          getCheckoutError(err);
+
+        const requiresVerification =
+          retryLocked ||
+          errorDetails.requiresVerification;
+
+        setError({
+          ...errorDetails,
+          requiresVerification,
+        });
+
+        if (requiresVerification) {
+          setRetryLocked(true);
+        }
+
+        setCheckoutStatus("error");
+
+      } finally {
+        // Release local submission lock.
+        submittingRef.current = false;
       }
-
-      // Display scenario-specific error popup.
-      setCheckoutStatus("error");
-
-    } finally {
-      // Always release the local submission lock.
-      submittingRef.current = false;
-    }
-  }, [
-    busy,
-    canConfirm,
-    payablePaise,
-    receivedPaise,
-    retryLocked,
-    onConfirmPayment,
-  ]);
+    }, [
+      busy,
+      canConfirm,
+      payablePaise,
+      receivedPaise,
+      retryLocked,
+      onConfirmPayment,
+    ]);
 
   // ==========================================
-  // VIEW RECEIPT AFTER SUCCESS
+  // VIEW RECEIPT
+  // UPDATED FOR BACKWARD COMPATIBILITY
   // ==========================================
 
   const handleViewReceipt =
@@ -528,14 +514,20 @@ export function PosCheckoutModal({
         return;
       }
 
-      // Existing Billing.tsx function
-      // opens the confirmed receipt.
-      onViewReceipt();
-
+      // Current Billing.tsx provides this
+      // callback to open the receipt.
+      if (onViewReceipt) {
+        onViewReceipt();
+      } else {
+        // Older components and tests
+        // may not provide onViewReceipt.
+        onClose();
+      }
     }, [
       busy,
       checkoutStatus,
       onViewReceipt,
+      onClose,
     ]);
 
   // ==========================================
@@ -550,9 +542,8 @@ export function PosCheckoutModal({
       return;
     }
 
-    // Preserve error information.
-    // Preserve cash amount and retry protection.
-    // Never reset the Idempotency-Key here.
+    // Retain original cash amount and
+    // unresolved transaction protection.
     setCheckoutStatus("idle");
   };
 
@@ -561,27 +552,36 @@ export function PosCheckoutModal({
   // ==========================================
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleKeyDown = (
       event: KeyboardEvent
     ) => {
-      if (event.key !== "Enter") {
+      if (
+        event.key !== "Enter" ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.metaKey
+      ) {
         return;
       }
 
-      // Prevent repeated Enter presses.
+      // Prevent repeated payment submission.
       if (
         busy ||
         submittingRef.current ||
         event.repeat
       ) {
         event.preventDefault();
+
         return;
       }
 
-      // Preserve normal keyboard behavior
-      // for focused interactive elements.
+      // Preserve focused button functionality.
       if (
         event.target instanceof HTMLElement &&
         event.target.closest(
@@ -600,7 +600,7 @@ export function PosCheckoutModal({
         return;
       }
 
-      // Enter confirms valid cash checkout.
+      // Enter confirms valid cash payment.
       if (
         checkoutStatus === "idle" &&
         canConfirm
@@ -632,7 +632,7 @@ export function PosCheckoutModal({
   ]);
 
   // ==========================================
-  // PAYMENT METHOD SELECTION
+  // CHANGE PAYMENT METHOD
   // ==========================================
 
   const changePaymentMethod = (
@@ -670,7 +670,7 @@ export function PosCheckoutModal({
   // ==========================================
 
   const handleClose = () => {
-    // Do not close during processing.
+    // Prevent modal closure during payment.
     if (
       busy ||
       submittingRef.current
@@ -678,15 +678,15 @@ export function PosCheckoutModal({
       return;
     }
 
-    // Open receipt after successful payment.
+    // After successful checkout,
+    // open receipt or close using fallback.
     if (checkoutStatus === "success") {
       handleViewReceipt();
 
       return;
     }
 
-    // Return to unchanged checkout when
-    // the previous transaction is unresolved.
+    // Preserve unresolved payment state.
     if (retryLocked) {
       setCheckoutStatus("idle");
 
@@ -703,7 +703,6 @@ export function PosCheckoutModal({
   return (
     <PopupModal
       isOpen={isOpen}
-
       onClose={handleClose}
 
       closeOnEscape={
@@ -743,8 +742,11 @@ export function PosCheckoutModal({
         method === "Cash" ? (
           <Button
             type="button"
+
             variant="primary"
+
             size="md"
+
             fullWidth
 
             disabled={!canConfirm}
@@ -864,12 +866,13 @@ export function PosCheckoutModal({
           )}
 
           {/* =================================
-              2. UNRESOLVED TRANSACTION WARNING
+              2. UNRESOLVED PAYMENT WARNING
               ================================= */}
 
           {retryLocked && (
             <div
               role="alert"
+
               className="
                 shrink-0 rounded-lg
                 border border-border-subtle
@@ -893,7 +896,7 @@ export function PosCheckoutModal({
           )}
 
           {/* =================================
-              3. PAYMENT METHOD
+              3. PAYMENT METHOD SELECTION
               ================================= */}
 
           <fieldset
@@ -921,8 +924,6 @@ export function PosCheckoutModal({
             >
               Payment Method
             </legend>
-
-            {/* REUSABLE SELECTABLE GROUP */}
 
             <SelectableGroup
               options={[
@@ -999,11 +1000,11 @@ export function PosCheckoutModal({
                     Cash Collected
                   </h3>
 
-                  {/* REUSABLE CLEAR BUTTON */}
-
                   <Button
                     type="button"
+
                     variant="ghost"
+
                     size="sm"
 
                     disabled={
@@ -1020,7 +1021,7 @@ export function PosCheckoutModal({
                   </Button>
                 </div>
 
-                {/* REUSABLE CASH AMOUNT INPUT */}
+                {/* CASH AMOUNT INPUT */}
 
                 <div
                   className="
@@ -1039,9 +1040,7 @@ export function PosCheckoutModal({
                   />
                 </div>
 
-                {/* =================================
-                    FOUR OUTLINED QUICK CASH BUTTONS
-                    ================================= */}
+                {/* QUICK CASH BUTTONS */}
 
                 <div
                   className="
@@ -1054,8 +1053,11 @@ export function PosCheckoutModal({
 
                   <Button
                     type="button"
+
                     variant="ghost"
+
                     size="sm"
+
                     fullWidth
 
                     disabled={
@@ -1085,9 +1087,13 @@ export function PosCheckoutModal({
                     (amount) => (
                       <Button
                         key={amount}
+
                         type="button"
+
                         variant="ghost"
+
                         size="sm"
+
                         fullWidth
 
                         disabled={
@@ -1110,9 +1116,7 @@ export function PosCheckoutModal({
                   )}
                 </div>
 
-                {/* =================================
-                    REUSABLE NUMERIC KEYPAD
-                    ================================= */}
+                {/* NUMERIC KEYPAD */}
 
                 <div
                   className="
@@ -1175,9 +1179,7 @@ export function PosCheckoutModal({
                   />
                 </div>
 
-                {/* =================================
-                    REUSABLE CHANGE SUMMARY
-                    ================================= */}
+                {/* CHANGE DUE SUMMARY */}
 
                 <div className="mt-2">
                   <div
@@ -1248,7 +1250,7 @@ export function PosCheckoutModal({
                 </p>
               )}
 
-              {/* PREVIOUS CHECKOUT ERROR */}
+              {/* CHECKOUT ERROR MESSAGE */}
 
               {error && (
                 <div
@@ -1288,9 +1290,13 @@ export function PosCheckoutModal({
                 p-6 text-center
               "
             >
+              {/* LUCIDE CARD ICON */}
+
               <CreditCard
                 size={48}
+
                 className="text-primary"
+
                 aria-hidden="true"
               />
 
@@ -1341,8 +1347,11 @@ export function PosCheckoutModal({
 
               <Button
                 type="button"
+
                 variant="primary"
+
                 fullWidth
+
                 disabled
               >
                 Confirm Card Payment
@@ -1366,7 +1375,7 @@ export function PosCheckoutModal({
                   bg-surface-alt p-3
                 "
               >
-                {/* DEMO QR IMAGE */}
+                {/* DEMO QR */}
 
                 <div
                   className="
@@ -1385,7 +1394,7 @@ export function PosCheckoutModal({
                   {formatINR(payablePaise)}
                 </strong>
 
-                {/* UPI PROVIDER LABELS */}
+                {/* UPI PROVIDERS */}
 
                 <div
                   className="
@@ -1428,8 +1437,11 @@ export function PosCheckoutModal({
 
               <Button
                 type="button"
+
                 variant="primary"
+
                 fullWidth
+
                 disabled
 
                 rightIcon={
