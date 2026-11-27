@@ -5,7 +5,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.UUID;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,7 +30,7 @@ public class TenantFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
-            UUID tenantId = resolveTenantId(request);
+            String tenantId = resolveTenantId(request);
             if (tenantId != null) {
                 TenantContext.setTenantId(tenantId);
             }
@@ -41,16 +40,12 @@ public class TenantFilter extends OncePerRequestFilter {
         }
     }
 
-    private UUID resolveTenantId(HttpServletRequest request) {
+    private String resolveTenantId(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         // Cryptographically verified JWT always takes precedence over untrusted headers
         if (authentication instanceof JwtAuthenticationToken jwtAuth && authentication.isAuthenticated()) {
             String hotelClaim = jwtAuth.getToken().getClaimAsString("hotel_id");
-            if (hotelClaim != null && !hotelClaim.isBlank()) {
-                try {
-                    return UUID.fromString(hotelClaim.trim());
-                } catch (IllegalArgumentException ignored) { }
-            }
+            if (validHotelId(hotelClaim)) return hotelClaim.trim();
         }
 
         // Fallback to headers for unauthenticated requests if provided
@@ -58,12 +53,13 @@ public class TenantFilter extends OncePerRequestFilter {
         if (headerValue == null || headerValue.isBlank()) {
             headerValue = request.getHeader(HOTEL_HEADER);
         }
-        if (headerValue != null && !headerValue.isBlank()) {
-            try {
-                return UUID.fromString(headerValue.trim());
-            } catch (IllegalArgumentException ignored) { }
-        }
+        if (validHotelId(headerValue)) return headerValue.trim();
 
         return null;
+    }
+
+    private static boolean validHotelId(String value) {
+        return value != null && !value.isBlank() && value.length() <= 64
+                && value.chars().noneMatch(Character::isISOControl);
     }
 }

@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -20,10 +20,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 @ExtendWith(MockitoExtension.class)
 class DailySalesControllerTest {
 
-    private static final UUID HOTEL_ID = UUID.randomUUID();
+    private static final String HOTEL_ID = UUID.randomUUID().toString();
 
     @Mock private DailySalesService service;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
     @InjectMocks private DailySalesController controller;
 
     private Jwt jwt;

@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.LocalTime;
 import java.util.Currency;
-import java.util.UUID;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
@@ -20,7 +19,8 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "hotel")
 public class Hotel {
     @Id
-    private UUID id;
+    @Column(length = 64)
+    private String id;
 
     @Column(nullable = false, length = 160)
     private String name;
@@ -46,28 +46,15 @@ public class Hotel {
 
     protected Hotel() { }
 
-    public static Hotel create(String name, String currencyCode, String timezone, LocalTime dayCutoff,
-            Map<String, Object> receiptDetails) {
-        return new Hotel(UUID.randomUUID(), name, currencyCode, timezone, dayCutoff, receiptDetails);
-    }
-
-    public static Hotel create(UUID id, String name, String currencyCode, String timezone, LocalTime dayCutoff,
+    public static Hotel create(String id, String name, String currencyCode, String timezone, LocalTime dayCutoff,
             Map<String, Object> receiptDetails) {
         return new Hotel(id, name, currencyCode, timezone, dayCutoff, receiptDetails);
     }
 
-    public Hotel(String name, String currencyCode, String timezone, LocalTime dayCutoff) {
-        this(name, currencyCode, timezone, dayCutoff, Map.of());
-    }
-
-    public Hotel(String name, String currencyCode, String timezone, LocalTime dayCutoff,
+    private Hotel(String id, String name, String currencyCode, String timezone, LocalTime dayCutoff,
             Map<String, Object> receiptDetails) {
-        this(UUID.randomUUID(), name, currencyCode, timezone, dayCutoff, receiptDetails);
-    }
-
-    private Hotel(UUID id, String name, String currencyCode, String timezone, LocalTime dayCutoff,
-            Map<String, Object> receiptDetails) {
-        this.id = id;
+        this.id = requireText(id, "id");
+        if (this.id.length() > 64) throw new IllegalArgumentException("Hotel id must be at most 64 characters");
         this.name = requireText(name, "name");
         this.currencyCode = Currency.getInstance(requireText(currencyCode, "currencyCode")).getCurrencyCode();
         this.timezone = ZoneId.of(requireText(timezone, "timezone")).getId();
@@ -93,7 +80,7 @@ public class Hotel {
         return value.trim();
     }
 
-    public UUID getId() { return id; }
+    public String getId() { return id; }
     public String getName() { return name; }
     public String getCurrencyCode() { return currencyCode; }
     public String getTimezone() { return timezone; }

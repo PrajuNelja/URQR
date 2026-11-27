@@ -17,13 +17,13 @@ public class HotelService {
         this.hotels = hotels;
     }
 
-    public HotelResponse getCurrentHotel(UUID authenticatedHotelId) {
+    public HotelResponse getCurrentHotel(String authenticatedHotelId) {
         return hotels.findByIdAndStatus(authenticatedHotelId, "ACTIVE")
                 .map(HotelResponse::from)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Hotel not found"));
     }
 
-    @Transactional public HotelResponse update(UUID hotelId,String name,String currency,String timezone,LocalTime cutoff,Map<String,Object> receiptDetails){
+    @Transactional public HotelResponse update(String hotelId,String name,String currency,String timezone,LocalTime cutoff,Map<String,Object> receiptDetails){
         Hotel hotel=hotels.findById(hotelId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Hotel not found"));
         try{hotel.update(name,currency,timezone,cutoff,receiptDetails);}catch(RuntimeException e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid hotel configuration");}
         return HotelResponse.from(hotels.save(hotel));

@@ -34,7 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 @ExtendWith(MockitoExtension.class)
 class PlatformHotelStaffControllerTest {
 
-    private static final UUID HOTEL_ID = UUID.randomUUID();
+    private static final String HOTEL_ID = UUID.randomUUID().toString();
 
     @Mock private HotelRepository hotels;
     @Mock private RoleRepository roles;

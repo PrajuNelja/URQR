@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nelja.urqr.auth.security.CurrentTenant;
+import com.nelja.urqr.auth.security.CurrentHotel;
 import com.nelja.urqr.billing.payment.PaymentMethod;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,13 +27,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
 
-    private static final UUID HOTEL_ID = UUID.randomUUID();
+    private static final String HOTEL_ID = UUID.randomUUID().toString();
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID ITEM_ID = UUID.randomUUID();
 
     @Mock private PosOrderService service;
-    @Mock private CurrentTenant tenant;
+    @Mock private CurrentHotel tenant;
 
     @InjectMocks private OrderController controller;
 

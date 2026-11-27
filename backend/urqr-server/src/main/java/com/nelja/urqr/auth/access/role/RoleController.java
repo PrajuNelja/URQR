@@ -20,13 +20,13 @@ public class RoleController {
   public RoleDto create(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody RoleRequest x){
    String name=HotelStaffRole.normalize(x.name());
    if(!HotelStaffRole.managerCreatedRole(name))throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Managers can create COOK or WAITER roles; MANAGER and CASHIER are provisioned with the hotel");
-   UUID h=tenant.hotelId(jwt);Role role=roles.save(new Role(h,name));audit.record(h,tenant.userId(jwt),"ROLE_CREATED","Role",role.getId().toString(),null,role.getName());return dto(role);}
+   String h = tenant.hotelId(jwt);Role role=roles.save(new Role(h,name));audit.record(h,tenant.userId(jwt),"ROLE_CREATED","Role",role.getId().toString(),null,role.getName());return dto(role);}
  @GetMapping public List<RoleDto> list(@AuthenticationPrincipal Jwt jwt){
      return roles.findAllByHotelIdOrderByName(tenant.hotelId(jwt)).stream().map(RoleController::dto).toList();
  }
   @PatchMapping("/{id}")
   public RoleDto rename(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id,@Valid @RequestBody RoleRequest x){
-     UUID h=tenant.hotelId(jwt);Role r=roles.findByIdAndHotelId(id,h).orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,"Role not found"));
+     String h = tenant.hotelId(jwt);Role r=roles.findByIdAndHotelId(id,h).orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,"Role not found"));
      String old=r.getName();
      if(HotelStaffRole.supports(old))throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,"Supported staff roles cannot be renamed");
      String name=HotelStaffRole.normalize(x.name());

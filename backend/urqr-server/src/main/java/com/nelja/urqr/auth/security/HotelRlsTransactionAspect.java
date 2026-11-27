@@ -1,7 +1,6 @@
 package com.nelja.urqr.auth.security;
 
 import java.util.Collection;
-import java.util.UUID;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -35,7 +34,7 @@ public class HotelRlsTransactionAspect {
             } else {
                 String hotelClaim = jwt.getToken().getClaimAsString("hotel_id");
                 if (hotelClaim != null && !hotelClaim.isBlank()) {
-                    rlsContext.bindHotel(UUID.fromString(hotelClaim));
+                    rlsContext.bindHotel(hotelClaim);
                 }
             }
         }

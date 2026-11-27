@@ -37,7 +37,7 @@ public class MenuItemController {
 
     @PostMapping @PreAuthorize("hasRole('MANAGER')")
     public ItemDto create(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody ItemRequest request) {
-        UUID hotel=tenant.hotelId(jwt); requireCategory(request.categoryId(),hotel);
+        String hotel=tenant.hotelId(jwt); requireCategory(request.categoryId(),hotel);
         MenuItem item=new MenuItem(hotel,request.categoryId(),request.name(),request.price());
         item.update(request.categoryId(),request.name(),request.price(),request.cgstRate(),request.sgstRate(),request.vatRate(),request.discountPercent());
         item=items.save(item);
@@ -50,7 +50,7 @@ public class MenuItemController {
     @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')")
     public List<ItemDto> list(@AuthenticationPrincipal Jwt jwt,@RequestParam(required=false) UUID categoryId,
             @RequestParam(defaultValue="true") Boolean available) {
-        UUID hotel=tenant.hotelId(jwt); if(categoryId!=null) requireCategory(categoryId,hotel);
+        String hotel=tenant.hotelId(jwt); if(categoryId!=null) requireCategory(categoryId,hotel);
         return catalog.get(hotel).stream()
                 .map(item -> new ItemDto(item.id(), item.categoryId(), item.name(), item.price(), item.available(),
                         item.discountPercent(), item.cgstRate(), item.sgstRate(), item.vatRate()))
@@ -66,7 +66,7 @@ public class MenuItemController {
             description = "Items with available=false are returned for visibility but cannot be added to an order. "
                     + "A Manager can change availability through PATCH /api/v1/menu/items/{id}/availability.")
     public List<AllItemDto> listAll(@AuthenticationPrincipal Jwt jwt) {
-        UUID hotel = tenant.hotelId(jwt);
+        String hotel = tenant.hotelId(jwt);
         return items.findAllActiveWithCategory(hotel).stream()
                 .map(item -> new AllItemDto(item.getId(), item.getCategoryId(), item.getCategoryName(),
                         item.getName(), item.getPrice(), item.isAvailable(), item.getDiscountPercent(),
@@ -78,22 +78,22 @@ public class MenuItemController {
 
     @PatchMapping("/{id}") @PreAuthorize("hasRole('MANAGER')")
     public ItemDto update(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id,@Valid @RequestBody ItemRequest request) {
-        UUID hotel=tenant.hotelId(jwt); requireCategory(request.categoryId(),hotel); MenuItem item=find(id,hotel);
+        String hotel=tenant.hotelId(jwt); requireCategory(request.categoryId(),hotel); MenuItem item=find(id,hotel);
         String old=item.getName()+" "+item.getPrice(); item.update(request.categoryId(),request.name(),request.price(),request.cgstRate(),request.sgstRate(),request.vatRate(),request.discountPercent()); items.save(item);
         audit.record(hotel,tenant.userId(jwt),"MENU_ITEM_CHANGED","MenuItem",id.toString(),old,item.getName()+" "+item.getPrice()); catalog.evictAfterCommit(hotel); return dto(item);
     }
 
     @PatchMapping("/{id}/availability") @PreAuthorize("hasRole('MANAGER')")
     public ItemDto availability(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id,@RequestBody AvailabilityRequest request) {
-        UUID hotel=tenant.hotelId(jwt); MenuItem item=find(id,hotel); item.setAvailable(request.available()); items.save(item);
+        String hotel=tenant.hotelId(jwt); MenuItem item=find(id,hotel); item.setAvailable(request.available()); items.save(item);
         audit.record(hotel,tenant.userId(jwt),"MENU_ITEM_AVAILABILITY_CHANGED","MenuItem",id.toString(),null,Boolean.toString(request.available())); catalog.evictAfterCommit(hotel); return dto(item);
     }
 
     @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasRole('MANAGER')")
-    public void deactivate(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id){UUID hotel=tenant.hotelId(jwt);MenuItem item=find(id,hotel);item.deactivate();items.save(item);audit.record(hotel,tenant.userId(jwt),"MENU_ITEM_DEACTIVATED","MenuItem",id.toString(),null,item.getName());catalog.evictAfterCommit(hotel);}
+    public void deactivate(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id){String hotel=tenant.hotelId(jwt);MenuItem item=find(id,hotel);item.deactivate();items.save(item);audit.record(hotel,tenant.userId(jwt),"MENU_ITEM_DEACTIVATED","MenuItem",id.toString(),null,item.getName());catalog.evictAfterCommit(hotel);}
 
-    private MenuItem find(UUID id,UUID hotel){return items.findByIdAndHotelIdAndActiveTrue(id,hotel).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Menu item not found"));}
-    private void requireCategory(UUID id,UUID hotel){if(categories.findByIdAndHotelId(id,hotel).filter(c->c.isActive()).isEmpty())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Active category not found in this hotel");}
+    private MenuItem find(UUID id,String hotel){return items.findByIdAndHotelIdAndActiveTrue(id,hotel).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Menu item not found"));}
+    private void requireCategory(UUID id,String hotel){if(categories.findByIdAndHotelId(id,hotel).filter(c->c.isActive()).isEmpty())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Active category not found in this hotel");}
     private static ItemDto dto(MenuItem item){return new ItemDto(item.getId(),item.getCategoryId(),item.getName(),item.getPrice(),item.isAvailable(),item.getDiscountPercent(),item.getCgstRate(),item.getSgstRate(),item.getVatRate());}
     public record ItemRequest(@NotNull UUID categoryId,@NotBlank @Size(max=160) String name,
             @NotNull @DecimalMin("0.00") @Digits(integer=10,fraction=2) BigDecimal price,

@@ -39,7 +39,7 @@ public class MenuCategoryController {
     @PostMapping
     @PreAuthorize("hasRole('MANAGER')")
     public CategoryDto create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CategoryRequest request) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         MenuCategory category = categories.save(new MenuCategory(hotelId, request.name()));
         audit.record(hotelId, tenant.userId(jwt), "CATEGORY_CREATED", "MenuCategory",
                 category.getId().toString(), null, category.getName());
@@ -51,7 +51,7 @@ public class MenuCategoryController {
     @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')")
     public List<CategoryDto> list(@AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "true") boolean activeOnly) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         var rows = activeOnly ? categories.findAllByHotelIdAndActiveTrueOrderByName(hotelId)
                 : categories.findAllByHotelIdOrderByName(hotelId);
         return rows.stream().map(MenuCategoryController::dto).toList();
@@ -68,7 +68,7 @@ public class MenuCategoryController {
     @PreAuthorize("hasRole('MANAGER')")
     public CategoryDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
             @Valid @RequestBody CategoryRequest request) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         MenuCategory category = find(id, hotelId);
         String previousName = category.getName();
         category.rename(request.name());
@@ -83,7 +83,7 @@ public class MenuCategoryController {
     @PreAuthorize("hasRole('MANAGER')")
     public CategoryDto status(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
             @RequestBody StatusRequest request) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         MenuCategory category = find(id, hotelId);
         category.setActive(request.active());
         categories.save(category);
@@ -98,7 +98,7 @@ public class MenuCategoryController {
     @PreAuthorize("hasRole('MANAGER')")
     @Operation(summary = "Deactivate a menu category without removing historical references")
     public void deactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         MenuCategory category = find(id, hotelId);
         category.setActive(false);
         categories.save(category);
@@ -107,7 +107,7 @@ public class MenuCategoryController {
         catalog.evictAfterCommit(hotelId);
     }
 
-    private MenuCategory find(UUID id, UUID hotelId) {
+    private MenuCategory find(UUID id, String hotelId) {
         return categories.findByIdAndHotelId(id, hotelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
     }

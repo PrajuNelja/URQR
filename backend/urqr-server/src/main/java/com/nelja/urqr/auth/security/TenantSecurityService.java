@@ -1,6 +1,5 @@
 package com.nelja.urqr.auth.security;
 
-import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service("tenantSecurity")
 public class TenantSecurityService {
 
-    public boolean isTenantMember(Authentication authentication, UUID resourceHotelId) {
+    public boolean isTenantMember(Authentication authentication, String resourceHotelId) {
         if (authentication == null || !authentication.isAuthenticated() || resourceHotelId == null) {
             return false;
         }
@@ -27,18 +26,15 @@ public class TenantSecurityService {
             String hotelClaim = jwtAuth.getToken().getClaimAsString("hotel_id");
             if (hotelClaim != null && !hotelClaim.isBlank()) {
                 try {
-                    UUID tokenHotelId = UUID.fromString(hotelClaim.trim());
-                    return tokenHotelId.equals(resourceHotelId);
-                } catch (IllegalArgumentException e) {
-                    return false;
-                }
+                    return hotelClaim.trim().equals(resourceHotelId);
+                } catch (RuntimeException e) { return false; }
             }
         }
         return false;
     }
 
-    public boolean isCurrentTenant(UUID resourceHotelId) {
-        UUID current = TenantContext.getTenantId();
+    public boolean isCurrentTenant(String resourceHotelId) {
+        String current = TenantContext.getTenantId();
         return current != null && current.equals(resourceHotelId);
     }
 }

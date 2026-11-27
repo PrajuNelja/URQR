@@ -1,7 +1,5 @@
 package com.nelja.urqr.auth.security;
 
-import java.util.UUID;
-
 /**
  * ThreadLocal storage holder for the active tenant/hotel identifier.
  * Ensures safe retrieval per request thread and prevents memory leaks
@@ -9,11 +7,11 @@ import java.util.UUID;
  */
 public final class TenantContext {
 
-    private static final ThreadLocal<UUID> CURRENT_TENANT = new ThreadLocal<>();
+    private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
 
     private TenantContext() { }
 
-    public static void setTenantId(UUID tenantId) {
+    public static void setTenantId(String tenantId) {
         if (tenantId != null) {
             CURRENT_TENANT.set(tenantId);
         } else {
@@ -21,7 +19,7 @@ public final class TenantContext {
         }
     }
 
-    public static UUID getTenantId() {
+    public static String getTenantId() {
         return CURRENT_TENANT.get();
     }
 

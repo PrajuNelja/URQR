@@ -59,7 +59,7 @@ public class StaffUserController {
     @PostMapping
     @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.CREATED)
     public UserDto create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateUser request) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         Role role = requestedRole(request.roleId(), hotelId);
         if (request.password().length() < 8) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
@@ -84,7 +84,7 @@ public class StaffUserController {
 
     @GetMapping
     public List<UserDto> list(@AuthenticationPrincipal Jwt jwt) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         Map<UUID, Role> roleById = new HashMap<>();
         roles.findAllByHotelIdOrderByName(hotelId).forEach(role -> roleById.put(role.getId(), role));
         return users.findAllByHotelIdOrderByUsername(hotelId).stream()
@@ -96,7 +96,7 @@ public class StaffUserController {
 
     @GetMapping("/{id}")
     public UserDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         StaffUser user = findUser(id, hotelId);
         return dto(user, findRole(user.getRoleId(), hotelId));
     }
@@ -104,7 +104,7 @@ public class StaffUserController {
     @PatchMapping("/{id}")
     public UserDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
             @Valid @RequestBody UpdateUser request) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         StaffUser user = findUser(id, hotelId);
         Role previousRole = findRole(user.getRoleId(), hotelId);
         Role nextRole = request.roleId() == null ? previousRole : requestedRole(request.roleId(), hotelId);
@@ -135,7 +135,7 @@ public class StaffUserController {
 
     @PatchMapping("/{id}/status")
     public UserDto status(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @RequestBody Status request) {
-        UUID hotelId = tenant.hotelId(jwt);
+        String hotelId = tenant.hotelId(jwt);
         StaffUser user = findUser(id, hotelId);
         Role role = findRole(user.getRoleId(), hotelId);
         if (!request.active() && user.isActive() && HotelStaffRole.MANAGER.name().equals(role.getName())
@@ -153,12 +153,12 @@ public class StaffUserController {
         return dto(user, role);
     }
 
-    private StaffUser findUser(UUID id, UUID hotelId) {
+    private StaffUser findUser(UUID id, String hotelId) {
         return users.findByIdAndHotelId(id, hotelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
-    private Role requestedRole(UUID id, UUID hotelId) {
+    private Role requestedRole(UUID id, String hotelId) {
         Role role = findRole(id, hotelId);
         if (!HotelStaffRole.supports(role.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported hotel staff role");
@@ -166,7 +166,7 @@ public class StaffUserController {
         return role;
     }
 
-    private Role findRole(UUID id, UUID hotelId) {
+    private Role findRole(UUID id, String hotelId) {
         return roles.findByIdAndHotelId(id, hotelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Role not found in this hotel"));

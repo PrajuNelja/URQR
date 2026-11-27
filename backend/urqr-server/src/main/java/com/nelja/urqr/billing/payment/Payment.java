@@ -5,8 +5,8 @@ public class Payment {
  @Id
  @GeneratedValue(strategy=GenerationType.UUID)
  private UUID id;
- @Column(name="hotel_id",nullable=false)
- private UUID hotelId;
+ @Column(name = "hotel_id", nullable = false, length = 64)
+ private String hotelId;
  @Column(name="order_id",nullable=false)
  private UUID orderId;
  @ManyToOne(fetch=FetchType.LAZY)
@@ -19,9 +19,9 @@ public class Payment {
  private BigDecimal amount;
  @Column(name="reference_no",length=120) private String referenceNo; @Column(name="created_at",nullable=false,updatable=false) private Instant createdAt;
  protected Payment(){}
-    public Payment(UUID h,UUID o,PaymentMethod m,BigDecimal a,String r){hotelId=h;orderId=o;method=m;amount=a;referenceNo=r;createdAt=Instant.now();}
+    public Payment(String h,UUID o,PaymentMethod m,BigDecimal a,String r){hotelId=h;orderId=o;method=m;amount=a;referenceNo=r;createdAt=Instant.now();}
  public UUID getId(){return id;}
-    public UUID getHotelId(){return hotelId;}
+    public String getHotelId(){return hotelId;}
     public UUID getOrderId(){return orderId;}
     public PaymentMethod getMethod(){
      return method;

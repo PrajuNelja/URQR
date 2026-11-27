@@ -24,9 +24,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override @Transactional(readOnly = true) public UserDetails loadUserByUsername(String username) {
         int separator=username.indexOf(':');
         if(separator<1) throw new UsernameNotFoundException("Invalid credentials");
-        UUID hotelId;
-        try { hotelId=UUID.fromString(username.substring(0,separator)); }
-        catch (IllegalArgumentException ex) { throw new UsernameNotFoundException("Invalid credentials"); }
+        String hotelId=username.substring(0,separator).trim();
+        if (hotelId.isBlank() || hotelId.length() > 64) throw new UsernameNotFoundException("Invalid credentials");
         rls.bindHotel(hotelId);
         String staffName=username.substring(separator+1);
         var user=users.findByHotelIdAndUsernameIgnoreCase(hotelId,staffName)

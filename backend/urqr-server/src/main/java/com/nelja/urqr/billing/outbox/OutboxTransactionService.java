@@ -52,7 +52,7 @@ public class OutboxTransactionService {
                  ORDER BY due.created_at, due.event_id
                 """, (rs, row) -> new PendingEvent(
                         rs.getObject(1, UUID.class),
-                        rs.getObject(2, UUID.class),
+                        rs.getString(2),
                         rs.getString(3),
                         readPayload(rs.getString(4)),
                         rs.getInt(5)), limit);
@@ -95,6 +95,6 @@ public class OutboxTransactionService {
         }
     }
 
-    public record PendingEvent(UUID eventId, UUID hotelId, String eventType,
+    public record PendingEvent(UUID eventId, String hotelId, String eventType,
             Map<String, Object> payload, int attempts) { }
 }

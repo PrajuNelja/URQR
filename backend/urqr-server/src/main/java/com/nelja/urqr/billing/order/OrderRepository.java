@@ -13,11 +13,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-    Optional<Order> findByIdAndHotelId(UUID id, UUID hotel);
+    Optional<Order> findByIdAndHotelId(UUID id, String hotel);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id=:id and o.hotelId=:hotel")
-    Optional<Order> findForUpdate(@Param("id") UUID id, @Param("hotel") UUID hotel);
+    Optional<Order> findForUpdate(@Param("id") UUID id, @Param("hotel") String hotel);
 
     // Explicit casts keep PostgreSQL from treating nullable filter parameters as unknown types.
     @Query(value = """
@@ -35,10 +35,10 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
                AND (CAST(:to AS timestamptz) IS NULL OR o.created_at < CAST(:to AS timestamptz))
             """,
             nativeQuery = true)
-    Page<Order> search(@Param("hotel") UUID hotel, @Param("status") String status,
+    Page<Order> search(@Param("hotel") String hotel, @Param("status") String status,
             @Param("from") Instant from, @Param("to") Instant to, Pageable pageable);
 
-    Page<Order> findAllByHotelId(UUID hotel, Pageable pageable);
+    Page<Order> findAllByHotelId(String hotel, Pageable pageable);
 
-    long countByHotelId(UUID hotel);
+    long countByHotelId(String hotel);
 }

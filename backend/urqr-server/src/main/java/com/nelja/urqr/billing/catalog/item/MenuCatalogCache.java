@@ -28,7 +28,7 @@ public class MenuCatalogCache {
         this.items = items;
     }
 
-    public List<CatalogProductDto> get(UUID hotelId) {
+    public List<CatalogProductDto> get(String hotelId) {
         String key = key(hotelId);
         String cached = redis.opsForValue().get(key);
         if (cached != null) {
@@ -52,7 +52,7 @@ public class MenuCatalogCache {
         return catalog;
     }
 
-    public void evictAfterCommit(UUID hotelId) {
+    public void evictAfterCommit(String hotelId) {
         String key = key(hotelId);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -64,7 +64,7 @@ public class MenuCatalogCache {
         }
     }
 
-    private static String key(UUID hotelId) {
+    private static String key(String hotelId) {
         return "hotel:" + hotelId + ":catalog";
     }
 }

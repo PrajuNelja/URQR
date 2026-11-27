@@ -30,7 +30,7 @@ class TenantSecurityServiceTest {
 
     @Test
     void allowsAccessWhenTenantMatchesResource() {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         Jwt jwt = Jwt.withTokenValue("mock-jwt")
                 .header("alg", "none")
                 .claim("sub", "manager")
@@ -43,8 +43,8 @@ class TenantSecurityServiceTest {
 
     @Test
     void rejectsAccessWhenTenantMismatchesResource() {
-        UUID callerHotelId = UUID.randomUUID();
-        UUID otherHotelId = UUID.randomUUID();
+        String callerHotelId = UUID.randomUUID().toString();
+        String otherHotelId = UUID.randomUUID().toString();
         Jwt jwt = Jwt.withTokenValue("mock-jwt")
                 .header("alg", "none")
                 .claim("sub", "manager")
@@ -57,7 +57,7 @@ class TenantSecurityServiceTest {
 
     @Test
     void allowsPlatformAdminGlobalAccess() {
-        UUID otherHotelId = UUID.randomUUID();
+        String otherHotelId = UUID.randomUUID().toString();
         Jwt jwt = Jwt.withTokenValue("mock-jwt")
                 .header("alg", "none")
                 .claim("sub", "platform-admin")
@@ -71,10 +71,10 @@ class TenantSecurityServiceTest {
 
     @Test
     void evaluatesCurrentTenantContext() {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         TenantContext.setTenantId(hotelId);
 
         assertTrue(service.isCurrentTenant(hotelId));
-        assertFalse(service.isCurrentTenant(UUID.randomUUID()));
+        assertFalse(service.isCurrentTenant(UUID.randomUUID().toString()));
     }
 }

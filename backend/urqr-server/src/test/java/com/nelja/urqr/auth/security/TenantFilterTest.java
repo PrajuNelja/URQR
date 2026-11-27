@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,17 +45,17 @@ class TenantFilterTest {
 
     @Test
     void extractsTenantIdFromJwtAndClearsAfterChainCompletion() throws ServletException, IOException {
-        UUID expectedHotelId = UUID.randomUUID();
+        String expectedHotelId = "GRAINTN0001";
         Jwt jwt = Jwt.withTokenValue("mock-jwt-token")
                 .header("alg", "none")
                 .claim("sub", "test-user")
-                .claim("hotel_id", expectedHotelId.toString())
+                .claim("hotel_id", expectedHotelId)
                 .build();
         JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         // Capture TenantContext during chain execution
-        final UUID[] capturedInChain = new UUID[1];
+        final String[] capturedInChain = new String[1];
         FilterChain assertingChain = (req, res) -> {
             capturedInChain[0] = TenantContext.getTenantId();
         };
@@ -70,10 +69,10 @@ class TenantFilterTest {
 
     @Test
     void extractsTenantIdFromHeaderWhenUnauthenticatedAndClears() throws ServletException, IOException {
-        UUID headerHotelId = UUID.randomUUID();
-        when(request.getHeader(TenantFilter.TENANT_HEADER)).thenReturn(headerHotelId.toString());
+        String headerHotelId = "NELLINB0001";
+        when(request.getHeader(TenantFilter.TENANT_HEADER)).thenReturn(headerHotelId);
 
-        final UUID[] capturedInChain = new UUID[1];
+        final String[] capturedInChain = new String[1];
         FilterChain assertingChain = (req, res) -> {
             capturedInChain[0] = TenantContext.getTenantId();
         };
@@ -86,20 +85,20 @@ class TenantFilterTest {
 
     @Test
     void jwtAlwaysOverridesSpoofedHeader() throws ServletException, IOException {
-        UUID realHotelId = UUID.randomUUID();
-        UUID spoofedHotelId = UUID.randomUUID();
+        String realHotelId = "GRAINTN0001";
+        String spoofedHotelId = "NELLINB0001";
 
-        when(request.getHeader(TenantFilter.TENANT_HEADER)).thenReturn(spoofedHotelId.toString());
+        when(request.getHeader(TenantFilter.TENANT_HEADER)).thenReturn(spoofedHotelId);
 
         Jwt jwt = Jwt.withTokenValue("mock-jwt-token")
                 .header("alg", "none")
                 .claim("sub", "test-user")
-                .claim("hotel_id", realHotelId.toString())
+                .claim("hotel_id", realHotelId)
                 .build();
         JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        final UUID[] capturedInChain = new UUID[1];
+        final String[] capturedInChain = new String[1];
         FilterChain assertingChain = (req, res) -> {
             capturedInChain[0] = TenantContext.getTenantId();
         };
@@ -112,8 +111,8 @@ class TenantFilterTest {
 
     @Test
     void ensuresContextIsClearedEvenWhenChainThrowsException() throws ServletException, IOException {
-        UUID expectedHotelId = UUID.randomUUID();
-        when(request.getHeader(TenantFilter.TENANT_HEADER)).thenReturn(expectedHotelId.toString());
+        String expectedHotelId = "GRAINTN0001";
+        when(request.getHeader(TenantFilter.TENANT_HEADER)).thenReturn(expectedHotelId);
 
         FilterChain failingChain = (req, res) -> {
             assertEquals(expectedHotelId, TenantContext.getTenantId());

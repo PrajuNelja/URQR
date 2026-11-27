@@ -51,7 +51,7 @@ class MenuCatalogCacheIntegrationTest {
 
     @Test
     void cachesByTenantAndEvictsAfterProductChange() {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         UUID categoryId = UUID.randomUUID();
         MenuItemRepository repository = mock(MenuItemRepository.class);
         MenuItem item = new MenuItem(hotelId, categoryId, "Masala Chai", new BigDecimal("80.00"));
@@ -75,7 +75,7 @@ class MenuCatalogCacheIntegrationTest {
 
     @Test
     void measuresWarmCatalogCacheReadLatency() {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         MenuItemRepository repository = mock(MenuItemRepository.class);
         when(repository.findPosMenu(hotelId, null)).thenReturn(List.of());
         MenuCatalogCache cache = new MenuCatalogCache(redis, new ObjectMapper(), repository);
@@ -95,8 +95,8 @@ class MenuCatalogCacheIntegrationTest {
 
     @Test
     void keepsCatalogEntriesSeparateForDifferentHotels() {
-        UUID hotelA = UUID.randomUUID();
-        UUID hotelB = UUID.randomUUID();
+        String hotelA = UUID.randomUUID().toString();
+        String hotelB = UUID.randomUUID().toString();
         UUID categoryA = UUID.randomUUID();
         UUID categoryB = UUID.randomUUID();
         MenuItemRepository repository = mock(MenuItemRepository.class);

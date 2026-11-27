@@ -25,8 +25,8 @@ public class StaffUser {
     @GeneratedValue(strategy=GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "hotel_id", nullable = false)
-    private UUID hotelId;
+    @Column(name = "hotel_id", nullable = false, length = 64)
+    private String hotelId;
 
     @Column(nullable = false, length = 254)
     private String username;
@@ -49,13 +49,13 @@ public class StaffUser {
 
     protected StaffUser() { }
 
-    public StaffUser(UUID hotelId, UUID roleId, String username, String passwordHash) {
+    public StaffUser(String hotelId, UUID roleId, String username, String passwordHash) {
         this.hotelId=hotelId; this.roleId=roleId; this.username=username.trim().toLowerCase(Locale.ROOT);
         this.passwordHash=passwordHash; this.status="ACTIVE"; this.createdAt=Instant.now();
     }
 
     public UUID getId() { return id; }
-    public UUID getHotelId() { return hotelId; }
+    public String getHotelId() { return hotelId; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public UUID getRoleId() { return roleId; }
