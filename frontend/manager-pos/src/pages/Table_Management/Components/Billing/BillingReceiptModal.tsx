@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
@@ -7,7 +6,6 @@ import { PopupModal } from "../../../../components/PopupModal/PopupModal";
 import { Receipt } from "../../../../components/PopupModal/Receipt";
 import { Button } from "../../../../components/Buttons/Button";
 import { IconButton } from "../../../../components/Buttons/IconButton";
-import { useNotification } from "../../../../components/Notification/useNotification";
 import { useBridgeHeartbeat } from "../../Hooks/useBridgeHeartbeat";
 import {
   RECEIPT_BUSINESS,
@@ -70,50 +68,60 @@ export function BillingReceiptModal({
   const isPreview = Boolean(previewOrder);
 
   const { printReceipt } = useBridgeHeartbeat(false);
-  const { success, error, info } = useNotification();
-  const [isReprinting, setIsReprinting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  
+  // Track whether the receipt has been printed at least once
+  const [hasPrinted, setHasPrinted] = useState(false);
   const [reprintState, setReprintState] = useState<{ orderId: string; printedAt: string } | null>(null);
+  
   const currentReprint =
     reprintState?.orderId === receipt?.orderId ? reprintState : null;
 
-  const handleReprint = async () => {
-    if (!receipt || isReprinting) return;
+  // Reset the printed state if the modal is closed or the order changes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasPrinted(false);
+      setReprintState(null);
+    }
+  }, [isOpen]);
 
-    setIsReprinting(true);
+  const handlePrintAction = async () => {
+    if (!receipt || isPrinting) return;
+
+    setIsPrinting(true);
     try {
       const request = serializeReceiptForBridge(
         receipt,
         localStorage.getItem("tenant_id"),
       );
+      
+      // Use "print" for the first time, "reprint" for subsequent clicks
+      const action = hasPrinted ? "reprint" : "print";
+      
       const response = await printReceipt(
-        { ...request, action: "reprint" },
+        { ...request, action },
         performance.now(),
       );
 
       if (!response.success) {
-        error(
-          `Receipt reprint failed: ${response.message ?? response.status}`,
-        );
+        // Silent fail or handle differently since notifications are removed
+        console.error(`Receipt print failed: ${response.message ?? response.status}`);
         return;
       }
 
-      if (["SPOOLED", "PRINTING"].includes(response.status.toUpperCase())) {
-        info("Receipt reprint queued.");
-        return;
+      // If the print request was successful, update the UI state
+      if (["SPOOLED", "PRINTING", "SUCCESS"].includes(response.status.toUpperCase())) {
+        setHasPrinted(true);
+        const printedAt = new Date().toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        setReprintState({ orderId: receipt.orderId, printedAt });
       }
-
-      const printedAt = new Date().toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      setReprintState({ orderId: receipt.orderId, printedAt });
-      success("Receipt reprinted successfully.");
     } catch (cause) {
-      const message =
-        cause instanceof Error ? cause.message : "Unknown bridge error";
-      error(`Receipt reprint failed: ${message}`);
+      console.error("Bridge error:", cause);
     } finally {
-      setIsReprinting(false);
+      setIsPrinting(false);
     }
   };
 
@@ -160,7 +168,6 @@ export function BillingReceiptModal({
         return;
       }
 
-      // Trap focus between reusable close controls
       if (event.key === "Tab") {
         const first = crossRef.current;
         const last = bottomCloseRef.current;
@@ -170,10 +177,7 @@ export function BillingReceiptModal({
         if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last.focus();
-        } else if (
-          !event.shiftKey &&
-          document.activeElement === last
-        ) {
+        } else if (!event.shiftKey && document.activeElement === last) {
           event.preventDefault();
           first.focus();
         }
@@ -260,11 +264,7 @@ export function BillingReceiptModal({
             />
 
             {/* HOTEL HEADER */}
-            <header
-              style={{
-                textAlign: "center",
-              }}
-            >
+            <header style={{ textAlign: "center" }}>
               <h2
                 style={{
                   margin: 0,
@@ -330,48 +330,20 @@ export function BillingReceiptModal({
               }}
             >
               <div>
-                <div
-                  style={{
-                    color: COLOR.muted,
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    marginBottom: "5px",
-                  }}
-                >
+                <div style={{ color: COLOR.muted, fontSize: "10px", fontWeight: 700, marginBottom: "5px" }}>
                   ORDER NUMBER
                 </div>
-
-                <strong
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 700,
-                  }}
-                >
+                <strong style={{ fontSize: "15px", fontWeight: 700 }}>
                   {previewOrder.orderId}
                 </strong>
               </div>
 
               <div>
-                <div
-                  style={{
-                    color: COLOR.muted,
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    marginBottom: "5px",
-                  }}
-                >
+                <div style={{ color: COLOR.muted, fontSize: "10px", fontWeight: 700, marginBottom: "5px" }}>
                   DATE / TIME
                 </div>
-
-                <strong
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 700,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {previewOrder.date},{" "}
-                  {previewOrder.time}
+                <strong style={{ fontSize: "15px", fontWeight: 700, lineHeight: 1.5 }}>
+                  {previewOrder.date}, {previewOrder.time}
                 </strong>
               </div>
             </div>
@@ -407,60 +379,25 @@ export function BillingReceiptModal({
                   <span style={{ minWidth: 0 }}>
                     {item.name} × {item.quantity}
                   </span>
-
-                  <strong
-                    style={{
-                      whiteSpace: "nowrap",
-                      fontWeight: 600,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
+                  <strong style={{ whiteSpace: "nowrap", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                     {money(item.price * item.quantity)}
                   </strong>
                 </div>
               ))}
             </div>
 
-            {/* TOTALS — RIGHT ALIGNED */}
-            <div
-              style={{
-                width: "min(230px, 100%)",
-                margin: "9px 0 0 auto",
-                fontSize: "13px",
-              }}
-            >
-              <div
-                style={{
-                  ...rowStyle,
-                  padding: "5px 0",
-                }}
-              >
-                <span style={{ color: COLOR.muted }}>
-                  Subtotal
-                </span>
-
-                <strong>
-                  {money(previewOrder.subtotal)}
-                </strong>
+            {/* TOTALS */}
+            <div style={{ width: "min(230px, 100%)", margin: "9px 0 0 auto", fontSize: "13px" }}>
+              <div style={{ ...rowStyle, padding: "5px 0" }}>
+                <span style={{ color: COLOR.muted }}>Subtotal</span>
+                <strong>{money(previewOrder.subtotal)}</strong>
               </div>
 
-              <div
-                style={{
-                  ...rowStyle,
-                  padding: "5px 0 9px",
-                  borderBottom: `1px solid ${COLOR.border}`,
-                }}
-              >
-                <span style={{ color: COLOR.muted }}>
-                  Tax ({previewOrder.taxRate}%)
-                </span>
-
-                <strong>
-                  {money(previewOrder.tax)}
-                </strong>
+              <div style={{ ...rowStyle, padding: "5px 0 9px", borderBottom: `1px solid ${COLOR.border}` }}>
+                <span style={{ color: COLOR.muted }}>Tax ({previewOrder.taxRate}%)</span>
+                <strong>{money(previewOrder.tax)}</strong>
               </div>
 
-              {/* FINAL PAYABLE */}
               <div
                 style={{
                   ...rowStyle,
@@ -470,22 +407,13 @@ export function BillingReceiptModal({
                   fontWeight: 700,
                 }}
               >
-                <span style={{ whiteSpace: "nowrap" }}>
-                  Final payable
-                </span>
-
-                <strong
-                  style={{
-                    whiteSpace: "nowrap",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
+                <span style={{ whiteSpace: "nowrap" }}>Final payable</span>
+                <strong style={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
                   {money(previewOrder.total)}
                 </strong>
               </div>
             </div>
 
-            {/* THANK YOU MESSAGE */}
             <p
               style={{
                 margin: "29px 0 0",
@@ -502,7 +430,6 @@ export function BillingReceiptModal({
             </p>
           </article>
 
-          {/* BOTTOM CLOSE BUTTON — REUSABLE */}
           <Button
             ref={bottomCloseRef}
             type="button"
@@ -543,19 +470,23 @@ export function BillingReceiptModal({
       size="lg"
       footer={
         <>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-          >
-            Close
-          </Button>
+          {/* Show Close button ONLY after it's been printed */}
+          {hasPrinted && (
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+          )}
 
           <Button
             variant="primary"
-            onClick={() => void handleReprint()}
-            disabled={!receipt || isReprinting}
+            onClick={() => void handlePrintAction()}
+            disabled={!receipt || isPrinting}
           >
-            {isReprinting ? "Sending reprint..." : "Reprint receipt"}
+            {isPrinting 
+              ? "Sending to printer..." 
+              : hasPrinted 
+                ? "Reprint receipt" 
+                : "Print receipt"}
           </Button>
         </>
       }
