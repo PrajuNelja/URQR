@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, LogOut, ReceiptText, X } from "lucide-react";
 
 import { IconButton } from "../../../../components/Buttons/IconButton";
@@ -13,6 +14,7 @@ interface BillingSidebarProps {
 
 export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
   const sidebarRef = useRef<HTMLElement>(null);
@@ -69,6 +71,7 @@ export function BillingSidebar({ isOpen, onClose }: BillingSidebarProps) {
 
   const handleLogout = () => {
     clearAuth();
+    queryClient.clear();
     onClose();
 
     void navigate({
