@@ -1,8 +1,8 @@
-
 import {
   useState,
   useMemo,
   useCallback,
+  useRef,
 } from "react";
 
 import { useQuery } from "@tanstack/react-query";
@@ -25,11 +25,84 @@ import {
   CATEGORIES,
 } from "../Config/billing.config";
 
-import { POS_CATALOG_QUERY_KEY } from "../../../queryClient";
-import { usePosHotkeys } from "./usePosHotkeys";
-import { useCartStore } from "../../../lib/cartStore";
+import {
+  POS_CATALOG_QUERY_KEY,
+} from "../../../queryClient";
+
+import {
+  usePosHotkeys,
+} from "./usePosHotkeys";
+
+import {
+  useCartStore,
+} from "../../../lib/cartStore";
+
+// DAY 5 MORNING TASK 3
+
+import {
+  useCheckoutIdempotency,
+} from "./useCheckoutIdempotency";
+
+// DAY 5 MORNING TASK 4
+
+import {
+  useOrderMutation,
+} from "./useOrderMutation";
+
+// DAY 5 AFTERNOON TASK 1
+
+import {
+  useAutoReceiptPrint,
+} from "./useAutoReceiptPrint";
+
+import type {
+  OrderPayload,
+} from "../Components/Billing/orderApi";
+
+// ==========================================
+// MAIN BILLING HOOK
+// ==========================================
 
 export const useBilling = () => {
+  // ==========================================
+  // CHECKOUT IDEMPOTENCY
+  // ==========================================
+
+  const {
+    getCheckoutHeaders,
+    resetIdempotencyKey,
+  } = useCheckoutIdempotency();
+
+  // ==========================================
+  // TANSTACK QUERY ORDER MUTATION
+  // ==========================================
+
+  const {
+    mutateAsync: submitOrder,
+    isPending: isCheckoutSubmitting,
+  } = useOrderMutation();
+
+  // ==========================================
+  // AUTOMATIC RECEIPT PRINTING
+  // ==========================================
+
+  const {
+    printConfirmedReceipt,
+  } = useAutoReceiptPrint();
+
+  // Prevent duplicate checkout submission.
+
+  const checkoutLock = useRef(false);
+
+  // Preserve payload during checkout retries.
+
+  const pendingPayload =
+    useRef<string | null>(null);
+
+  // ==========================================
+  // BILLING STATES
+  // ==========================================
+
   const [activeTab, setActiveTab] =
     useState("all");
 
@@ -51,16 +124,21 @@ export const useBilling = () => {
   const [isReceiptOpen, setIsReceiptOpen] =
     useState(false);
 
-  // Existing TanStack Query catalog
+  // ==========================================
+  // TANSTACK QUERY CATALOG
+  // ==========================================
+
   const {
     data: dishes = DISHES,
     refetch: refreshCatalog,
     isLoading: isCatalogLoading,
   } = useQuery<Dish[]>({
     queryKey: POS_CATALOG_QUERY_KEY,
+
     queryFn: async () => {
       try {
-        const response = await fetch("/api/products");
+        const response =
+          await fetch("/api/products");
 
         if (response.ok) {
           const data: unknown =
@@ -121,13 +199,18 @@ export const useBilling = () => {
           }
         }
       } catch {
-        // Keep existing static catalog fallback.
+        // Existing static catalog fallback.
       }
 
       return DISHES;
     },
+
     initialData: DISHES,
   });
+
+  // ==========================================
+  // PRODUCT SEARCH AND CATEGORY FILTER
+  // ==========================================
 
   const filteredDishes = useMemo(() => {
     return dishes.filter((dish) => {
@@ -139,29 +222,52 @@ export const useBilling = () => {
       const matchesSearch =
         dish.name
           .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .includes(
+            searchQuery.toLowerCase()
+          );
 
-      return (
-        matchesCategory &&
-        matchesSearch
-      );
+      return matchesCategory && matchesSearch;
     });
-  }, [dishes, activeTab, searchQuery]);
+  }, [
+    dishes,
+    activeTab,
+    searchQuery,
+  ]);
+
+  // ==========================================
+  // ADD PRODUCT TO CART
+  // ==========================================
 
   const addToCart = useCallback(
     (dishId: number) => {
+      if (
+        checkoutLock.current ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
       setCart((previous) => ({
         ...previous,
+
         [dishId]:
           (previous[dishId] || 0) + 1,
       }));
 
-      const dish = dishes.find((d) => d.id === dishId);
+      const dish = dishes.find(
+        (d) => d.id === dishId
+      );
+
       if (dish) {
         useCartStore.getState().addItem({
           id: String(dish.id),
+
           name: dish.name,
-          unitPricePaise: Math.round(dish.price * 100),
+
+          unitPricePaise: Math.round(
+            dish.price * 100
+          ),
+
           taxable: true,
         });
       }
@@ -169,8 +275,19 @@ export const useBilling = () => {
     [dishes]
   );
 
+  // ==========================================
+  // UPDATE PRODUCT QUANTITY
+  // ==========================================
+
   const updateQuantity = useCallback(
     (dishId: number, delta: number) => {
+      if (
+        checkoutLock.current ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
       setCart((previous) => {
         const next = { ...previous };
 
@@ -183,72 +300,168 @@ export const useBilling = () => {
           next[dishId] = quantity;
         }
 
-        useCartStore.getState().setQuantity(String(dishId), Math.max(0, quantity));
+        useCartStore
+          .getState()
+          .setQuantity(
+            String(dishId),
+            Math.max(0, quantity)
+          );
+
         return next;
       });
     },
     []
   );
 
+  // ==========================================
+  // CLEAR CART
+  // ==========================================
+
   const clearCart = useCallback(() => {
+    if (
+      checkoutLock.current ||
+      pendingPayload.current !== null
+    ) {
+      return;
+    }
+
     setCart({});
+
     setCashCollected("");
-    useCartStore.getState().clearCart();
+
+    useCartStore
+      .getState()
+      .clearCart();
   }, []);
 
-  const heldCarts = useCartStore((state) => state.heldCarts);
+  // ==========================================
+  // HOLD AND RECALL CART
+  // ==========================================
+
+  const heldCarts = useCartStore(
+    (state) => state.heldCarts
+  );
+
+  // HOLD CART
 
   const holdCurrentCart = useCallback(() => {
-    if (Object.keys(cart).length === 0) return;
-    useCartStore.getState().holdCurrentCart();
+    if (
+      checkoutLock.current ||
+      pendingPayload.current !== null
+    ) {
+      return;
+    }
+
+    if (
+      Object.keys(cart).length === 0
+    ) {
+      return;
+    }
+
+    useCartStore
+      .getState()
+      .holdCurrentCart();
+
     setCart({});
+
     setCashCollected("");
   }, [cart]);
 
-  const recallCart = useCallback((id: string) => {
-    const target = useCartStore.getState().heldCarts.find((c) => c.id === id);
-    if (!target) return;
-    useCartStore.getState().recallCart(id);
-    const restoredCart: Record<number, number> = {};
-    for (const item of target.items) {
-      restoredCart[Number(item.productId)] = item.quantity;
-    }
-    setCart(restoredCart);
-  }, []);
+  // RECALL CART
 
-  const deleteHeldCart = useCallback((id: string) => {
-    useCartStore.getState().deleteHeldCart(id);
-  }, []);
+  const recallCart = useCallback(
+    (id: string) => {
+      if (
+        checkoutLock.current ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
 
-  const totals = useMemo(() => {
-    const items: CartItem[] = Object.keys(cart)
-      .map((id) => {
-        const dish = dishes.find(
-          (product) => product.id === Number(id)
+      const target = useCartStore
+        .getState()
+        .heldCarts.find(
+          (c) => c.id === id
         );
 
-        if (!dish) return null;
+      if (!target) return;
 
-        return {
-          dish,
-          quantity: cart[Number(id)],
-        };
-      })
-      .filter(
-        (item): item is CartItem =>
-          item !== null
-      );
+      useCartStore
+        .getState()
+        .recallCart(id);
+
+      const restoredCart:
+        Record<number, number> = {};
+
+      for (const item of target.items) {
+        restoredCart[
+          Number(item.productId)
+        ] = item.quantity;
+      }
+
+      setCart(restoredCart);
+    },
+    []
+  );
+
+  // DELETE HELD CART
+
+  const deleteHeldCart = useCallback(
+    (id: string) => {
+      useCartStore
+        .getState()
+        .deleteHeldCart(id);
+    },
+    []
+  );
+
+  // ==========================================
+  // CART TOTAL CALCULATIONS
+  // ==========================================
+
+  const totals = useMemo(() => {
+    const items: CartItem[] =
+      Object.keys(cart)
+        .map((id) => {
+          const dish = dishes.find(
+            (product) =>
+              product.id === Number(id)
+          );
+
+          if (!dish) return null;
+
+          return {
+            dish,
+
+            quantity:
+              cart[Number(id)],
+          };
+        })
+        .filter(
+          (item): item is CartItem =>
+            item !== null
+        );
+
+    // SUBTOTAL
 
     const subtotal = items.reduce(
       (sum, item) =>
-        sum + item.dish.price * item.quantity,
+        sum +
+        item.dish.price *
+          item.quantity,
       0
     );
 
+    // TAX
+
     const tax =
       Math.round(
-        subtotal * (TAX_RATE / 100) * 100
+        subtotal *
+          (TAX_RATE / 100) *
+          100
       ) / 100;
+
+    // GRAND TOTAL
 
     const total =
       Math.round(
@@ -263,14 +476,17 @@ export const useBilling = () => {
     };
   }, [cart, dishes]);
 
-  // Preserve existing derived change state
-  // for any other Billing components using it.
+  // ==========================================
+  // CHANGE DUE CALCULATION
+  // ==========================================
+
   const change = useMemo(() => {
     if (paymentMethod !== "Cash") {
       return 0;
     }
 
-    const cash = parseFloat(cashCollected);
+    const cash =
+      parseFloat(cashCollected);
 
     if (Number.isNaN(cash)) {
       return NaN;
@@ -287,121 +503,393 @@ export const useBilling = () => {
     totals.total,
   ]);
 
-  // ========================================
-  // DEMO CASH PAYMENT CONFIRMATION
-  // ========================================
+  // ==========================================
+  // CHECKOUT BACKEND API INTEGRATION
+  // ==========================================
+
   const handleCompletePayment = useCallback(
-    (
-      checkout: CheckoutRequest,
-      orderId?: string
-    ): boolean => {
-      if (totals.items.length === 0) {
+    async (
+      checkout: CheckoutRequest
+    ): Promise<boolean> => {
+      // Prevent double submission.
+
+      if (checkoutLock.current) {
         return false;
       }
 
-      const result =
+      // ======================================
+      // VALIDATE CHECKOUT
+      // ======================================
+
+      const parsed =
         CheckoutRequestSchema.safeParse(
           checkout
         );
 
-      if (!result.success) {
-        return false;
+      if (
+        !parsed.success ||
+        !totals.items.length
+      ) {
+        throw new Error(
+          "Invalid checkout details or empty cart."
+        );
       }
 
-      const payment = result.data;
+      const payment = parsed.data;
 
-      // Cash-only demo completion.
-      // UPI must be backend-verified.
-      if (payment.paymentMode !== "Cash") {
-        return false;
+      // Existing Cash-only development flow.
+
+      if (
+        payment.paymentMode !== "Cash"
+      ) {
+        throw new Error(
+          "Only cash checkout is available in this development flow."
+        );
       }
+
+      // ======================================
+      // INTEGER PAISE VALIDATION
+      // ======================================
 
       const payablePaise = Math.round(
         totals.total * 100
       );
-
-      const submittedPayablePaise =
-        Math.round(
-          payment.payableAmount * 100
-        );
 
       const receivedPaise = Math.round(
         payment.amountTendered * 100
       );
 
       if (
-        payablePaise <= 0 ||
-        !Number.isSafeInteger(payablePaise) ||
         !Number.isSafeInteger(
-          submittedPayablePaise
+          payablePaise
         ) ||
-        !Number.isSafeInteger(receivedPaise) ||
-        submittedPayablePaise !== payablePaise ||
-        receivedPaise < payablePaise
+        payablePaise <= 0 ||
+        !Number.isSafeInteger(
+          receivedPaise
+        ) ||
+        receivedPaise < payablePaise ||
+        Math.round(
+          payment.payableAmount * 100
+        ) !== payablePaise ||
+        Math.round(
+          payment.changeDue * 100
+        ) !==
+          receivedPaise - payablePaise
       ) {
-        return false;
+        throw new Error(
+          "Invalid cash amount or cart total."
+        );
       }
 
-      const changePaise =
-        receivedPaise - payablePaise;
+      // ======================================
+      // VALIDATE ORDER QUANTITIES
+      // ======================================
 
-      const now = new Date();
+      if (
+        totals.items.length > 100 ||
+        totals.items.some(
+          ({ quantity }) =>
+            !Number.isInteger(quantity) ||
+            quantity < 1 ||
+            quantity > 15
+        )
+      ) {
+        throw new Error(
+          "Invalid order quantities."
+        );
+      }
 
-      // This receipt belongs to local demo checkout.
-      const newReceipt: ReceiptData = {
-        orderId: orderId
-          ? `#${orderId}`
-          : `#ORD${Math.floor(
-              1000 + Math.random() * 9000
-            )}`,
+      // ======================================
+      // PREPARE ORDER PAYLOAD
+      // ======================================
 
-        date: now.toLocaleDateString(
-          "en-GB",
-          {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }
-        ),
-
-        time: now.toLocaleTimeString(
-          "en-IN",
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-          }
-        ),
-
+      const payload: OrderPayload = {
         items: totals.items.map(
           ({ dish, quantity }) => ({
-            name: dish.name,
-            price: dish.price,
+            // Numeric IDs are currently
+            // used for MSW fixtures.
+
+            menuItemId: String(dish.id),
+
             quantity,
           })
         ),
 
-        subtotal: totals.subtotal,
-        taxRate: TAX_RATE,
-        tax: totals.tax,
-        total: totals.total,
+        payments: [
+          {
+            method: "CASH",
 
-        paymentMethod: "Cash",
-        cashCollected:
-          receivedPaise / 100,
-        change: changePaise / 100,
+            amount:
+              payablePaise / 100,
+          },
+        ],
       };
 
-      setReceipt(newReceipt);
-      setIsReceiptOpen(true);
-      clearCart();
+      // ======================================
+      // PRESERVE PAYLOAD FOR SAFE RETRY
+      // ======================================
 
-      return true;
+      const fingerprint = JSON.stringify({
+        payload,
+
+        receivedPaise,
+      });
+
+      if (
+        pendingPayload.current !== null &&
+        pendingPayload.current !== fingerprint
+      ) {
+        throw new Error(
+          "Retry the unchanged checkout; the previous result is unresolved."
+        );
+      }
+
+      checkoutLock.current = true;
+
+      pendingPayload.current = fingerprint;
+
+      try {
+        // ====================================
+        // RECORD CHECKOUT START TIME
+        // ====================================
+
+        const checkoutStartedAt =
+          performance.now();
+
+        if (import.meta.env.DEV) {
+          console.log(
+            "[CHECKOUT] Submitting order"
+          );
+        }
+
+        // ====================================
+        // POST ORDER REQUEST
+        // ====================================
+
+        const result = await submitOrder({
+          payload,
+
+          headers: getCheckoutHeaders(),
+        });
+
+        // ====================================
+        // CHECKOUT SUCCESS DEBUGGING
+        // ====================================
+
+        if (import.meta.env.DEV) {
+          console.log(
+            "[CHECKOUT] Order confirmed:",
+            result.orderNumber
+          );
+
+          console.log(
+            "[CHECKOUT] Is demo order:",
+            result.demo
+          );
+        }
+
+        const now = new Date();
+
+        // ====================================
+        // GENERATE CONFIRMED RECEIPT
+        // ====================================
+
+        const newReceipt: ReceiptData = {
+          orderId:
+            `#${result.orderNumber}`,
+
+          date: now.toLocaleDateString(
+            "en-GB",
+            {
+              day: "2-digit",
+
+              month: "short",
+
+              year: "numeric",
+            }
+          ),
+
+          time: now.toLocaleTimeString(
+            "en-IN",
+            {
+              hour: "2-digit",
+
+              minute: "2-digit",
+            }
+          ),
+
+          items: totals.items.map(
+            ({ dish, quantity }) => ({
+              name: dish.name,
+
+              price: dish.price,
+
+              quantity,
+            })
+          ),
+
+          subtotal:
+            totals.subtotal,
+
+          taxRate:
+            TAX_RATE,
+
+          tax:
+            totals.tax,
+
+          total:
+            totals.total,
+
+          paymentMethod:
+            "Cash",
+
+          cashCollected:
+            receivedPaise / 100,
+
+          change:
+            (receivedPaise - payablePaise) /
+            100,
+        };
+
+        // ====================================
+        // STORE RECEIPT DATA
+        // ====================================
+
+        setReceipt(newReceipt);
+
+        // Receipt opens when the cashier
+        // clicks the View Receipt button.
+
+        setIsReceiptOpen(false);
+
+        if (import.meta.env.DEV) {
+          console.log(
+            "[PRINT] Receipt generated:",
+            newReceipt.orderId
+          );
+        }
+
+        // ====================================
+        // RESET CHECKOUT STATE
+        // ====================================
+
+        resetIdempotencyKey();
+
+        pendingPayload.current = null;
+
+        checkoutLock.current = false;
+
+        // Clear cart only after confirmation.
+
+        clearCart();
+
+        // ====================================
+        // DAY 5 AFTERNOON TASK 1
+        // AUTOMATIC RECEIPT PRINTING
+        // ====================================
+
+        // Physical printing is allowed only
+        // for explicitly confirmed non-demo orders.
+
+        if (result.demo === false) {
+          if (import.meta.env.DEV) {
+            console.log(
+              "[PRINT] Automatic printing triggered"
+            );
+          }
+
+          // CORRECTED:
+          // Only two arguments are passed.
+
+          void printConfirmedReceipt(
+            newReceipt,
+            checkoutStartedAt
+          ).catch((cause: unknown) => {
+            console.error(
+              "[PRINT] Receipt printing failed:",
+              cause
+            );
+          });
+
+        } else {
+          if (import.meta.env.DEV) {
+            console.log(
+              "[PRINT] Demo or unverified order - physical printing skipped"
+            );
+          }
+        }
+
+        // Printing failure does not change
+        // successful checkout confirmation.
+
+        return true;
+
+      } finally {
+        checkoutLock.current = false;
+      }
     },
-    [totals, clearCart]
+    [
+      totals,
+      submitOrder,
+      getCheckoutHeaders,
+      resetIdempotencyKey,
+      clearCart,
+      printConfirmedReceipt,
+    ]
   );
 
-  // Existing keyboard shortcuts
+  // ==========================================
+  // DAY 5 AFTERNOON TASK 2
+  // F4 QUICK CASH PAYMENT
+  // ==========================================
+
+  const openCheckoutFromHotkey =
+    useCallback(() => {
+      if (
+        checkoutLock.current ||
+        isCheckoutSubmitting ||
+        pendingPayload.current !== null ||
+        isReceiptOpen
+      ) {
+        return;
+      }
+
+      if (
+        totals.items.length === 0 ||
+        totals.total <= 0
+      ) {
+        return;
+      }
+
+      const paymentButton =
+        document.getElementById(
+          "billing-select-payment"
+        );
+
+      if (
+        !(paymentButton instanceof HTMLButtonElement) ||
+        paymentButton.disabled
+      ) {
+        return;
+      }
+
+      setPaymentMethod("Cash");
+
+      paymentButton.click();
+    }, [
+      isCheckoutSubmitting,
+      isReceiptOpen,
+      totals.items.length,
+      totals.total,
+    ]);
+
+  // ==========================================
+  // POS KEYBOARD SHORTCUTS
+  // ==========================================
+
   usePosHotkeys({
+    // F2 - Focus Search
+
     onSearchFocus: () => {
       const searchInput =
         document.querySelector<HTMLInputElement>(
@@ -411,7 +899,13 @@ export const useBilling = () => {
       searchInput?.focus();
     },
 
+    // F3 - Next Category
+
     onNextCategory: () => {
+      if (CATEGORIES.length === 0) {
+        return;
+      }
+
       const currentIndex =
         CATEGORIES.findIndex(
           (category) =>
@@ -428,43 +922,144 @@ export const useBilling = () => {
       );
     },
 
-    onClearCart: () => clearCart(),
+    // F4 - Quick Cash Pay
+
+    onQuickCashPay:
+      openCheckoutFromHotkey,
+
+    // Clear active cart
+
+    onClearCart: () => {
+      if (
+        checkoutLock.current ||
+        isCheckoutSubmitting ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
+      clearCart();
+    },
+
+    // F5 - Refresh Catalog
 
     onRefreshCatalog: () => {
+      if (
+        checkoutLock.current ||
+        isCheckoutSubmitting ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
       void refreshCatalog();
     },
 
-    onSelectCash: () =>
-      setPaymentMethod("Cash"),
+    // F7 - Cash
 
-    onSelectUPI: () =>
-      setPaymentMethod("UPI"),
+    onSelectCash: () => {
+      if (
+        checkoutLock.current ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
 
-    onSelectCard: () =>
-      setPaymentMethod("Others"),
-
-    // F10 opens the validated payment flow.
-    // It must not directly complete payment.
-    onCheckout: () => {
-      document
-        .getElementById(
-          "billing-select-payment"
-        )
-        ?.click();
+      setPaymentMethod("Cash");
     },
+
+    // F8 - UPI
+
+    onSelectUPI: () => {
+      if (
+        checkoutLock.current ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
+      setPaymentMethod("UPI");
+    },
+
+    // F9 - Card
+
+    onSelectCard: () => {
+      if (
+        checkoutLock.current ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
+      setPaymentMethod("Others");
+    },
+
+    // F10 - Checkout
+
+    onCheckout: () => {
+      if (
+        checkoutLock.current ||
+        isCheckoutSubmitting ||
+        isReceiptOpen ||
+        totals.items.length === 0
+      ) {
+        return;
+      }
+
+      const paymentButton =
+        document.getElementById(
+          "billing-select-payment"
+        );
+
+      if (
+        paymentButton instanceof HTMLButtonElement &&
+        !paymentButton.disabled
+      ) {
+        paymentButton.click();
+      }
+    },
+
+    // ESC - Clear active cart
 
     onEscape: () => {
-      setIsReceiptOpen(false);
+      if (
+        checkoutLock.current ||
+        isCheckoutSubmitting ||
+        pendingPayload.current !== null
+      ) {
+        return;
+      }
+
+      if (isReceiptOpen) {
+        setIsReceiptOpen(false);
+
+        return;
+      }
+
+      if (
+        Object.keys(cart).length === 0
+      ) {
+        return;
+      }
+
+      clearCart();
     },
   });
+
+  // ==========================================
+  // RETURN BILLING FUNCTIONALITY
+  // ==========================================
 
   return {
     activeTab,
     setActiveTab,
+
     searchQuery,
     setSearchQuery,
+
     filteredDishes,
     dishes,
+
     isCatalogLoading,
     refreshCatalog,
 
@@ -472,19 +1067,23 @@ export const useBilling = () => {
     addToCart,
     updateQuantity,
     clearCart,
+
     heldCarts,
     holdCurrentCart,
     recallCart,
     deleteHeldCart,
+
     totals,
 
     paymentMethod,
     setPaymentMethod,
+
     cashCollected,
     setCashCollected,
     change,
 
     handleCompletePayment,
+    isCheckoutSubmitting,
 
     receipt,
     isReceiptOpen,

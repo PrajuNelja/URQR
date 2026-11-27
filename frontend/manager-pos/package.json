@@ -17,5 +17,8 @@
     "centrifuge": "^5.8.0",
     "react-hook-form": "^7.92.0",
     "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.1"
   }
 }
