@@ -147,7 +147,7 @@ export default function Dashboard() {
               </div>
 
               {/* Right Controls: Date Filter, Heartbeat, Export */}
-              <div className="flex items-center flex-wrap gap-2 relative">
+              <div className="flex items-center flex-wrap gap-space-sm relative">
                 {/* Date Range Button & Popover Container */}
                 <div className="relative">
                   <button
@@ -157,14 +157,14 @@ export default function Dashboard() {
                     aria-expanded={datePopoverOpen}
                     aria-haspopup="dialog"
                     onClick={() => setDatePopoverOpen((prev) => !prev)}
-                    className="h-10 px-4 bg-[#FFFDF8] border border-[#E4D8C3] rounded-lg shadow-sm hover:bg-[#FAF3E6] transition-all flex items-center gap-2 text-[#3B2A1E] text-xs font-semibold cursor-pointer"
+                    className="h-10 px-space-md bg-[#FFFDF8] border border-[#E4D8C3] rounded-lg shadow-sm hover:bg-[#FAF3E6] transition-all flex items-center gap-space-sm text-[#3B2A1E] font-label-lg text-xs font-semibold cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[18px] text-[#8B5E3C]">
                       calendar_today
                     </span>
                     <span id="dateFilterLabel">Custom Range</span>
                     <span
-                      className="px-1.5 py-0.5 rounded bg-[#FAF3E6] border border-[#E4D8C3] text-[11px] text-[#7A6A5A]"
+                      className="px-1.5 py-0.5 rounded bg-[#FAF3E6] border border-[#E4D8C3] font-ticket-mono text-[11px] text-[#7A6A5A]"
                       style={{ fontFamily: "'JetBrains Mono', monospace" }}
                     >
                       17–23 Oct
@@ -369,17 +369,17 @@ export default function Dashboard() {
                 </div>
 
                 {/* Live Heartbeat Status Badge */}
-                <div className="flex items-center gap-1 h-10 px-4 rounded-lg bg-[#FFFDF8] border border-[#E4D8C3] shadow-sm text-xs text-[#7A6A5A]">
+                <div className="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-[#FFFDF8] border border-[#E4D8C3] shadow-sm font-label-md text-xs text-[#7A6A5A]">
                   <span className="w-2 h-2 rounded-full bg-[#3F6B3A] animate-ping" />
                   <span className="w-2 h-2 -ml-3 rounded-full bg-[#3F6B3A]" />
-                  <span className="ml-1">Updated 2m ago</span>
+                  <span>Updated 2m ago</span>
                 </div>
 
                 {/* Export Report Button */}
                 <button
                   type="button"
                   onClick={() => downloadDashboardOrdersCsv(MOCK_ORDERS)}
-                  className="h-10 px-4 bg-[#8B5E3C] hover:bg-[#7A5132] text-[#FFFFFF] text-xs font-bold rounded-lg transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                  className="h-10 px-space-md bg-[#8B5E3C] hover:bg-[#7A5132] text-[#FFFFFF] font-label-lg text-xs font-bold rounded-lg transition-all flex items-center gap-space-xs shadow-sm cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">
                     download
