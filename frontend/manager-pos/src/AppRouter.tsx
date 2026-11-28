@@ -57,6 +57,13 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: ManagerLogin,
+  validateSearch: (search) => loginSearchSchema.parse(search),
+  beforeLoad: () => {
+    // If already logged in, don't show the login page, send to billing
+    if (useAuthStore.getState().isAuthenticated()) {
+      throw redirect({ to: "/pos/billing" });
+    }
+  },
 });
 
 // 4. Login route (Reverse Guard + Search Param Validation)

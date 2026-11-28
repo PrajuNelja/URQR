@@ -27,7 +27,7 @@ export const useManagerLogin = () => {
   const navigate = useNavigate();
   
   // Grab the redirect URL from TanStack Router (Day 3 Afternoon Task 2)
-  const search = useSearch({ from: "/login" }) as { redirect?: string };
+  const search = useSearch({ strict: false }) as { redirect?: string };
 
   const setAuth = useAuthStore((state) => state.setAuth);
 
