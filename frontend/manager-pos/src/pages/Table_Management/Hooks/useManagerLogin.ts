@@ -139,5 +139,6 @@ export const useManagerLogin = () => {
     isSubmitting,
     onSubmit,
     dismissFeedback,
+    setFeedback, // 👈 ADDED THIS LINE HERE
   };
 };
