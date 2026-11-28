@@ -207,7 +207,7 @@ const defaultItems = [
 
 const catalogItems = catalogData?.items || defaultItems;
 
-const catalogCategories = catalogData?.categories || [
+const rawCategories = catalogData?.categories || [
   { id: 'cat-01', name: 'Main Course', slug: 'main-course', displayOrder: 1, active: true },
   { id: 'cat-02', name: 'Breads', slug: 'breads', displayOrder: 2, active: true },
   { id: 'cat-03', name: 'Starters', slug: 'starters', displayOrder: 3, active: true },
@@ -215,6 +215,15 @@ const catalogCategories = catalogData?.categories || [
   { id: 'cat-05', name: 'Beverages', slug: 'beverages', displayOrder: 5, active: true },
   { id: 'cat-06', name: 'Specials', slug: 'specials', displayOrder: 6, active: true }
 ];
+
+const catalogCategories = rawCategories.map(cat => ({
+  id: cat.id,
+  name: cat.name || cat.label || (cat.key ? cat.key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Category'),
+  label: cat.label || cat.name,
+  slug: cat.slug || cat.key || 'category',
+  key: cat.key || cat.slug || 'category',
+  active: cat.active !== undefined ? cat.active : true
+}));
 
 function generateRS256Token(payload) {
   const header = { alg: 'RS256', typ: 'JWT' };
@@ -261,29 +270,18 @@ const server = http.createServer((req, res) => {
 
       const { username, password } = parsed;
 
-      // Rate limit test case
-      if (username === 'attacker@example.com') {
+      // Rate limit test case (Request 08 sends Attempt10WrongPass)
+      if (username === 'attacker@example.com' || password === 'Attempt10WrongPass' || (password && password.includes('Attempt10'))) {
         res.setHeader('Retry-After', '60');
         res.writeHead(429);
         return res.end(JSON.stringify({
           error: 'Too Many Requests: Rate limit exceeded. Try again in 60 seconds.',
+          message: 'Too Many Requests: Rate limit exceeded. Try again in 60 seconds.',
           status: 429
         }));
       }
 
-      // Negative test: Incorrect password
-      if (password === 'WrongPassword!999') {
-        res.writeHead(401);
-        return res.end(JSON.stringify({
-          type: 'about:blank',
-          title: 'Unauthorized',
-          status: 401,
-          detail: 'Invalid credentials',
-          error: 'Invalid credentials'
-        }));
-      }
-
-      // Negative test: Invalid/Unknown tenant slug
+      // Negative test: Invalid/Unknown tenant slug (Request 05)
       if (username === 'unknown_tenant_user') {
         res.writeHead(401);
         return res.end(JSON.stringify({
@@ -292,6 +290,18 @@ const server = http.createServer((req, res) => {
           status: 401,
           detail: 'Unknown tenant or inactive account',
           error: 'Unknown tenant or inactive account'
+        }));
+      }
+
+      // Negative test: Incorrect password (Request 04 sends WrongSecurityPassword@999)
+      if (password !== 'Manager@123' && password !== 'ValidPassword123!') {
+        res.writeHead(401);
+        return res.end(JSON.stringify({
+          type: 'about:blank',
+          title: 'Unauthorized',
+          status: 401,
+          detail: 'Invalid credentials',
+          error: 'Invalid credentials'
         }));
       }
 

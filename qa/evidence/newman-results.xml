@@ -1,82 +1,82 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="URQR Phase 1 POS - API Regression Collection" tests="19" time="0.094">
-  <testsuite name="01 - Health &amp; Liveness Probe" id="300623b6-877c-4b5d-bb55-c6249593f601" timestamp="2026-11-28T02:46:17.996Z" tests="3" failures="0" errors="0" time="0.026">
-    <testcase name="Status code is 200 OK" time="0.026" classname="01HealthAmpLivenessProbe"/>
-    <testcase name="Response latency is acceptable (&lt;1000ms)" time="0.026" classname="01HealthAmpLivenessProbe"/>
-    <testcase name="Service reports UP status" time="0.026" classname="01HealthAmpLivenessProbe"/>
+<testsuites name="URQR Phase 1 POS - API Regression Collection" tests="19" time="0.096">
+  <testsuite name="01 - Health &amp; Liveness Probe" id="6e66a3d2-2e37-4556-a3ea-0106f28cd270" timestamp="2026-11-28T02:54:03.843Z" tests="3" failures="0" errors="0" time="0.030">
+    <testcase name="Status code is 200 OK" time="0.030" classname="01HealthAmpLivenessProbe"/>
+    <testcase name="Response latency is acceptable (&lt;1000ms)" time="0.030" classname="01HealthAmpLivenessProbe"/>
+    <testcase name="Service reports UP status" time="0.030" classname="01HealthAmpLivenessProbe"/>
   </testsuite>
-  <testsuite name="02 - Manager Login (Happy Path &amp; JWT RS256 Audit)" id="b0a16920-2193-4c81-b815-707c62ba7c13" timestamp="2026-11-28T02:46:17.996Z" tests="4" failures="0" errors="0" time="0.006">
-    <testcase name="Status code is 200 OK" time="0.006" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
-    <testcase name="Login response latency is acceptable (&lt;3000ms)" time="0.006" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
-    <testcase name="JWT Access Token has valid 3-part signature structure" time="0.006" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
-    <testcase name="User profile returned with matching username and role" time="0.006" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
+  <testsuite name="02 - Manager Login (Happy Path &amp; JWT RS256 Audit)" id="27214957-02d0-4626-a7fd-051db36bcf6c" timestamp="2026-11-28T02:54:03.843Z" tests="4" failures="0" errors="0" time="0.010">
+    <testcase name="Status code is 200 OK" time="0.010" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
+    <testcase name="Login response latency is acceptable (&lt;3000ms)" time="0.010" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
+    <testcase name="JWT Access Token has valid 3-part signature structure" time="0.010" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
+    <testcase name="User profile returned with matching username and role" time="0.010" classname="02ManagerLoginHappyPathAmpJwtRs256Audit"/>
   </testsuite>
-  <testsuite name="03 - Auth Token Refresh (/api/v1/auth/refresh)" id="ed3a52c1-ec3f-47cd-bccf-3645aefb761a" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.005">
-    <testcase name="Status code is 200 OK for refresh" time="0.005" classname="03AuthTokenRefreshApiV1AuthRefresh"/>
-    <testcase name="Rotated access token is issued with RS256 algorithm" time="0.005" classname="03AuthTokenRefreshApiV1AuthRefresh"/>
+  <testsuite name="03 - Auth Token Refresh (/api/v1/auth/refresh)" id="f5bc3e24-f8de-4819-bcf4-dad748473685" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.007">
+    <testcase name="Status code is 200 OK for refresh" time="0.007" classname="03AuthTokenRefreshApiV1AuthRefresh"/>
+    <testcase name="Rotated access token is issued with RS256 algorithm" time="0.007" classname="03AuthTokenRefreshApiV1AuthRefresh"/>
   </testsuite>
-  <testsuite name="04 - Negative: Incorrect Password" id="37c7fbdc-f964-4b41-9daa-3ea7e821dedb" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.003">
-    <testcase name="Status code is 401 Unauthorized" time="0.003" classname="04NegativeIncorrectPassword"/>
-    <testcase name="Error payload contains descriptive rejection" time="0.003" classname="04NegativeIncorrectPassword"/>
+  <testsuite name="04 - Negative: Incorrect Password" id="1594933a-d1f2-42dd-a837-1f05f6239fc2" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.002">
+    <testcase name="Status code is 401 Unauthorized" time="0.002" classname="04NegativeIncorrectPassword"/>
+    <testcase name="Error payload contains descriptive rejection" time="0.002" classname="04NegativeIncorrectPassword"/>
   </testsuite>
-  <testsuite name="05 - Negative: Invalid / Unknown Tenant Slug Account" id="f0e5fbac-eb46-490f-8c2d-3390edc29549" timestamp="2026-11-28T02:46:17.996Z" tests="1" failures="0" errors="0" time="0.003">
-    <testcase name="Status code is 401 Unauthorized for unknown tenant account" time="0.003" classname="05NegativeInvalidUnknownTenantSlugAccount"/>
+  <testsuite name="05 - Negative: Invalid / Unknown Tenant Slug Account" id="325796a5-2b06-4d68-8aa7-c1d9f32bda74" timestamp="2026-11-28T02:54:03.843Z" tests="1" failures="0" errors="0" time="0.006">
+    <testcase name="Status code is 401 Unauthorized for unknown tenant account" time="0.006" classname="05NegativeInvalidUnknownTenantSlugAccount"/>
   </testsuite>
-  <testsuite name="06 - Negative: Expired or Revoked Refresh Token" id="d8af5d58-6b3b-46b4-9f63-9c2e0c9eef4c" timestamp="2026-11-28T02:46:17.996Z" tests="1" failures="0" errors="0" time="0.002">
+  <testsuite name="06 - Negative: Expired or Revoked Refresh Token" id="c93ced4c-df90-4198-a6be-3aab828249e0" timestamp="2026-11-28T02:54:03.843Z" tests="1" failures="0" errors="0" time="0.002">
     <testcase name="Status code is 401 Unauthorized for expired refresh token" time="0.002" classname="06NegativeExpiredOrRevokedRefreshToken"/>
   </testsuite>
-  <testsuite name="07 - Negative: Malformed JSON Payload" id="d779b315-f4d7-47f4-b2c6-202d4f913c16" timestamp="2026-11-28T02:46:17.996Z" tests="1" failures="0" errors="0" time="0.005">
+  <testsuite name="07 - Negative: Malformed JSON Payload" id="5be1f159-42d8-4b09-a2af-39dd4954bdb6" timestamp="2026-11-28T02:54:03.843Z" tests="1" failures="0" errors="0" time="0.005">
     <testcase name="Status code is 400 Bad Request for malformed JSON syntax" time="0.005" classname="07NegativeMalformedJsonPayload"/>
   </testsuite>
-  <testsuite name="08 - Brute-Force Rate Limiting (10 Rapid Failed Logins)" id="095b8d02-42e7-49c6-8d75-18d7f64ecd07" timestamp="2026-11-28T02:46:17.996Z" tests="3" failures="0" errors="0" time="0.005">
-    <testcase name="Brute-force security check: returns 401 Unauthorized or 429 Too Many Requests" time="0.005" classname="08BruteForceRateLimiting10RapidFailedLogins"/>
-    <testcase name="Response contains Retry-After header for rate throttling" time="0.005" classname="08BruteForceRateLimiting10RapidFailedLogins"/>
-    <testcase name="Response payload informs user of temporary lockout" time="0.005" classname="08BruteForceRateLimiting10RapidFailedLogins"/>
+  <testsuite name="08 - Brute-Force Rate Limiting (10 Rapid Failed Logins)" id="f16eb436-72f1-471e-96e6-413e4b4bb0b8" timestamp="2026-11-28T02:54:03.843Z" tests="3" failures="0" errors="0" time="0.003">
+    <testcase name="Brute-force security check: returns 401 Unauthorized or 429 Too Many Requests" time="0.003" classname="08BruteForceRateLimiting10RapidFailedLogins"/>
+    <testcase name="Response contains Retry-After header for rate throttling" time="0.003" classname="08BruteForceRateLimiting10RapidFailedLogins"/>
+    <testcase name="Response payload informs user of temporary lockout" time="0.003" classname="08BruteForceRateLimiting10RapidFailedLogins"/>
   </testsuite>
-  <testsuite name="09 - Catalog Products (Contract Schema Validation)" id="f37722d1-3707-44d5-8ff9-91efd8cd9d4a" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.006">
-    <testcase name="Status code is 200 OK" time="0.006" classname="09CatalogProductsContractSchemaValidation"/>
-    <testcase name="Products conform to ProductItemSchema contract" time="0.006" classname="09CatalogProductsContractSchemaValidation"/>
+  <testsuite name="09 - Catalog Products (Contract Schema Validation)" id="d65f50de-a103-4176-9529-0afd1fdf2d5a" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.003">
+    <testcase name="Status code is 200 OK" time="0.003" classname="09CatalogProductsContractSchemaValidation"/>
+    <testcase name="Products conform to ProductItemSchema contract" time="0.003" classname="09CatalogProductsContractSchemaValidation"/>
   </testsuite>
-  <testsuite name="10 - Catalog Categories (Contract Schema Validation)" id="a3933011-d26c-4e71-968c-bf56b6d1b01c" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.002">
-    <testcase name="Status code is 200 OK" time="0.002" classname="10CatalogCategoriesContractSchemaValidation"/>
-    <testcase name="Categories conform to CategorySchema contract" time="0.002" classname="10CatalogCategoriesContractSchemaValidation"/>
+  <testsuite name="10 - Catalog Categories (Contract Schema Validation)" id="a3416138-b641-458d-8337-f1d21dfde833" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Status code is 200 OK" time="0.004" classname="10CatalogCategoriesContractSchemaValidation"/>
+    <testcase name="Categories conform to CategorySchema contract" time="0.004" classname="10CatalogCategoriesContractSchemaValidation"/>
   </testsuite>
-  <testsuite name="11 - Catalog Category Filter (Main Course)" id="e9003bbc-660c-4bf6-b6c1-3cf9200db273" timestamp="2026-11-28T02:46:17.996Z" tests="4" failures="0" errors="0" time="0.005">
-    <testcase name="Status code is 200 OK for category filter query" time="0.005" classname="11CatalogCategoryFilterMainCourse"/>
-    <testcase name="Returned category results is a non-empty array" time="0.005" classname="11CatalogCategoryFilterMainCourse"/>
-    <testcase name="All returned products have category Main Course" time="0.005" classname="11CatalogCategoryFilterMainCourse"/>
-    <testcase name="Results include known standard items: Paneer Butter Masala" time="0.005" classname="11CatalogCategoryFilterMainCourse"/>
+  <testsuite name="11 - Catalog Category Filter (Main Course)" id="93a62d5e-8c83-44d9-a123-4ba9fac61d88" timestamp="2026-11-28T02:54:03.843Z" tests="4" failures="0" errors="0" time="0.002">
+    <testcase name="Status code is 200 OK for category filter query" time="0.002" classname="11CatalogCategoryFilterMainCourse"/>
+    <testcase name="Returned category results is a non-empty array" time="0.002" classname="11CatalogCategoryFilterMainCourse"/>
+    <testcase name="All returned products have category Main Course" time="0.002" classname="11CatalogCategoryFilterMainCourse"/>
+    <testcase name="Results include known standard items: Paneer Butter Masala" time="0.002" classname="11CatalogCategoryFilterMainCourse"/>
   </testsuite>
-  <testsuite name="12 - Catalog Category Filter (Empty on Non-Existent Category)" id="52ba367e-e457-48e3-97ef-60b55830afe3" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.002">
+  <testsuite name="12 - Catalog Category Filter (Empty on Non-Existent Category)" id="4868c61c-42ca-4131-9795-008c245024c8" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.002">
     <testcase name="Status code is 200 OK for non-existent category query" time="0.002" classname="12CatalogCategoryFilterEmptyOnNonExistentCategory"/>
     <testcase name="Empty array returned when category has no matches" time="0.002" classname="12CatalogCategoryFilterEmptyOnNonExistentCategory"/>
   </testsuite>
-  <testsuite name="13 - Catalog Search Query (Search for &quot;Paneer&quot;)" id="ff4f9b96-b5c0-4be7-87da-72dbe6cd7ac4" timestamp="2026-11-28T02:46:17.996Z" tests="3" failures="0" errors="0" time="0.005">
-    <testcase name="Status code is 200 OK for search query" time="0.005" classname="13CatalogSearchQuerySearchForQuotPaneerQuot"/>
-    <testcase name="Search returns matching item records" time="0.005" classname="13CatalogSearchQuerySearchForQuotPaneerQuot"/>
-    <testcase name="Returned items match substring query &quot;Paneer&quot;" time="0.005" classname="13CatalogSearchQuerySearchForQuotPaneerQuot"/>
+  <testsuite name="13 - Catalog Search Query (Search for &quot;Paneer&quot;)" id="d6f8048a-3264-4624-89f1-e0580d8890ce" timestamp="2026-11-28T02:54:03.843Z" tests="3" failures="0" errors="0" time="0.003">
+    <testcase name="Status code is 200 OK for search query" time="0.003" classname="13CatalogSearchQuerySearchForQuotPaneerQuot"/>
+    <testcase name="Search returns matching item records" time="0.003" classname="13CatalogSearchQuerySearchForQuotPaneerQuot"/>
+    <testcase name="Returned items match substring query &quot;Paneer&quot;" time="0.003" classname="13CatalogSearchQuerySearchForQuotPaneerQuot"/>
   </testsuite>
-  <testsuite name="14 - Catalog Search Query Case-Insensitive (Search for &quot;naan&quot;)" id="0804ed09-daf2-49cd-98cd-67728773eead" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.003">
-    <testcase name="Status code is 200 OK for case-insensitive search" time="0.003" classname="14CatalogSearchQueryCaseInsensitiveSearchForQuotNaanQuot"/>
-    <testcase name="Found matching item Garlic Naan" time="0.003" classname="14CatalogSearchQueryCaseInsensitiveSearchForQuotNaanQuot"/>
+  <testsuite name="14 - Catalog Search Query Case-Insensitive (Search for &quot;naan&quot;)" id="940f898e-a60d-4209-be2e-31eec5295d2b" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Status code is 200 OK for case-insensitive search" time="0.004" classname="14CatalogSearchQueryCaseInsensitiveSearchForQuotNaanQuot"/>
+    <testcase name="Found matching item Garlic Naan" time="0.004" classname="14CatalogSearchQueryCaseInsensitiveSearchForQuotNaanQuot"/>
   </testsuite>
-  <testsuite name="15 - Catalog Pagination (Page 1 with Size 2)" id="7049dd65-663a-4433-992c-4008ae52c4d0" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.004">
-    <testcase name="Status code is 200 OK for paginated query" time="0.004" classname="15CatalogPaginationPage1WithSize2"/>
-    <testcase name="Pagination metadata conforms to Spring Boot pageable contract" time="0.004" classname="15CatalogPaginationPage1WithSize2"/>
+  <testsuite name="15 - Catalog Pagination (Page 1 with Size 2)" id="6bdb88d3-e591-468b-884a-fbccf25eb405" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.005">
+    <testcase name="Status code is 200 OK for paginated query" time="0.005" classname="15CatalogPaginationPage1WithSize2"/>
+    <testcase name="Pagination metadata conforms to Spring Boot pageable contract" time="0.005" classname="15CatalogPaginationPage1WithSize2"/>
   </testsuite>
-  <testsuite name="16 - Catalog Pagination (Page 2 with Size 2)" id="fd344bfe-a3a0-4656-b7bc-d0c75bb7f874" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.002">
-    <testcase name="Status code is 200 OK for page 2 query" time="0.002" classname="16CatalogPaginationPage2WithSize2"/>
-    <testcase name="Page 2 returns distinct items from Page 1" time="0.002" classname="16CatalogPaginationPage2WithSize2"/>
+  <testsuite name="16 - Catalog Pagination (Page 2 with Size 2)" id="87a66451-ee20-4293-8c97-8d077b4b3f1f" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.001">
+    <testcase name="Status code is 200 OK for page 2 query" time="0.001" classname="16CatalogPaginationPage2WithSize2"/>
+    <testcase name="Page 2 returns distinct items from Page 1" time="0.001" classname="16CatalogPaginationPage2WithSize2"/>
   </testsuite>
-  <testsuite name="17 - Out-of-Stock and Multi-Tax Inventory Verification" id="0741cc53-a810-4cfe-9800-79496c292743" timestamp="2026-11-28T02:46:17.996Z" tests="3" failures="0" errors="0" time="0.004">
-    <testcase name="Status code is 200 OK for full catalog audit" time="0.004" classname="17OutOfStockAndMultiTaxInventoryVerification"/>
-    <testcase name="Out-of-stock items have inStock false and zero quantity" time="0.004" classname="17OutOfStockAndMultiTaxInventoryVerification"/>
-    <testcase name="Multi-tax items carry tax rate and component breakdowns" time="0.004" classname="17OutOfStockAndMultiTaxInventoryVerification"/>
+  <testsuite name="17 - Out-of-Stock and Multi-Tax Inventory Verification" id="2eaa5b8f-78c2-4cc1-985c-fc986fb8d22b" timestamp="2026-11-28T02:54:03.843Z" tests="3" failures="0" errors="0" time="0.002">
+    <testcase name="Status code is 200 OK for full catalog audit" time="0.002" classname="17OutOfStockAndMultiTaxInventoryVerification"/>
+    <testcase name="Out-of-stock items have inStock false and zero quantity" time="0.002" classname="17OutOfStockAndMultiTaxInventoryVerification"/>
+    <testcase name="Multi-tax items carry tax rate and component breakdowns" time="0.002" classname="17OutOfStockAndMultiTaxInventoryVerification"/>
   </testsuite>
-  <testsuite name="18 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)" id="fe873f2b-dbe5-4c75-9b25-df7e82b096cd" timestamp="2026-11-28T02:46:17.996Z" tests="1" failures="0" errors="0" time="0.002">
-    <testcase name="Status code is 403 Forbidden or 404 Not Found for cross-tenant breach" time="0.002" classname="18MultiTenantIsolationTenantACannotAccessTenantB"/>
+  <testsuite name="18 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)" id="0d54a683-24ad-4f0c-bcf5-95793fcfef4b" timestamp="2026-11-28T02:54:03.843Z" tests="1" failures="0" errors="0" time="0.001">
+    <testcase name="Status code is 403 Forbidden or 404 Not Found for cross-tenant breach" time="0.001" classname="18MultiTenantIsolationTenantACannotAccessTenantB"/>
   </testsuite>
-  <testsuite name="19 - Super-Manager Cross-Tenant Metrics Query" id="28d14091-730a-44a2-b185-a9882c263373" timestamp="2026-11-28T02:46:17.996Z" tests="2" failures="0" errors="0" time="0.004">
+  <testsuite name="19 - Super-Manager Cross-Tenant Metrics Query" id="47651d27-ad38-4bbe-a1d0-eaf9b8de3a2a" timestamp="2026-11-28T02:54:03.843Z" tests="2" failures="0" errors="0" time="0.004">
     <testcase name="Status code is 200 OK for Super-Manager query" time="0.004" classname="19SuperManagerCrossTenantMetricsQuery"/>
     <testcase name="Returns aggregated platform tenant metrics" time="0.004" classname="19SuperManagerCrossTenantMetricsQuery"/>
   </testsuite>
