@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URQR Manager POS — Day 5 Morning Complete Suite (Tasks 1–4 &amp; Configs)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* =====================================================================
+       AUTHORITATIVE VARIABLE COLLECTION: "URQR THEME" (Screen 1 & Screen 2)
+       ===================================================================== */
+    :root {
+      --bg: #F5EEE0;
+      --surface: #FFFDF8;
+      --surfaceAlt: #FAF3E6;
+      --border: #E4D8C3;
+      --primary: #8B5E3C;
+      --primaryDark: #5C3D26;
+      --text: #3B2A1E;
+      --textSecondary: #7A6A5A;
+      --success: #3F6B3A;
+      --successBg: #EEF3E8;
+      --warning: #B45309;
+      --warningBg: #FDF1E1;
+      --error: #B91C1C;
+      --errorBg: #FEF2F2;
+      --disabled: #D9CDB8;
+      --disabledText: #8E7F6C;
+      --onPrimary: #FFFFFF;
+      --inputBg: #FFFFFF;
+      --modal-shadow: 0 8px 24px rgba(59, 42, 30, 0.20);
+      --backdrop: rgba(59, 42, 30, 0.55);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .font-mono-num {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Official URQR Focus Ring: 2px primary (#8B5E3C), offset 2px */
+    .urqr-focus:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .urqr-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .urqr-well {
+      background-color: var(--surfaceAlt);
+      border: 1px solid var(--border);
+    }
+
+    .urqr-btn-primary {
+      background-color: var(--primary);
+      color: var(--onPrimary);
+      height: 52px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background-color 0.15s ease;
+    }
+
+    .urqr-btn-primary:hover:not(:disabled),
+    .urqr-btn-primary:active:not(:disabled) {
+      background-color: var(--primaryDark);
+    }
+
+    .urqr-btn-primary:disabled {
+      background-color: var(--disabled);
+      color: var(--disabledText);
+      cursor: not-allowed;
+    }
+
+    .urqr-btn-secondary {
+      background-color: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      height: 52px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background-color 0.15s ease;
+    }
+
+    .urqr-btn-secondary:hover:not(:disabled) {
+      background-color: var(--surfaceAlt);
+    }
+
+    .urqr-btn-secondary:disabled {
+      background-color: var(--disabled);
+      color: var(--disabledText);
+      border-color: var(--disabled);
+      cursor: not-allowed;
+    }
+
+    .urqr-modal-shell {
+      width: 100%;
+      max-width: 560px;
+      background-color: var(--surface);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--modal-shadow);
+      border: 1px solid var(--border);
+    }
+
+    @keyframes slideDownBanner {
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .banner-enter {
+      animation: slideDownBanner 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-enter {
+      animation: modalIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spin-icon {
+      animation: spinSlow 0.9s linear infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .badge-pulse {
+      animation: badgePulse 0.3s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .banner-enter, .modal-enter, .spin-icon, .badge-pulse {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP SUITE NAVIGATION BAR (72px aligned to URQR Header) -->
+  <header class="w-full h-[72px] px-4 lg:px-6 border-b flex items-center justify-between gap-4 sticky top-0 z-50" style="background-color: var(--surface); border-color: var(--border);">
+    <div class="flex items-center gap-3 min-w-0">
+      <!-- 32x32 Reserved Logo Space + URQR 18/22 Bold -->
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0" style="background-color: var(--primaryDark); color: var(--onPrimary);">U</div>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="text-[18px] leading-[22px] font-bold tracking-tight">URQR</span>
+          <span class="text-xs px-2 py-0.5 rounded font-semibold" style="background-color: var(--surfaceAlt); color: var(--primaryDark); border: 1px solid var(--border);">Day 5 Morning · Tasks 1–4</span>
+        </div>
+        <div class="text-[12px] truncate" style="color: var(--textSecondary);">Phase 1 Standalone Manager POS · 1920×1080 · 8px Grid · URQR THEME</div>
+      </div>
+    </div>
+
+    <!-- 4-Task Suite Tabs -->
+    <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl border" style="background-color: var(--bg); border-color: var(--border);" role="tablist" aria-label="Day 5 Morning Tasks">
+      <button data-tab="t1" role="tab" aria-selected="true" class="suite-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">1. Offline Banner</button>
+      <button data-tab="t2" role="tab" aria-selected="false" class="suite-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">2. Printer Modals</button>
+      <button data-tab="t3" role="tab" aria-selected="false" class="suite-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">3. Radix A11y Audit</button>
+      <button data-tab="t4" role="tab" aria-selected="false" class="suite-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">4. Handoff &amp; Configs</button>
+    </nav>
+
+    <!-- Right-Aligned Header End Group: Network -> Date (Official Screen 1 & 2 Spec) -->
+    <div class="flex items-center gap-2 shrink-0">
+      <div id="globalNetPill" class="px-3 py-1.5 rounded-full text-[13px] font-semibold flex items-center gap-2 border" style="background-color: var(--errorBg); border-color: var(--error); color: var(--error);">
+        <span id="globalNetDot" class="w-2 h-2 rounded-full" style="background-color: var(--error);"></span>
+        <span id="globalNetText">Offline</span>
+      </div>
+      <div id="globalDatePill" class="hidden sm:block px-3 py-1.5 rounded-lg text-[13px] font-medium border" style="background-color: var(--surface); border-color: var(--border); color: var(--text);">
+        Fri, 27 Nov 2026
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile / Narrow Tab Switcher -->
+  <div class="md:hidden px-4 py-2 border-b flex gap-1.5 overflow-x-auto" style="background-color: var(--surfaceAlt); border-color: var(--border);">
+    <button data-tab="t1" class="suite-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">1. Offline Banner</button>
+    <button data-tab="t2" class="suite-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">2. Printer Modals</button>
+    <button data-tab="t3" class="suite-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">3. Radix A11y</button>
+    <button data-tab="t4" class="suite-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">4. Handoff &amp; Configs</button>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 1: TASK 1 — NETWORK DISCONNECTED FLOATING BANNER + BILLING/PAYMENT  -->
+  <!-- ======================================================================= -->
+  <section id="panel-t1" class="flex-1 p-4 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4">
+
+    <!-- Simulation Controls -->
+    <div class="urqr-card rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold uppercase tracking-wider mr-1" style="color: var(--textSecondary);">Network State:</span>
+        <button data-net="offline" class="net-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors">Offline (Buffered)</button>
+        <button data-net="syncing" class="net-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors">Syncing Queue</button>
+        <button data-net="synced" class="net-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors">Back Online (Synced)</button>
+        <button data-net="error" class="net-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors">Sync Error</button>
+        <button data-net="online" class="net-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors">Online (Hidden)</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnResetBuffer" class="urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-medium border" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--textSecondary);">Reset Queue (0)</button>
+      </div>
+    </div>
+
+    <!-- POS Frame Preview (88w Rail + 72h Header + Floating z-40 Banner + Billing/Payment) -->
+    <div class="rounded-2xl border overflow-hidden relative flex min-h-[640px]" style="background-color: var(--bg); border-color: var(--border);">
+
+      <!-- 88w Billing Rail (Official Screen 1 & 2 Spec: 16x16 logo, URQR 14/20 Bold, 24px extra clearance) -->
+      <aside class="hidden sm:flex w-[88px] shrink-0 border-r flex-col items-center py-5" style="background-color: var(--surface); border-color: var(--border);">
+        <div class="flex items-center gap-1.5">
+          <div class="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold" style="background-color: var(--primaryDark); color: var(--onPrimary);">U</div>
+          <span class="text-[14px] leading-[20px] font-bold">URQR</span>
+        </div>
+        <!-- 24px extra clearance + 16px rail gap -->
+        <div class="mt-10 flex flex-col items-center gap-4 w-full px-2">
+          <div class="w-full py-2.5 rounded-lg text-center text-[11px] font-semibold" style="background-color: var(--surfaceAlt); color: var(--primary); border: 1px solid var(--border);">Billing</div>
+          <div class="w-full py-2.5 rounded-lg text-center text-[11px] font-medium" style="color: var(--textSecondary);">Orders</div>
+          <div class="w-full py-2.5 rounded-lg text-center text-[11px] font-medium" style="color: var(--textSecondary);">Menu</div>
+          <div class="w-full py-2.5 rounded-lg text-center text-[11px] font-medium" style="color: var(--textSecondary);">Sales</div>
+        </div>
+      </aside>
+
+      <!-- Main POS Content Area -->
+      <div class="flex-1 flex flex-col relative min-w-0">
+        <!-- 72h Inner POS Header -->
+        <div class="h-[72px] px-6 border-b flex items-center justify-between shrink-0 z-20" style="background-color: var(--surface); border-color: var(--border);">
+          <h2 class="text-[28px] leading-[36px] font-semibold tracking-tight">Billing</h2>
+          <div class="flex items-center gap-3">
+            <div id="posNetBadge" class="px-3 py-1 rounded-full text-[13px] font-semibold flex items-center gap-2 border">
+              <span id="posNetDot" class="w-2 h-2 rounded-full"></span>
+              <span id="posNetLabel">Offline</span>
+            </div>
+            <span class="text-[13px] font-medium" style="color: var(--textSecondary);">Fri, 27 Nov 2026</span>
+          </div>
+        </div>
+
+        <!-- ================================================================ -->
+        <!-- TASK 1: FLOATING NETWORK DISCONNECTED ALERT BANNER (z-40)        -->
+        <!-- ================================================================ -->
+        <div id="floatingBannerWrap" class="absolute left-1/2 -translate-x-1/2 top-[84px] z-40 w-[calc(100%-2rem)] max-w-[740px] pointer-events-none">
+          <div id="floatingBanner" role="status" aria-live="polite" aria-atomic="true" class="pointer-events-auto rounded-xl border-2 px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3" style="box-shadow: var(--modal-shadow);">
+            <div class="flex items-center gap-3 min-w-0">
+              <div id="bannerIconBox" class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"></div>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span id="bannerTitle" class="text-[14px] font-semibold leading-snug">Network disconnected — Working offline</span>
+                  <span id="bannerCountPill" class="font-mono-num px-2 py-0.5 rounded-full text-[12px] font-semibold border">3 buffered</span>
+                </div>
+                <p id="bannerSub" class="text-[12px] mt-0.5 truncate" style="color: var(--textSecondary);">
+                  Cash payments stay enabled. Buffered locally in SQLite Edge (:8090) for auto-sync.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0 ml-auto">
+              <button id="btnToggleQueue" type="button" class="urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border flex items-center gap-1 transition-colors" aria-expanded="false" aria-controls="queuePopover">
+                <span>Queue</span>
+                <svg id="queueArrow" class="w-3.5 h-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <button id="btnBannerRetry" type="button" class="urqr-focus px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors">
+                Retry Sync
+              </button>
+              <button id="btnBannerClose" type="button" class="hidden urqr-focus p-1.5 rounded-lg" aria-label="Dismiss banner">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Expandable SQLite Buffered Queue Popover -->
+          <div id="queuePopover" class="hidden pointer-events-auto mt-2 rounded-xl border overflow-hidden" style="background-color: var(--surface); border-color: var(--border); box-shadow: var(--modal-shadow);">
+            <div class="px-4 py-2.5 border-b flex items-center justify-between" style="background-color: var(--surfaceAlt); border-color: var(--border);">
+              <div>
+                <div class="text-[12px] font-semibold uppercase tracking-wider">Locally Buffered Offline Cash Transactions</div>
+                <div class="text-[12px]" style="color: var(--textSecondary);">FIFO SQLite WAL queue · Calculated in integer paise</div>
+              </div>
+              <span id="queueTotalInr" class="font-mono-num text-[14px] font-bold">₹0.00</span>
+            </div>
+            <div id="queueRows" class="max-h-48 overflow-y-auto divide-y" style="border-color: var(--border);"></div>
+            <div class="px-4 py-2 border-t flex items-center justify-between text-[12px]" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--textSecondary);">
+              <span>Press Esc to close queue popover</span>
+              <button id="btnPopoverSync" type="button" class="urqr-focus font-semibold underline" style="color: var(--primary);">Sync Queue Now</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 2 Billing + Payment Interactive Split (Clears floating banner) -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 p-6 pt-28 relative z-10">
+          <!-- Left: Product Cards (Screen 2 Spec: 15px Semi Bold card title, gap 16) -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-3 py-1 rounded-full text-[13px] font-semibold" style="background-color: var(--primary); color: var(--onPrimary);">All Items</span>
+                <span class="px-3 py-1 rounded-full text-[13px] font-medium border" style="background-color: var(--surface); border-color: var(--border); color: var(--textSecondary);">South Indian</span>
+                <span class="px-3 py-1 rounded-full text-[13px] font-medium border" style="background-color: var(--surface); border-color: var(--border); color: var(--textSecondary);">Beverages</span>
+              </div>
+              <span class="text-[12px]" style="color: var(--textSecondary);">Tap card to add to order</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <button data-item="Masala Dosa" data-paise="14000" class="item-card urqr-focus urqr-card rounded-xl p-4 text-left hover:bg-[#FAF3E6] transition-colors">
+                <div class="text-[12px]" style="color: var(--textSecondary);">South Indian</div>
+                <div class="text-[15px] font-semibold mt-1">Masala Dosa</div>
+                <div class="font-mono-num text-[14px] font-semibold mt-2" style="color: var(--primaryDark);">₹140.00</div>
+              </button>
+              <button data-item="Ghee Roast" data-paise="18000" class="item-card urqr-focus urqr-card rounded-xl p-4 text-left hover:bg-[#FAF3E6] transition-colors">
+                <div class="text-[12px]" style="color: var(--textSecondary);">South Indian</div>
+                <div class="text-[15px] font-semibold mt-1">Ghee Roast</div>
+                <div class="font-mono-num text-[14px] font-semibold mt-2" style="color: var(--primaryDark);">₹180.00</div>
+              </button>
+              <button data-item="Filter Coffee" data-paise="5500" class="item-card urqr-focus urqr-card rounded-xl p-4 text-left hover:bg-[#FAF3E6] transition-colors">
+                <div class="text-[12px]" style="color: var(--textSecondary);">Beverages</div>
+                <div class="text-[15px] font-semibold mt-1">Filter Coffee</div>
+                <div class="font-mono-num text-[14px] font-semibold mt-2" style="color: var(--primaryDark);">₹55.00</div>
+              </button>
+              <button data-item="Podi Idli (3 pcs)" data-paise="11000" class="item-card urqr-focus urqr-card rounded-xl p-4 text-left hover:bg-[#FAF3E6] transition-colors">
+                <div class="text-[12px]" style="color: var(--textSecondary);">South Indian</div>
+                <div class="text-[15px] font-semibold mt-1">Podi Idli (3 pcs)</div>
+                <div class="font-mono-num text-[14px] font-semibold mt-2" style="color: var(--primaryDark);">₹110.00</div>
+              </button>
+              <button data-item="Medu Vada" data-paise="8500" class="item-card urqr-focus urqr-card rounded-xl p-4 text-left hover:bg-[#FAF3E6] transition-colors">
+                <div class="text-[12px]" style="color: var(--textSecondary);">South Indian</div>
+                <div class="text-[15px] font-semibold mt-1">Medu Vada</div>
+                <div class="font-mono-num text-[14px] font-semibold mt-2" style="color: var(--primaryDark);">₹85.00</div>
+              </button>
+              <button data-item="Badam Milk" data-paise="9500" class="item-card urqr-focus urqr-card rounded-xl p-4 text-left hover:bg-[#FAF3E6] transition-colors">
+                <div class="text-[12px]" style="color: var(--textSecondary);">Beverages</div>
+                <div class="text-[15px] font-semibold mt-1">Badam Milk</div>
+                <div class="font-mono-num text-[14px] font-semibold mt-2" style="color: var(--primaryDark);">₹95.00</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Order Summary & Offline-Capable Payment Shell (Screen 2 Paise Logic) -->
+          <div class="lg:col-span-5 urqr-card rounded-2xl p-5 flex flex-col justify-between gap-4">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border);">
+                <div>
+                  <div class="text-[12px] font-medium" style="color: var(--textSecondary);">Amount to Pay (incl. 5% GST)</div>
+                  <div id="payAmountDue" class="font-mono-num text-[32px] leading-tight font-bold">₹616.00</div>
+                </div>
+                <span id="payOrderNo" class="font-mono-num text-[12px] px-2 py-1 rounded border" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--textSecondary);">NLJ202611270004</span>
+              </div>
+
+              <!-- Payment Method Selector (Cash allowed offline; UPI/Others gated offline) -->
+              <div>
+                <div class="text-[13px] font-semibold mb-2">Payment Method</div>
+                <div class="grid grid-cols-3 gap-2">
+                  <button data-method="CASH" class="method-btn urqr-focus h-11 rounded-lg text-[14px] font-semibold border transition-colors">Cash</button>
+                  <button data-method="UPI" class="method-btn urqr-focus h-11 rounded-lg text-[14px] font-semibold border transition-colors">UPI</button>
+                  <button data-method="OTHER" class="method-btn urqr-focus h-11 rounded-lg text-[14px] font-semibold border transition-colors">Others</button>
+                </div>
+                <p id="offlineMethodHint" class="hidden text-[12px] mt-1.5 font-medium" style="color: var(--error);">
+                  Offline mode: Only Cash payment is allowed while disconnected.
+                </p>
+              </div>
+
+              <!-- Cash Block (Screen 2 Spec: 52-56h input, 24px Semi Bold, Quick Cash 48h gap 16) -->
+              <div id="cashBlock" class="space-y-3">
+                <div>
+                  <label for="cashInput" class="block text-[14px] font-medium mb-1.5">Cash Received (INR)</label>
+                  <input id="cashInput" type="text" inputmode="decimal" value="650.00" placeholder="0.00" class="urqr-focus w-full h-[54px] px-4 rounded-lg font-mono-num text-[24px] font-semibold border" style="background-color: var(--inputBg); border-color: var(--primary); color: var(--text);" />
+                </div>
+
+                <!-- Quick Cash Buttons: ₹50 / ₹100 / ₹200 (48h, gap 16px, 16px Semi Bold) -->
+                <div class="grid grid-cols-3 gap-4">
+                  <button data-add="5000" type="button" class="quick-cash urqr-focus h-[48px] rounded-lg text-[16px] font-semibold border transition-colors" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--text);">+₹50</button>
+                  <button data-add="10000" type="button" class="quick-cash urqr-focus h-[48px] rounded-lg text-[16px] font-semibold border transition-colors" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--text);">+₹100</button>
+                  <button data-add="20000" type="button" class="quick-cash urqr-focus h-[48px] rounded-lg text-[16px] font-semibold border transition-colors" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--text);">+₹200</button>
+                </div>
+
+                <!-- Change Summary (aria-live polite, 28px Bold) -->
+                <div id="changeSummaryBox" role="status" aria-live="polite" class="rounded-xl px-4 py-3 border flex items-center justify-between">
+                  <span id="changeSummaryLabel" class="text-[14px] font-semibold">Change to Return</span>
+                  <span id="changeSummaryAmount" class="font-mono-num text-[28px] leading-tight font-bold">₹34.00</span>
+                </div>
+              </div>
+            </div>
+
+            <button id="btnConfirmPay" type="button" class="urqr-btn-primary urqr-focus w-full">
+              Confirm Cash Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 2: TASK 2 — PRINTER ERROR & OVERRIDE MODALS (560w · r16 · pad 28)   -->
+  <!-- ======================================================================= -->
+  <section id="panel-t2" class="hidden flex-1 p-4 lg:p-6 max-w-[1440px] w-full mx-auto space-y-4">
+
+    <div class="urqr-card rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold uppercase tracking-wider mr-1" style="color: var(--textSecondary);">Preview Modal (560w · r16 · p28):</span>
+        <button data-modal="paper_empty" class="m-trigger urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">1. Out of Paper</button>
+        <button data-modal="cover_open" class="m-trigger urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">2. Cover Open</button>
+        <button data-modal="timeout" class="m-trigger urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">3. Connection Timeout</button>
+        <button data-modal="sync_override" class="m-trigger urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">4. Sync Conflict Override</button>
+        <button data-modal="none" class="m-trigger urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">Close</button>
+      </div>
+      <label class="flex items-center gap-2 text-[13px] font-medium cursor-pointer px-3 py-1.5 rounded-lg border" style="background-color: var(--surfaceAlt); border-color: var(--border);">
+        <input id="chkFixHardware" type="checkbox" class="accent-[#8B5E3C]" />
+        <span>Simulate hardware resolved on Retry</span>
+      </label>
+    </div>
+
+    <!-- Modal Preview Stage with Official Backdrop (text #3B2A1E @ 55% opacity) -->
+    <div class="rounded-2xl border overflow-hidden relative min-h-[620px] flex flex-col" style="background-color: var(--bg); border-color: var(--border);">
+      <!-- Stage Toast -->
+      <div id="modalToast" class="hidden absolute top-4 right-4 z-40 px-4 py-2.5 rounded-xl border text-[13px] font-semibold" role="status" aria-live="polite" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);"></div>
+
+      <!-- Underlying Screen 5 Bill Context -->
+      <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-center">
+        <div class="urqr-card rounded-2xl p-6 space-y-3">
+          <div class="text-[12px] font-semibold uppercase" style="color: var(--textSecondary);">Settled Order</div>
+          <div class="text-[24px] font-semibold font-mono-num">NLJ202611270004</div>
+          <div class="text-[14px]" style="color: var(--textSecondary);">Grand Total: <strong class="font-mono-num" style="color: var(--text);">₹616.00</strong> (CGST 2.5% + SGST 2.5%)</div>
+          <div class="pt-3 flex gap-3">
+            <button id="btnReopenPaper" type="button" class="urqr-btn-primary urqr-focus px-5">Print 80mm Receipt (F9)</button>
+          </div>
+        </div>
+        <div class="urqr-well rounded-2xl p-6 font-mono-num text-[12px] space-y-1.5">
+          <div class="font-bold text-center">NELJA BISTRO · 80mm (48 cols)</div>
+          <div class="text-center" style="color: var(--textSecondary);">GSTIN: 29AABCN1234F1Z5</div>
+          <div class="border-t border-dashed my-2" style="border-color: var(--border);"></div>
+          <div class="flex justify-between"><span>Order No:</span><span>NLJ202611270004</span></div>
+          <div class="flex justify-between"><span>Payment:</span><span>CASH (₹650.00 / Chg ₹34.00)</span></div>
+          <div class="flex justify-between font-bold"><span>GRAND TOTAL</span><span>₹616.00</span></div>
+        </div>
+      </div>
+
+      <!-- Official Backdrop: rgba(59, 42, 30, 0.55) -->
+      <div id="modalBackdrop" class="absolute inset-0 z-50 flex items-center justify-center p-4" style="background-color: var(--backdrop);">
+        <!-- Official Modal Shell: 560w · radius 16 · pad 28 · elevation 0 8 24 rgba(59,42,30,.20) -->
+        <div id="activeModalCard" role="alertdialog" aria-modal="true" aria-labelledby="mTitle" aria-describedby="mDesc" tabindex="-1" class="urqr-modal-shell modal-enter space-y-5">
+          <!-- Header -->
+          <div class="flex items-start gap-4">
+            <div id="mIconWrap" class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"></div>
+            <div class="min-w-0 flex-1">
+              <h2 id="mTitle" class="text-[24px] leading-[32px] font-semibold tracking-tight">Printer Out of Paper</h2>
+              <div class="mt-1 flex flex-wrap items-center gap-2">
+                <span id="mCode" class="font-mono-num text-[12px] font-semibold px-2 py-0.5 rounded border">ERR_PRINTER_PAPER_EMPTY</span>
+                <span id="mMeta" class="font-mono-num text-[12px]" style="color: var(--textSecondary);">ESC/POS · DLE EOT 4 · 0x60</span>
+              </div>
+            </div>
+          </div>
+
+          <p id="mDesc" class="text-[14px] leading-[22px]" style="color: var(--textSecondary);"></p>
+
+          <!-- Payment Safety Guardrail (successBg #EEF3E8 / success #3F6B3A) -->
+          <div class="rounded-xl px-4 py-3 border flex items-center gap-2.5 text-[13px] font-medium" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            <span id="mSafety">Order NLJ202611270004 (₹616.00) is saved and paid. Retrying print will not duplicate billing.</span>
+          </div>
+
+          <!-- Recovery Steps Well (surfaceAlt #FAF3E6) -->
+          <div class="urqr-well rounded-xl p-4 space-y-2">
+            <div class="text-[12px] font-semibold uppercase tracking-wider" style="color: var(--textSecondary);">Recovery Checklist</div>
+            <ol id="mSteps" class="list-decimal list-inside space-y-1.5 text-[14px] leading-[20px]"></ol>
+          </div>
+
+          <!-- Timeout Diagnostics Accordion -->
+          <div id="mDiagWrap" class="hidden rounded-xl border overflow-hidden" style="border-color: var(--border);">
+            <button id="btnDiagToggle" type="button" class="urqr-focus w-full px-4 py-2.5 text-[13px] font-semibold flex items-center justify-between" style="background-color: var(--surfaceAlt);" aria-expanded="false" aria-controls="mDiagBody">
+              <span>Go URQR-Bridge Diagnostic Details</span>
+              <svg id="mDiagArrow" class="w-4 h-4 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="mDiagBody" class="hidden px-4 py-3 border-t font-mono-num text-[12px] space-y-1" style="background-color: var(--surface); border-color: var(--border); color: var(--textSecondary);">
+              <div class="flex justify-between"><span>Endpoint:</span><span>http://127.0.0.1:9105/print</span></div>
+              <div class="flex justify-between"><span>Timeout:</span><span>5,000 ms (HTTP POST)</span></div>
+              <div class="flex justify-between"><span>Retry Attempt:</span><span id="mDiagAttempt">1 of 3</span></div>
+            </div>
+          </div>
+
+          <!-- Inline Retry Error Alert -->
+          <div id="mRetryErr" role="alert" class="hidden rounded-lg px-3.5 py-2.5 border text-[13px] font-medium" style="background-color: var(--errorBg); border-color: var(--error); color: var(--error);"></div>
+
+          <!-- Footer Actions (52h buttons, 16px gap) -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pt-1">
+            <button id="btnMSkip" type="button" class="urqr-btn-secondary urqr-focus px-4">Skip Print</button>
+            <div class="flex items-center gap-4">
+              <button id="btnMFallback" type="button" class="urqr-btn-secondary urqr-focus px-4">A4 Fallback</button>
+              <button id="btnMRetry" type="button" class="urqr-btn-primary urqr-focus px-5 flex items-center gap-2">
+                <span id="mRetrySpinner"></span>
+                <span id="mRetryLabel">Retry Print</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 3: TASK 3 — RADIX UI ACCESSIBILITY & KEYBOARD TRAP AUDIT            -->
+  <!-- ======================================================================= -->
+  <section id="panel-t3" class="hidden flex-1 p-4 lg:p-6 max-w-[1200px] w-full mx-auto space-y-5">
+    <div class="urqr-card rounded-2xl p-6 space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b pb-4" style="border-color: var(--border);">
+        <div>
+          <h2 class="text-[24px] font-semibold tracking-tight">Task 3 · Radix UI Accessibility &amp; Keyboard Trap Review</h2>
+          <p class="text-[13px] mt-1" style="color: var(--textSecondary);">Joint Review: Gagan (Design Systems) &amp; Swaroopa (Frontend · @urqr/ui) · Fri, 27 Nov 2026</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div id="a11yProgressText" class="font-mono-num text-[14px] font-bold" style="color: var(--primaryDark);">0 / 12 Verified</div>
+            <div class="w-40 h-2 rounded-full overflow-hidden mt-1" style="background-color: var(--surfaceAlt); border: 1px solid var(--border);">
+              <div id="a11yProgressBar" class="h-full transition-all" style="width: 0%; background-color: var(--success);"></div>
+            </div>
+          </div>
+          <button id="btnCheckAllA11y" type="button" class="urqr-focus px-3 py-2 rounded-lg text-[13px] font-semibold border" style="background-color: var(--surfaceAlt); border-color: var(--border);">Mark All Verified</button>
+        </div>
+      </div>
+
+      <!-- Live Focus & Key Monitor -->
+      <div class="urqr-well rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-[13px]">
+        <div class="flex items-center gap-2">
+          <span class="font-semibold">Live Focus Inspector:</span>
+          <code id="focusMonitor" class="font-mono-num px-2 py-0.5 rounded border" style="background-color: var(--surface); border-color: var(--border);">Press Tab to inspect focus ring (#8B5E3C, 2px offset)</code>
+        </div>
+        <span class="text-[12px]" style="color: var(--textSecondary);">Target: WCAG 2.1 AA (Normal ≥ 4.5:1 · Controls ≥ 3:1)</span>
+      </div>
+
+      <!-- Interactive Checklist Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-[13px]">
+          <thead>
+            <tr class="border-b" style="border-color: var(--border); color: var(--textSecondary);">
+              <th class="py-2.5 pr-3 w-12">Pass</th>
+              <th class="py-2.5 pr-3 w-20">ID</th>
+              <th class="py-2.5 pr-4">Criterion</th>
+              <th class="py-2.5">Radix UI / POS Compliance Requirement</th>
+            </tr>
+          </thead>
+          <tbody id="a11yTableBody" class="divide-y" style="border-color: var(--border);"></tbody>
+        </table>
+      </div>
+
+      <!-- React 19 + Radix Implementation Guardrails -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="urqr-well rounded-xl p-4 space-y-2 text-[13px]">
+          <h3 class="font-semibold text-[15px]">React 19 + Radix Portal Guardrails</h3>
+          <ul class="list-disc list-inside space-y-1.5" style="color: var(--textSecondary);">
+            <li>Keep <code class="font-mono-num">BufferedQueuePopover</code> (<code class="font-mono-num">z-40</code>) and <code class="font-mono-num">PrinterErrorModal</code> (<code class="font-mono-num">z-50</code>) as sibling portals — auto-close popover if a printer modal fires.</li>
+            <li>Set <code class="font-mono-num">open=false</code> before invoking <code class="font-mono-num">window.print()</code> on A4 fallback so <code class="font-mono-num">react-remove-scroll</code> never leaves <code class="font-mono-num">body</code> pointer-locked.</li>
+            <li>Gate global POS hotkeys (<code class="font-mono-num">F2</code>, <code class="font-mono-num">F4</code>, <code class="font-mono-num">F9</code>, <code class="font-mono-num">Esc</code> Void Cart) on <code class="font-mono-num">!isAnyModalOpen</code>.</li>
+          </ul>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-2 text-[13px]">
+          <h3 class="font-semibold text-[15px]">Vitest + Testing Library Cases (@urqr/ui)</h3>
+          <ul class="list-disc list-inside space-y-1.5 font-mono-num text-[12px]" style="color: var(--textSecondary);">
+            <li>renders role="alertdialog" + aria-modal="true" for all 3 errors</li>
+            <li>moves initial focus to Retry CTA on open</li>
+            <li>traps Tab &amp; Shift+Tab strictly inside 560w dialog</li>
+            <li>blocks Esc while isRetrying=true; allows Esc when idle</li>
+            <li>blocks backdrop click dismiss; restores focus on close</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 4: TASK 4 — FRONTEND HANDOFF SPECS & COPYABLE CONFIGURATIONS        -->
+  <!-- ======================================================================= -->
+  <section id="panel-t4" class="hidden flex-1 p-4 lg:p-6 max-w-[1200px] w-full mx-auto space-y-5">
+
+    <!-- Visual URQR THEME Token Swatches -->
+    <div class="urqr-card rounded-2xl p-6 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3" style="border-color: var(--border);">
+        <div>
+          <h2 class="text-[24px] font-semibold tracking-tight">Task 4 · Frontend Handoff &amp; Configurations</h2>
+          <p class="text-[13px]" style="color: var(--textSecondary);">Authoritative Variable Collection "URQR THEME" (Screen 1 Login + Screen 2 Billing/Payment + Day 5 Error Modals)</p>
+        </div>
+        <span class="px-3 py-1 rounded-full text-[12px] font-semibold border" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);">Ready for Day 5 Checkout Integration</span>
+      </div>
+
+      <div id="swatchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+    </div>
+
+    <!-- Copyable Configuration Switcher -->
+    <div class="urqr-card rounded-2xl p-6 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap gap-1.5" role="tablist" aria-label="Configuration files">
+          <button data-cfg="css" class="cfg-tab urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">theme.css</button>
+          <button data-cfg="tailwind" class="cfg-tab urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">tailwind.config.ts</button>
+          <button data-cfg="types" class="cfg-tab urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">day5-modals.types.ts</button>
+          <button data-cfg="a11y" class="cfg-tab urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold border">radix-a11y-policy.json</button>
+        </div>
+        <button id="btnCopyCfg" type="button" class="urqr-focus px-4 py-1.5 rounded-lg text-[13px] font-semibold text-white" style="background-color: var(--primary);">Copy Configuration</button>
+      </div>
+
+      <pre id="cfgCodeBlock" class="font-mono-num text-[12px] leading-relaxed p-4 rounded-xl border overflow-x-auto" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--text);"></pre>
+    </div>
+
+    <!-- Dimensions, Elevation & Integration Matrix -->
+    <div class="urqr-card rounded-2xl p-6 space-y-3">
+      <h3 class="text-[16px] font-semibold">Screen 1 &amp; 2 Aligned Geometry, Elevation &amp; Payment Rules</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[13px]">
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">Dimensions (8px Grid)</div>
+          <p style="color: var(--textSecondary);">Frame <code class="font-mono-num">1920×1080</code> · Rail <code class="font-mono-num">88w</code> · Header <code class="font-mono-num">72h</code> · Order Summary <code class="font-mono-num">520w</code> · Modal <code class="font-mono-num">560w / r16 / pad 28</code> · Confirm <code class="font-mono-num">52h / r8</code> · Quick Cash <code class="font-mono-num">48h / gap 16</code>.</p>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">Elevation &amp; Focus</div>
+          <p style="color: var(--textSecondary);">Modal shadow <code class="font-mono-num">0 8px 24px rgba(59,42,30,.20)</code> · Backdrop <code class="font-mono-num">rgba(59,42,30,.55)</code> · Focus ring <code class="font-mono-num">2px #8B5E3C offset 2px</code> · Hover/pressed <code class="font-mono-num">#5C3D26</code>.</p>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">Paise &amp; Offline Rules</div>
+          <p style="color: var(--textSecondary);">All INR math in integer paise · Cash stays enabled offline with SQLite queue + retry · UPI/Others gated offline · Success only after server/SQLite confirm.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      /* ===================================================================
+         DATA & CONFIGURATIONS
+         =================================================================== */
+      const TOKENS = [
+        { name: 'bg', hex: '#F5EEE0', role: 'Page canvas (cream)' },
+        { name: 'surface', hex: '#FFFDF8', role: 'Cards, modal, header' },
+        { name: 'surfaceAlt', hex: '#FAF3E6', role: 'Wells, selected, hover' },
+        { name: 'border', hex: '#E4D8C3', role: '1px lines' },
+        { name: 'primary', hex: '#8B5E3C', role: 'Primary CTA, focus' },
+        { name: 'primaryDark', hex: '#5C3D26', role: 'Logo, hover/pressed' },
+        { name: 'text', hex: '#3B2A1E', role: 'Body text' },
+        { name: 'textSecondary', hex: '#7A6A5A', role: 'Labels, hints' },
+        { name: 'success', hex: '#3F6B3A', role: 'Online, exact, change' },
+        { name: 'successBg', hex: '#EEF3E8', role: 'Success fill' },
+        { name: 'warning', hex: '#B45309', role: 'Remaining, paper/cover' },
+        { name: 'warningBg', hex: '#FDF1E1', role: 'Warning fill' },
+        { name: 'error', hex: '#B91C1C', role: 'Offline, timeout, invalid' },
+        { name: 'disabled', hex: '#D9CDB8', role: 'Disabled button' },
+        { name: 'disabledText', hex: '#8E7F6C', role: 'Disabled label' },
+        { name: 'onPrimary', hex: '#FFFFFF', role: 'Text on sepia' },
+        { name: 'inputBg', hex: '#FFFFFF', role: 'Input fill' }
+      ];
+
+      const CONFIG_SNIPPETS = {
+        css: `/* @urqr/ui — packages/ui/src/theme.css (URQR THEME) */
+:root {
+  --urqr-bg: #F5EEE0;
+  --urqr-surface: #FFFDF8;
+  --urqr-surface-alt: #FAF3E6;
+  --urqr-border: #E4D8C3;
+  --urqr-primary: #8B5E3C;
+  --urqr-primary-dark: #5C3D26;
+  --urqr-text: #3B2A1E;
+  --urqr-text-secondary: #7A6A5A;
+  --urqr-success: #3F6B3A;
+  --urqr-success-bg: #EEF3E8;
+  --urqr-warning: #B45309;
+  --urqr-warning-bg: #FDF1E1;
+  --urqr-error: #B91C1C;
+  --urqr-error-bg: #FEF2F2;
+  --urqr-disabled: #D9CDB8;
+  --urqr-disabled-text: #8E7F6C;
+  --urqr-on-primary: #FFFFFF;
+  --urqr-input-bg: #FFFFFF;
+
+  --urqr-modal-width: 560px;
+  --urqr-modal-radius: 16px;
+  --urqr-modal-padding: 28px;
+  --urqr-modal-shadow: 0 8px 24px rgba(59, 42, 30, 0.20);
+  --urqr-backdrop: rgba(59, 42, 30, 0.55);
+  --urqr-focus-ring: 2px solid #8B5E3C;
+}`,
+        tailwind: `// tailwind.config.ts — URQR Phase 1 Standalone Manager POS
+import type { Config } from 'tailwindcss';
+
+export default {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        urqr: {
+          bg: '#F5EEE0',
+          surface: '#FFFDF8',
+          surfaceAlt: '#FAF3E6',
+          border: '#E4D8C3',
+          primary: '#8B5E3C',
+          primaryDark: '#5C3D26',
+          text: '#3B2A1E',
+          textSecondary: '#7A6A5A',
+          success: '#3F6B3A',
+          successBg: '#EEF3E8',
+          warning: '#B45309',
+          warningBg: '#FDF1E1',
+          error: '#B91C1C',
+          errorBg: '#FEF2F2',
+          disabled: '#D9CDB8',
+          disabledText: '#8E7F6C',
+          onPrimary: '#FFFFFF',
+          inputBg: '#FFFFFF',
+        },
+      },
+      boxShadow: {
+        'urqr-modal': '0 8px 24px rgba(59, 42, 30, 0.20)',
+      },
+      borderRadius: {
+        'urqr-control': '8px',
+        'urqr-modal': '16px',
+      },
+    },
+  },
+} satisfies Config;`,
+        types: `// packages/ui/src/types/day5-modals.types.ts
+export type NetworkSyncState = 'online' | 'offline' | 'syncing' | 'synced' | 'error';
+
+export type PrinterErrorType =
+  | 'ERR_PRINTER_PAPER_EMPTY'
+  | 'ERR_PRINTER_COVER_OPEN'
+  | 'ERR_BRIDGE_TIMEOUT';
+
+export type PaymentStatus = 'insufficient' | 'exact' | 'change_due';
+
+export interface BufferedCashOrder {
+  orderNo: string;              // e.g. "NLJ202611270001"
+  createdAtIst: string;         // Asia/Kolkata ISO-8601
+  amountDuePaise: number;       // Integer paise (61600 = ₹616.00)
+  amountReceivedPaise: number;
+  changeToReturnPaise: number;
+  paymentMode: 'CASH';
+  syncStatus: 'queued' | 'syncing' | 'failed';
+}
+
+export interface OfflineAlertBannerProps {
+  state: NetworkSyncState;
+  bufferedOrders: BufferedCashOrder[];
+  syncedCount?: number;
+  onRetrySync: () => Promise<void>;
+  onDismissSynced?: () => void;
+}
+
+export interface PrinterErrorModalProps {
+  open: boolean;
+  errorType: PrinterErrorType;
+  orderNo: string;
+  amountPaidPaise: number;
+  bridgeEndpoint?: string;      // default "http://127.0.0.1:9105/print"
+  retryAttempt: number;
+  maxRetries?: number;          // default 3
+  isRetrying: boolean;
+  onRetryPrint: () => Promise<void>;
+  onFallbackA4Print: () => void;
+  onSkipPrint: () => void;
+}`,
+        a11y: `{
+  "componentSuite": "URQR_DAY5_MORNING",
+  "primitives": {
+    "PrinterErrorModal": "@radix-ui/react-alert-dialog",
+    "SyncConflictOverrideModal": "@radix-ui/react-alert-dialog",
+    "BufferedQueuePopover": "@radix-ui/react-popover"
+  },
+  "layerStack": {
+    "billingWorkspace": 10,
+    "header72hAndRail88w": 20,
+    "offlineAlertBannerAndQueue": 40,
+    "paymentAndErrorModals": 50
+  },
+  "keyboardRules": {
+    "initialFocus": "primaryRetryButton",
+    "trapTabAndShiftTab": true,
+    "escapeWhenIdle": "closeAndRestoreFocus",
+    "escapeWhenRetrying": "preventDefault",
+    "backdropClickDismiss": false,
+    "suppressGlobalPosHotkeys": ["F2", "F4", "F9", "Escape"]
+  },
+  "focusRing": { "outline": "2px solid #8B5E3C", "offset": "2px" },
+  "contrastStandard": "WCAG_2_1_AA"
+}`
+      };
+
+      const A11Y_ITEMS = [
+        { id: 'KB-01', name: 'Initial Focus (onOpenAutoFocus)', req: 'Focus moves directly to Primary CTA (Retry Print / Retry Connection) on modal open.' },
+        { id: 'KB-02', name: 'Forward Focus Trap (Tab)', req: 'Tab cycles strictly within 560w modal controls; background Billing grid is inert.' },
+        { id: 'KB-03', name: 'Reverse Focus Trap (Shift+Tab)', req: 'Shift+Tab wraps cleanly from first modal control to last enabled button.' },
+        { id: 'KB-04', name: 'Escape Key Policy', req: 'Esc closes modal when idle; blocked via preventDefault() while isRetrying === true.' },
+        { id: 'KB-05', name: 'Backdrop Click Guard', req: 'Clicking rgba(59,42,30,.55) backdrop does not dismiss critical printer error modals.' },
+        { id: 'KB-06', name: 'POS Hotkey Suppression', req: 'Global F2 (Search), F4 (Cash Pay), F9 (Print Last), Esc (Void Cart) disabled while modal open.' },
+        { id: 'KB-07', name: 'Focus Restoration', req: 'Closing modal restores focus deterministically to triggering Print/Checkout button.' },
+        { id: 'KB-08', name: 'No Deadlock While Loading', req: 'When buttons disable (#D9CDB8) during retry, modal root keeps tabIndex=-1 & aria-busy=true.' },
+        { id: 'SR-01', name: 'Dialog ARIA Bindings', req: 'role="alertdialog", aria-modal="true", aria-labelledby, aria-describedby always populated.' },
+        { id: 'SR-02', name: 'Live Regions (Banner & Change)', req: 'Offline banner & Cash Change summary use aria-live="polite"; retry failures use role="alert".' },
+        { id: 'SR-03', name: 'URQR Focus Ring', req: 'All interactive buttons/inputs show 2px solid #8B5E3C outline with 2px offset.' },
+        { id: 'SR-04', name: 'Contrast & Reduced Motion', req: 'Text ≥ 4.5:1, controls ≥ 3:1 across URQR THEME; animations respect prefers-reduced-motion.' }
+      ];
+
+      const MODAL_SPECS = {
+        paper_empty: {
+          title: 'Printer Out of Paper',
+          code: 'ERR_PRINTER_PAPER_EMPTY',
+          meta: 'ESC/POS · DLE EOT 4 · 0x60',
+          accent: 'var(--warning)',
+          accentBg: 'var(--warningBg)',
+          desc: 'The 80mm thermal receipt printer is out of paper. Replace the roll to complete receipt printing.',
+          safety: 'Order NLJ202611270004 (₹616.00) is saved and paid. Retrying print will not duplicate billing.',
+          steps: [
+            'Release the top latch to open the 80mm thermal printer cover.',
+            'Insert a fresh 80mm roll with the coated thermal side facing the print head.',
+            'Pull 2 cm past the tear bar, latch the cover shut, and press Retry Print.'
+          ],
+          retryLabel: 'Retry Print',
+          skipLabel: 'Skip Print',
+          fallbackLabel: 'A4 Fallback',
+          showDiag: false,
+          icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16l3-2 2 2 3-2 3 2 3-2 2 2V8z"/><line x1="9" y1="13" x2="15" y2="13"/></svg>'
+        },
+        cover_open: {
+          title: 'Printer Cover Open',
+          code: 'ERR_PRINTER_COVER_OPEN',
+          meta: 'ESC/POS · DLE EOT 2 · 0x04',
+          accent: 'var(--warning)',
+          accentBg: 'var(--warningBg)',
+          desc: 'The thermal printer top cover is unlatched. Go URQR-Bridge paused spooling until the sensor closes.',
+          safety: 'Order NLJ202611270004 (₹616.00) is saved and paid. Print spooler is safely paused.',
+          steps: [
+            'Check that the 80mm paper edge is straight across the cutter bar.',
+            'Press firmly on both corners of the top cover until it clicks shut.',
+            'Confirm the green Ready LED is solid, then press Check & Retry.'
+          ],
+          retryLabel: 'Check & Retry',
+          skipLabel: 'Skip Print',
+          fallbackLabel: 'A4 Fallback',
+          showDiag: false,
+          icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'
+        },
+        timeout: {
+          title: 'Printer Connection Timeout',
+          code: 'ERR_BRIDGE_TIMEOUT',
+          meta: 'Go URQR-Bridge · 127.0.0.1:9105 · 5000ms',
+          accent: 'var(--error)',
+          accentBg: 'var(--errorBg)',
+          desc: 'Local Go URQR-Bridge did not respond within 5 seconds. Check printer power, cable, and local bridge service.',
+          safety: 'Order NLJ202611270004 (₹616.00) is saved and paid. Switch to A4 Fallback if needed.',
+          steps: [
+            'Verify the thermal printer power LED and USB/LAN cable connection.',
+            'Ensure the local Go URQR-Bridge daemon is running on port 9105.',
+            'Press Retry Connection or print via A4 Browser Fallback.'
+          ],
+          retryLabel: 'Retry Connection',
+          skipLabel: 'Dismiss',
+          fallbackLabel: 'A4 Fallback',
+          showDiag: true,
+          icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
+        },
+        sync_override: {
+          title: 'Offline Sync Conflict Override',
+          code: 'ERR_SYNC_CONFLICT',
+          meta: 'SQLite Edge (:8090) · 1 Buffered Order',
+          accent: 'var(--error)',
+          accentBg: 'var(--errorBg)',
+          desc: 'One locally buffered offline cash order failed server reconciliation on reconnect. Records remain safely persisted locally.',
+          safety: 'Zero data loss: NLJ202611270001 (₹220.50) stays locked in SQLite WAL until server confirms 200 OK.',
+          steps: [
+            'Inspect network stability and confirm Spring Boot API reachability.',
+            'Press Retry Failed Sync to re-submit idempotent order payload.',
+            'Or Export Queue JSON for manual PM/backend reconciliation.'
+          ],
+          retryLabel: 'Retry Failed Sync',
+          skipLabel: 'Keep in Queue',
+          fallbackLabel: 'Export JSON',
+          showDiag: false,
+          icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+        }
+      };
+
+      /* ===================================================================
+         APP STATE (Integer Paise Math for Screen 2 Compliance)
+         =================================================================== */
+      const state = {
+        activeTab: 't1',
+        netState: 'offline',
+        queueOpen: false,
+        nextSeq: 4,
+        syncedLast: 0,
+        amountDuePaise: 61600,
+        amountReceivedPaise: 65000,
+        paymentMethod: 'CASH',
+        bufferedOrders: [
+          { orderNo: 'NLJ202611270001', time: '09:42 IST', paise: 22050, status: 'queued' },
+          { orderNo: 'NLJ202611270002', time: '09:51 IST', paise: 36750, status: 'queued' },
+          { orderNo: 'NLJ202611270003', time: '10:03 IST', paise: 16275, status: 'queued' }
+        ],
+        activeModal: 'paper_empty',
+        isRetrying: false,
+        retryAttempt: 1,
+        diagOpen: false,
+        activeCfg: 'css',
+        a11yChecked: {},
+        timers: { sync: null, dismiss: null, retry: null, toast: null }
+      };
+
+      function fmtInr(paise) {
+        const abs = Math.abs(paise) / 100;
+        return '₹' + abs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function nextOrderId(seq) {
+        return 'NLJ20261127' + String(seq).padStart(4, '0');
+      }
+
+      /* ===================================================================
+         TAB NAVIGATION
+         =================================================================== */
+      const panels = {
+        t1: document.getElementById('panel-t1'),
+        t2: document.getElementById('panel-t2'),
+        t3: document.getElementById('panel-t3'),
+        t4: document.getElementById('panel-t4')
+      };
+
+      function renderSuiteTabs() {
+        Object.keys(panels).forEach(k => panels[k].classList.toggle('hidden', k !== state.activeTab));
+        document.querySelectorAll('.suite-tab, .suite-tab-m').forEach(btn => {
+          const active = btn.dataset.tab === state.activeTab;
+          btn.setAttribute('aria-selected', String(active));
+          btn.style.backgroundColor = active ? 'var(--primary)' : 'transparent';
+          btn.style.color = active ? 'var(--onPrimary)' : 'var(--textSecondary)';
+        });
+      }
+
+      document.querySelectorAll('.suite-tab, .suite-tab-m').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeTab = btn.dataset.tab;
+          renderSuiteTabs();
+        });
+      });
+
+      /* ===================================================================
+         TASK 1: OFFLINE BANNER + PAISE PAYMENT LOGIC
+         =================================================================== */
+      const elT1 = {
+        globalNetPill: document.getElementById('globalNetPill'),
+        globalNetDot: document.getElementById('globalNetDot'),
+        globalNetText: document.getElementById('globalNetText'),
+        posNetBadge: document.getElementById('posNetBadge'),
+        posNetDot: document.getElementById('posNetDot'),
+        posNetLabel: document.getElementById('posNetLabel'),
+        floatingBannerWrap: document.getElementById('floatingBannerWrap'),
+        floatingBanner: document.getElementById('floatingBanner'),
+        bannerIconBox: document.getElementById('bannerIconBox'),
+        bannerTitle: document.getElementById('bannerTitle'),
+        bannerCountPill: document.getElementById('bannerCountPill'),
+        bannerSub: document.getElementById('bannerSub'),
+        btnToggleQueue: document.getElementById('btnToggleQueue'),
+        queueArrow: document.getElementById('queueArrow'),
+        btnBannerRetry: document.getElementById('btnBannerRetry'),
+        btnBannerClose: document.getElementById('btnBannerClose'),
+        queuePopover: document.getElementById('queuePopover'),
+        queueRows: document.getElementById('queueRows'),
+        queueTotalInr: document.getElementById('queueTotalInr'),
+        btnPopoverSync: document.getElementById('btnPopoverSync'),
+        payAmountDue: document.getElementById('payAmountDue'),
+        payOrderNo: document.getElementById('payOrderNo'),
+        cashInput: document.getElementById('cashInput'),
+        cashBlock: document.getElementById('cashBlock'),
+        offlineMethodHint: document.getElementById('offlineMethodHint'),
+        changeSummaryBox: document.getElementById('changeSummaryBox'),
+        changeSummaryLabel: document.getElementById('changeSummaryLabel'),
+        changeSummaryAmount: document.getElementById('changeSummaryAmount'),
+        btnConfirmPay: document.getElementById('btnConfirmPay')
+      };
+
+      function clearNetTimers() {
+        if (state.timers.sync) { clearTimeout(state.timers.sync); state.timers.sync = null; }
+        if (state.timers.dismiss) { clearTimeout(state.timers.dismiss); state.timers.dismiss = null; }
+      }
+
+      function renderQueue() {
+        const open = state.queueOpen && ['offline', 'syncing', 'error'].includes(state.netState);
+        elT1.queuePopover.classList.toggle('hidden', !open);
+        elT1.btnToggleQueue.setAttribute('aria-expanded', String(open));
+        elT1.queueArrow.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+        const totalPaise = state.bufferedOrders.reduce((s, o) => s + o.paise, 0);
+        elT1.queueTotalInr.textContent = fmtInr(totalPaise);
+
+        if (state.bufferedOrders.length === 0) {
+          elT1.queueRows.innerHTML = '<div class="px-4 py-5 text-center text-[13px]" style="color: var(--textSecondary);">No buffered offline transactions in SQLite Edge.</div>';
+          return;
+        }
+
+        elT1.queueRows.innerHTML = state.bufferedOrders.map(o => {
+          const isErr = o.status === 'failed';
+          const color = isErr ? 'var(--error)' : 'var(--warning)';
+          const statusTxt = isErr ? 'Sync Failed' : (state.netState === 'syncing' ? 'Syncing…' : 'Buffered');
+          return '<div class="px-4 py-2.5 flex items-center justify-between text-[13px]">' +
+            '<div class="flex items-center gap-2"><span class="font-mono-num font-semibold">' + o.orderNo + '</span>' +
+            '<span class="text-[11px] px-1.5 py-0.5 rounded border" style="border-color: var(--border); color: var(--textSecondary);">CASH</span>' +
+            '<span class="text-[12px]" style="color: var(--textSecondary);">' + o.time + '</span></div>' +
+            '<div class="flex items-center gap-3"><span class="font-mono-num font-semibold">' + fmtInr(o.paise) + '</span>' +
+            '<span class="text-[12px] font-semibold" style="color:' + color + ';">' + statusTxt + '</span></div></div>';
+        }).join('');
+      }
+
+      function renderNetworkBanner(pulse) {
+        const s = state.netState;
+        const count = state.bufferedOrders.length;
+        const isOnlineVisual = s === 'online' || s === 'synced';
+
+        // Header Network Pill (Official Screen 1 & 2 Rule: green dot + Online / red dot + Offline)
+        const pillColor = isOnlineVisual ? 'var(--success)' : 'var(--error)';
+        const pillBg = isOnlineVisual ? 'var(--successBg)' : 'var(--errorBg)';
+        const pillLabel = isOnlineVisual ? 'Online' : 'Offline';
+
+        [ [elT1.globalNetPill, elT1.globalNetDot, elT1.globalNetText],
+          [elT1.posNetBadge, elT1.posNetDot, elT1.posNetLabel] ].forEach(([pill, dot, txt]) => {
+          pill.style.backgroundColor = pillBg;
+          pill.style.borderColor = pillColor;
+          pill.style.color = pillColor;
+          dot.style.backgroundColor = pillColor;
+          txt.textContent = pillLabel;
+        });
+
+        document.querySelectorAll('.net-btn').forEach(btn => {
+          const active = btn.dataset.net === s;
+          btn.style.backgroundColor = active ? 'var(--primary)' : 'var(--surfaceAlt)';
+          btn.style.color = active ? 'var(--onPrimary)' : 'var(--text)';
+          btn.style.borderColor = active ? 'var(--primary)' : 'var(--border)';
+        });
+
+        if (s === 'online') {
+          elT1.floatingBannerWrap.classList.add('hidden');
+          state.queueOpen = false;
+          renderQueue();
+          renderPayment();
+          return;
+        }
+
+        elT1.floatingBannerWrap.classList.remove('hidden');
+        elT1.floatingBanner.classList.remove('banner-enter');
+        void elT1.floatingBanner.offsetWidth;
+        elT1.floatingBanner.classList.add('banner-enter');
+
+        if (s === 'offline') {
+          elT1.floatingBanner.setAttribute('role', 'status');
+          elT1.floatingBanner.setAttribute('aria-live', 'polite');
+          elT1.floatingBanner.style.backgroundColor = 'var(--warningBg)';
+          elT1.floatingBanner.style.borderColor = 'var(--warning)';
+          elT1.floatingBanner.style.color = 'var(--text)';
+          elT1.bannerIconBox.style.backgroundColor = 'rgba(180,83,9,0.14)';
+          elT1.bannerIconBox.style.color = 'var(--warning)';
+          elT1.bannerIconBox.innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="M12 20h.01"/></svg>';
+          elT1.bannerTitle.textContent = 'Network disconnected — Working offline';
+          elT1.bannerCountPill.textContent = count + (count === 1 ? ' transaction buffered' : ' transactions buffered');
+          elT1.bannerCountPill.style.backgroundColor = 'var(--surface)';
+          elT1.bannerCountPill.style.borderColor = 'var(--warning)';
+          elT1.bannerCountPill.style.color = 'var(--warning)';
+          elT1.bannerSub.textContent = 'Cash payments stay allowed. Queued locally in SQLite Edge (:8090) for retry.';
+          elT1.btnToggleQueue.classList.remove('hidden');
+          elT1.btnToggleQueue.style.borderColor = 'var(--warning)';
+          elT1.btnToggleQueue.style.color = 'var(--text)';
+          elT1.btnBannerRetry.classList.remove('hidden');
+          elT1.btnBannerRetry.disabled = false;
+          elT1.btnBannerRetry.textContent = 'Retry Sync';
+          elT1.btnBannerRetry.style.backgroundColor = 'var(--primary)';
+          elT1.btnBannerRetry.style.color = 'var(--onPrimary)';
+          elT1.btnBannerClose.classList.add('hidden');
+        } else if (s === 'syncing') {
+          elT1.floatingBanner.setAttribute('role', 'status');
+          elT1.floatingBanner.setAttribute('aria-live', 'polite');
+          elT1.floatingBanner.style.backgroundColor = 'var(--surfaceAlt)';
+          elT1.floatingBanner.style.borderColor = 'var(--primary)';
+          elT1.floatingBanner.style.color = 'var(--text)';
+          elT1.bannerIconBox.style.backgroundColor = 'rgba(139,94,60,0.14)';
+          elT1.bannerIconBox.style.color = 'var(--primary)';
+          elT1.bannerIconBox.innerHTML = '<svg class="w-5 h-5 spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 12a9 9 0 1 1-6.22-8.56"/><polyline points="21 3 21 9 15 9"/></svg>';
+          elT1.bannerTitle.textContent = 'Reconnecting — Syncing buffered cash orders';
+          elT1.bannerCountPill.textContent = 'Syncing ' + count;
+          elT1.bannerCountPill.style.backgroundColor = 'var(--surface)';
+          elT1.bannerCountPill.style.borderColor = 'var(--primary)';
+          elT1.bannerCountPill.style.color = 'var(--primaryDark)';
+          elT1.bannerSub.textContent = 'Flushing SQLite Edge queue to backend API…';
+          elT1.btnToggleQueue.classList.remove('hidden');
+          elT1.btnBannerRetry.classList.remove('hidden');
+          elT1.btnBannerRetry.disabled = true;
+          elT1.btnBannerRetry.textContent = 'Syncing…';
+          elT1.btnBannerRetry.style.backgroundColor = 'var(--disabled)';
+          elT1.btnBannerRetry.style.color = 'var(--disabledText)';
+          elT1.btnBannerClose.classList.add('hidden');
+        } else if (s === 'synced') {
+          elT1.floatingBanner.setAttribute('role', 'status');
+          elT1.floatingBanner.setAttribute('aria-live', 'polite');
+          elT1.floatingBanner.style.backgroundColor = 'var(--successBg)';
+          elT1.floatingBanner.style.borderColor = 'var(--success)';
+          elT1.floatingBanner.style.color = 'var(--success)';
+          elT1.bannerIconBox.style.backgroundColor = 'rgba(63,107,58,0.14)';
+          elT1.bannerIconBox.style.color = 'var(--success)';
+          elT1.bannerIconBox.innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+          elT1.bannerTitle.textContent = 'Back online — All buffered transactions synced';
+          elT1.bannerCountPill.textContent = state.syncedLast + ' synced';
+          elT1.bannerCountPill.style.backgroundColor = 'var(--surface)';
+          elT1.bannerCountPill.style.borderColor = 'var(--success)';
+          elT1.bannerCountPill.style.color = 'var(--success)';
+          elT1.bannerSub.textContent = 'Local queue cleared. Auto-dismisses in 4 seconds.';
+          elT1.btnToggleQueue.classList.add('hidden');
+          elT1.btnBannerRetry.classList.add('hidden');
+          elT1.btnBannerClose.classList.remove('hidden');
+          state.queueOpen = false;
+        } else if (s === 'error') {
+          elT1.floatingBanner.setAttribute('role', 'alert');
+          elT1.floatingBanner.setAttribute('aria-live', 'assertive');
+          elT1.floatingBanner.style.backgroundColor = 'var(--errorBg)';
+          elT1.floatingBanner.style.borderColor = 'var(--error)';
+          elT1.floatingBanner.style.color = 'var(--error)';
+          elT1.bannerIconBox.style.backgroundColor = 'rgba(185,28,28,0.14)';
+          elT1.bannerIconBox.style.color = 'var(--error)';
+          elT1.bannerIconBox.innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+          elT1.bannerTitle.textContent = 'Offline sync failed — Retry required';
+          elT1.bannerCountPill.textContent = Math.max(1, count) + ' failed';
+          elT1.bannerCountPill.style.backgroundColor = 'var(--surface)';
+          elT1.bannerCountPill.style.borderColor = 'var(--error)';
+          elT1.bannerCountPill.style.color = 'var(--error)';
+          elT1.bannerSub.textContent = 'Orders stay safely persisted in SQLite Edge. Retry sync or open Queue.';
+          elT1.btnToggleQueue.classList.remove('hidden');
+          elT1.btnToggleQueue.style.borderColor = 'var(--error)';
+          elT1.btnToggleQueue.style.color = 'var(--error)';
+          elT1.btnBannerRetry.classList.remove('hidden');
+          elT1.btnBannerRetry.disabled = false;
+          elT1.btnBannerRetry.textContent = 'Retry Failed';
+          elT1.btnBannerRetry.style.backgroundColor = 'var(--error)';
+          elT1.btnBannerRetry.style.color = 'var(--onPrimary)';
+          elT1.btnBannerClose.classList.add('hidden');
+        }
+
+        if (pulse) {
+          elT1.bannerCountPill.classList.remove('badge-pulse');
+          void elT1.bannerCountPill.offsetWidth;
+          elT1.bannerCountPill.classList.add('badge-pulse');
+        }
+
+        renderQueue();
+        renderPayment();
+      }
+
+      function setNetState(next) {
+        clearNetTimers();
+        state.netState = next;
+        if (next === 'error') {
+          if (state.bufferedOrders.length === 0) {
+            state.bufferedOrders.push({ orderNo: nextOrderId(state.nextSeq++), time: '11:30 IST', paise: 61600, status: 'failed' });
+          } else {
+            state.bufferedOrders[0].status = 'failed';
+          }
+        } else if (next === 'offline') {
+          state.bufferedOrders.forEach(o => { o.status = 'queued'; });
+        } else if (next === 'syncing') {
+          const n = state.bufferedOrders.length;
+          state.timers.sync = setTimeout(() => {
+            state.syncedLast = n;
+            state.bufferedOrders = [];
+            setNetState('synced');
+          }, 1400);
+        } else if (next === 'synced') {
+          state.timers.dismiss = setTimeout(() => setNetState('online'), 4000);
+        }
+        renderNetworkBanner(false);
+      }
+
+      function renderPayment() {
+        const isOffline = state.netState === 'offline' || state.netState === 'error';
+        elT1.payAmountDue.textContent = fmtInr(state.amountDuePaise);
+        elT1.payOrderNo.textContent = nextOrderId(state.nextSeq);
+
+        document.querySelectorAll('.method-btn').forEach(btn => {
+          const m = btn.dataset.method;
+          const active = state.paymentMethod === m;
+          const blockedOffline = isOffline && m !== 'CASH';
+          btn.style.backgroundColor = active ? 'var(--primary)' : (blockedOffline ? 'var(--disabled)' : 'var(--surface)');
+          btn.style.color = active ? 'var(--onPrimary)' : (blockedOffline ? 'var(--disabledText)' : 'var(--text)');
+          btn.style.borderColor = active ? 'var(--primary)' : 'var(--border)';
+        });
+
+        const nonCashOffline = isOffline && state.paymentMethod !== 'CASH';
+        elT1.offlineMethodHint.classList.toggle('hidden', !nonCashOffline);
+        elT1.cashBlock.classList.toggle('hidden', state.paymentMethod !== 'CASH');
+
+        if (state.paymentMethod === 'CASH') {
+          const diff = state.amountReceivedPaise - state.amountDuePaise;
+          if (diff < 0) {
+            elT1.changeSummaryBox.style.backgroundColor = 'var(--warningBg)';
+            elT1.changeSummaryBox.style.borderColor = 'var(--warning)';
+            elT1.changeSummaryBox.style.color = 'var(--warning)';
+            elT1.changeSummaryLabel.textContent = 'Remaining Amount';
+            elT1.changeSummaryAmount.textContent = fmtInr(Math.abs(diff));
+            elT1.btnConfirmPay.disabled = true;
+          } else if (diff === 0) {
+            elT1.changeSummaryBox.style.backgroundColor = 'var(--successBg)';
+            elT1.changeSummaryBox.style.borderColor = 'var(--success)';
+            elT1.changeSummaryBox.style.color = 'var(--success)';
+            elT1.changeSummaryLabel.textContent = 'Exact Amount';
+            elT1.changeSummaryAmount.textContent = '₹0.00';
+            elT1.btnConfirmPay.disabled = false;
+          } else {
+            elT1.changeSummaryBox.style.backgroundColor = 'var(--successBg)';
+            elT1.changeSummaryBox.style.borderColor = 'var(--success)';
+            elT1.changeSummaryBox.style.color = 'var(--success)';
+            elT1.changeSummaryLabel.textContent = 'Change to Return';
+            elT1.changeSummaryAmount.textContent = fmtInr(diff);
+            elT1.btnConfirmPay.disabled = false;
+          }
+          elT1.btnConfirmPay.textContent = isOffline ? 'Confirm Offline Cash Payment' : 'Confirm Cash Payment';
+        } else {
+          elT1.btnConfirmPay.disabled = nonCashOffline;
+          elT1.btnConfirmPay.textContent = 'Confirm ' + state.paymentMethod + ' Payment';
+        }
+      }
+
+      document.querySelectorAll('.net-btn').forEach(b => b.addEventListener('click', () => setNetState(b.dataset.net)));
+      document.getElementById('btnResetBuffer').addEventListener('click', () => {
+        state.bufferedOrders = [];
+        renderNetworkBanner(true);
+      });
+      elT1.btnToggleQueue.addEventListener('click', () => { state.queueOpen = !state.queueOpen; renderQueue(); });
+      elT1.btnBannerRetry.addEventListener('click', () => setNetState('syncing'));
+      elT1.btnPopoverSync.addEventListener('click', () => { state.queueOpen = false; setNetState('syncing'); });
+      elT1.btnBannerClose.addEventListener('click', () => setNetState('online'));
+
+      document.querySelectorAll('.item-card').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const addPaise = Math.round(Number(btn.dataset.paise) * 1.05);
+          state.amountDuePaise += addPaise;
+          renderPayment();
+        });
+      });
+
+      document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.paymentMethod = btn.dataset.method;
+          renderPayment();
+        });
+      });
+
+      elT1.cashInput.addEventListener('input', () => {
+        const cleaned = elT1.cashInput.value.replace(/[^0-9.]/g, '');
+        const num = parseFloat(cleaned);
+        state.amountReceivedPaise = isNaN(num) ? 0 : Math.round(num * 100);
+        renderPayment();
+      });
+
+      document.querySelectorAll('.quick-cash').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.amountReceivedPaise += Number(btn.dataset.add);
+          elT1.cashInput.value = (state.amountReceivedPaise / 100).toFixed(2);
+          renderPayment();
+        });
+      });
+
+      elT1.btnConfirmPay.addEventListener('click', () => {
+        if (elT1.btnConfirmPay.disabled) return;
+        const now = new Date();
+        const ts = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' IST';
+        if (state.netState === 'offline' || state.netState === 'error') {
+          state.bufferedOrders.unshift({
+            orderNo: nextOrderId(state.nextSeq++),
+            time: ts,
+            paise: state.amountDuePaise,
+            status: 'queued'
+          });
+          state.amountDuePaise = 61600;
+          state.amountReceivedPaise = 65000;
+          elT1.cashInput.value = '650.00';
+          renderNetworkBanner(true);
+        } else {
+          state.nextSeq++;
+          state.amountDuePaise = 61600;
+          state.amountReceivedPaise = 65000;
+          elT1.cashInput.value = '650.00';
+          renderPayment();
+        }
+      });
+
+      /* ===================================================================
+         TASK 2: PRINTER ERROR & OVERRIDE MODALS
+         =================================================================== */
+      const elT2 = {
+        backdrop: document.getElementById('modalBackdrop'),
+        card: document.getElementById('activeModalCard'),
+        iconWrap: document.getElementById('mIconWrap'),
+        title: document.getElementById('mTitle'),
+        code: document.getElementById('mCode'),
+        meta: document.getElementById('mMeta'),
+        desc: document.getElementById('mDesc'),
+        safety: document.getElementById('mSafety'),
+        steps: document.getElementById('mSteps'),
+        diagWrap: document.getElementById('mDiagWrap'),
+        btnDiagToggle: document.getElementById('btnDiagToggle'),
+        diagArrow: document.getElementById('mDiagArrow'),
+        diagBody: document.getElementById('mDiagBody'),
+        diagAttempt: document.getElementById('mDiagAttempt'),
+        retryErr: document.getElementById('mRetryErr'),
+        btnSkip: document.getElementById('btnMSkip'),
+        btnFallback: document.getElementById('btnMFallback'),
+        btnRetry: document.getElementById('btnMRetry'),
+        retrySpinner: document.getElementById('mRetrySpinner'),
+        retryLabel: document.getElementById('mRetryLabel'),
+        chkFix: document.getElementById('chkFixHardware'),
+        toast: document.getElementById('modalToast')
+      };
+
+      function showModalToast(msg) {
+        if (state.timers.toast) clearTimeout(state.timers.toast);
+        elT2.toast.textContent = msg;
+        elT2.toast.classList.remove('hidden');
+        state.timers.toast = setTimeout(() => elT2.toast.classList.add('hidden'), 3500);
+      }
+
+      function renderModal() {
+        document.querySelectorAll('.m-trigger').forEach(b => {
+          const active = b.dataset.modal === state.activeModal;
+          b.style.backgroundColor = active ? 'var(--primary)' : 'var(--surfaceAlt)';
+          b.style.color = active ? 'var(--onPrimary)' : 'var(--text)';
+          b.style.borderColor = active ? 'var(--primary)' : 'var(--border)';
+        });
+
+        if (state.activeModal === 'none') {
+          elT2.backdrop.classList.add('hidden');
+          return;
+        }
+
+        const spec = MODAL_SPECS[state.activeModal];
+        elT2.backdrop.classList.remove('hidden');
+        elT2.card.setAttribute('aria-busy', String(state.isRetrying));
+        elT2.iconWrap.style.backgroundColor = spec.accentBg;
+        elT2.iconWrap.style.borderColor = spec.accent;
+        elT2.iconWrap.style.color = spec.accent;
+        elT2.iconWrap.innerHTML = spec.icon;
+
+        elT2.title.textContent = spec.title;
+        elT2.code.textContent = spec.code;
+        elT2.code.style.backgroundColor = spec.accentBg;
+        elT2.code.style.borderColor = spec.accent;
+        elT2.code.style.color = spec.accent;
+        elT2.meta.textContent = spec.meta;
+        elT2.desc.textContent = spec.desc;
+        elT2.safety.textContent = spec.safety;
+        elT2.steps.innerHTML = spec.steps.map(st => '<li>' + st + '</li>').join('');
+
+        elT2.diagWrap.classList.toggle('hidden', !spec.showDiag);
+        elT2.diagBody.classList.toggle('hidden', !state.diagOpen);
+        elT2.btnDiagToggle.setAttribute('aria-expanded', String(state.diagOpen));
+        elT2.diagArrow.style.transform = state.diagOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+        elT2.diagAttempt.textContent = state.retryAttempt + ' of 3';
+
+        elT2.btnSkip.textContent = spec.skipLabel;
+        elT2.btnFallback.textContent = spec.fallbackLabel;
+        elT2.btnSkip.disabled = state.isRetrying;
+        elT2.btnFallback.disabled = state.isRetrying;
+        elT2.btnRetry.disabled = state.isRetrying;
+
+        if (state.isRetrying) {
+          elT2.retrySpinner.innerHTML = '<svg class="w-4 h-4 spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>';
+          elT2.retryLabel.textContent = 'Checking…';
+        } else {
+          elT2.retrySpinner.innerHTML = '';
+          elT2.retryLabel.textContent = spec.retryLabel;
+        }
+      }
+
+      function openModal(id) {
+        if (state.timers.retry) { clearTimeout(state.timers.retry); state.timers.retry = null; }
+        state.activeModal = id;
+        state.isRetrying = false;
+        state.retryAttempt = 1;
+        state.diagOpen = false;
+        elT2.retryErr.classList.add('hidden');
+        renderModal();
+        if (id !== 'none') {
+          elT2.card.classList.remove('modal-enter');
+          void elT2.card.offsetWidth;
+          elT2.card.classList.add('modal-enter');
+          setTimeout(() => elT2.btnRetry.focus(), 30);
+        }
+      }
+
+      document.querySelectorAll('.m-trigger').forEach(b => b.addEventListener('click', () => openModal(b.dataset.modal)));
+      document.getElementById('btnReopenPaper').addEventListener('click', () => openModal('paper_empty'));
+      elT2.btnDiagToggle.addEventListener('click', () => { state.diagOpen = !state.diagOpen; renderModal(); });
+
+      elT2.btnSkip.addEventListener('click', () => {
+        if (state.isRetrying) return;
+        const prev = state.activeModal;
+        openModal('none');
+        showModalToast(prev === 'sync_override'
+          ? 'Order retained safely in local SQLite Edge queue.'
+          : 'Print skipped — NLJ202611270004 marked "Reprint Pending" in Order History.');
+      });
+
+      elT2.btnFallback.addEventListener('click', () => {
+        if (state.isRetrying) return;
+        const prev = state.activeModal;
+        openModal('none');
+        showModalToast(prev === 'sync_override'
+          ? 'Exported failed SQLite offline queue snapshot (JSON).'
+          : 'Modal closed cleanly — A4 Browser Print Fallback triggered.');
+      });
+
+      elT2.btnRetry.addEventListener('click', () => {
+        if (state.isRetrying || state.activeModal === 'none') return;
+        state.isRetrying = true;
+        elT2.retryErr.classList.add('hidden');
+        renderModal();
+        state.timers.retry = setTimeout(() => {
+          state.isRetrying = false;
+          if (elT2.chkFix.checked) {
+            openModal('none');
+            showModalToast('Hardware verified — 80mm receipt printed via Go URQR-Bridge (:9105).');
+          } else {
+            state.retryAttempt = Math.min(3, state.retryAttempt + 1);
+            elT2.retryErr.textContent = 'Still reporting ' + MODAL_SPECS[state.activeModal].code + ' (Attempt ' + state.retryAttempt + ' of 3). Resolve hardware or use A4 Fallback.';
+            elT2.retryErr.classList.remove('hidden');
+            renderModal();
+          }
+        }, 1100);
+      });
+
+      /* ===================================================================
+         TASK 3: RADIX A11Y CHECKLIST & FOCUS MONITOR
+         =================================================================== */
+      const a11yBody = document.getElementById('a11yTableBody');
+      const a11yProgText = document.getElementById('a11yProgressText');
+      const a11yProgBar = document.getElementById('a11yProgressBar');
+      const focusMon = document.getElementById('focusMonitor');
+
+      function renderA11y() {
+        const doneCount = Object.values(state.a11yChecked).filter(Boolean).length;
+        a11yProgText.textContent = doneCount + ' / ' + A11Y_ITEMS.length + ' Verified';
+        a11yProgBar.style.width = Math.round((doneCount / A11Y_ITEMS.length) * 100) + '%';
+
+        a11yBody.innerHTML = A11Y_ITEMS.map(item => {
+          const checked = !!state.a11yChecked[item.id];
+          return '<tr class="hover:bg-[#FAF3E6]">' +
+            '<td class="py-2.5 pr-3"><input type="checkbox" data-a11y="' + item.id + '" ' + (checked ? 'checked' : '') + ' class="a11y-chk w-4 h-4 accent-[#3F6B3A] cursor-pointer" aria-label="Verify ' + item.id + '" /></td>' +
+            '<td class="py-2.5 pr-3 font-mono-num font-semibold" style="color: var(--primaryDark);">' + item.id + '</td>' +
+            '<td class="py-2.5 pr-4 font-semibold">' + item.name + '</td>' +
+            '<td class="py-2.5" style="color: var(--textSecondary);">' + item.req + '</td></tr>';
+        }).join('');
+
+        a11yBody.querySelectorAll('.a11y-chk').forEach(chk => {
+          chk.addEventListener('change', () => {
+            state.a11yChecked[chk.dataset.a11y] = chk.checked;
+            renderA11y();
+          });
+        });
+      }
+
+      document.getElementById('btnCheckAllA11y').addEventListener('click', () => {
+        const allDone = Object.values(state.a11yChecked).filter(Boolean).length === A11Y_ITEMS.length;
+        A11Y_ITEMS.forEach(i => { state.a11yChecked[i.id] = !allDone; });
+        renderA11y();
+      });
+
+      document.addEventListener('focusin', (e) => {
+        const t = e.target;
+        const label = t.getAttribute('aria-label') || t.textContent.trim().slice(0, 32) || t.tagName;
+        focusMon.textContent = '<' + t.tagName.toLowerCase() + '> "' + label + '"';
+      });
+
+      /* ===================================================================
+         TASK 4: SWATCHES & COPYABLE CONFIGS
+         =================================================================== */
+      document.getElementById('swatchGrid').innerHTML = TOKENS.map(t =>
+        '<div class="rounded-xl border overflow-hidden" style="background-color: var(--surface); border-color: var(--border);">' +
+          '<div class="h-12 border-b" style="background-color:' + t.hex + '; border-color: var(--border);"></div>' +
+          '<div class="p-2.5"><div class="text-[12px] font-semibold">' + t.name + '</div>' +
+          '<div class="font-mono-num text-[11px]" style="color: var(--primaryDark);">' + t.hex + '</div>' +
+          '<div class="text-[11px] truncate mt-0.5" style="color: var(--textSecondary);">' + t.role + '</div></div></div>'
+      ).join('');
+
+      const cfgBlock = document.getElementById('cfgCodeBlock');
+      const btnCopyCfg = document.getElementById('btnCopyCfg');
+
+      function renderCfg() {
+        cfgBlock.textContent = CONFIG_SNIPPETS[state.activeCfg];
+        document.querySelectorAll('.cfg-tab').forEach(b => {
+          const active = b.dataset.cfg === state.activeCfg;
+          b.style.backgroundColor = active ? 'var(--primary)' : 'var(--surfaceAlt)';
+          b.style.color = active ? 'var(--onPrimary)' : 'var(--text)';
+          b.style.borderColor = active ? 'var(--primary)' : 'var(--border)';
+        });
+      }
+
+      document.querySelectorAll('.cfg-tab').forEach(b => b.addEventListener('click', () => {
+        state.activeCfg = b.dataset.cfg;
+        renderCfg();
+      }));
+
+      btnCopyCfg.addEventListener('click', () => {
+        const txt = CONFIG_SNIPPETS[state.activeCfg];
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).catch(() => fallbackCopy(txt));
+        } else {
+          fallbackCopy(txt);
+        }
+        btnCopyCfg.textContent = 'Copied!';
+        setTimeout(() => { btnCopyCfg.textContent = 'Copy Configuration'; }, 1400);
+      });
+
+      function fallbackCopy(str) {
+        const ta = document.createElement('textarea');
+        ta.value = str;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+
+      /* ===================================================================
+         GLOBAL KEYBOARD TRAP (TAB / SHIFT+TAB / ESC)
+         =================================================================== */
+      document.addEventListener('keydown', (e) => {
+        if (state.activeTab === 't1' && e.key === 'Escape' && state.queueOpen) {
+          state.queueOpen = false;
+          renderQueue();
+          elT1.btnToggleQueue.focus();
+          return;
+        }
+        if (state.activeTab === 't2' && state.activeModal !== 'none') {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            if (!state.isRetrying) {
+              openModal('none');
+              document.getElementById('btnReopenPaper').focus();
+            }
+            return;
+          }
+          if (e.key === 'Tab') {
+            const focusables = Array.from(elT2.card.querySelectorAll('button:not([disabled]):not(.hidden)')).filter(n => n.offsetParent !== null);
+            if (!focusables.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault(); first.focus();
+            }
+          }
+        }
+      });
+
+      // Init all views
+      renderSuiteTabs();
+      renderNetworkBanner(false);
+      renderModal();
+      renderA11y();
+      renderCfg();
+    })();
+  </script>
+</body>
+</html>

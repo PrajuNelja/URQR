@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-label="URQR Manager Avatar Placeholder">
+  <circle cx="128" cy="128" r="120" fill="#FAF3E6" stroke="#E4D8C3" stroke-width="8"/>
+  <circle cx="128" cy="128" r="102" fill="#F5EEE0"/>
+  <circle cx="128" cy="96" r="34" fill="#FFFDF8" stroke="#5C3D26" stroke-width="10"/>
+  <path d="M64 198 C68 158 94 140 128 140 C162 140 188 158 192 198" fill="#8B5E3C" stroke="#5C3D26" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M108 142 L128 164 L148 142" fill="#FFFDF8" stroke="#5C3D26" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

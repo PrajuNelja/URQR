@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URQR Thermal Receipt — Complete Specification &amp; Live Preview (80mm / 58mm)</title>
+  <style>
+    :root {
+      --bg-page: #f3f4f6;
+      --surface: #ffffff;
+      --surface-dim: #e5e7eb;
+      --surface-bright: #ffffff;
+      --on-surface: #111827;
+      --on-surface-variant: #4b5563;
+      --outline: #9ca3af;
+      --stroke-default: #d1d5db;
+      --accent: #0f172a;
+      --accent-soft: #e2e8f0;
+      --cut-accent: #dc2626;
+      --badge-80-bg: #dbeafe;
+      --badge-80-fg: #1d4ed8;
+      --badge-58-bg: #fef3c7;
+      --badge-58-fg: #b45309;
+      --code-bg: #0f172a;
+      --code-fg: #e2e8f0;
+      --r-s: 8px;
+      --r-m: 12px;
+      --ff-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --ff-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px 16px 40px;
+      background: var(--bg-page);
+      color: var(--on-surface);
+      font-family: var(--ff-sans);
+      line-height: 1.5;
+    }
+
+    .app-shell {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .header-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .header-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .header-sub {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--on-surface-variant);
+    }
+
+    .rule-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .rule-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: var(--ff-mono);
+    }
+
+    .rule-badge.b80 { background: var(--badge-80-bg); color: var(--badge-80-fg); }
+    .rule-badge.b58 { background: var(--badge-58-bg); color: var(--badge-58-fg); }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .segmented-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      background: var(--surface-dim);
+      padding: 3px;
+      border-radius: 10px;
+      gap: 3px;
+    }
+
+    .segmented-btn {
+      border: none;
+      background: transparent;
+      color: var(--on-surface-variant);
+      font-family: var(--ff-sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .segmented-btn:hover { color: var(--on-surface); }
+
+    .segmented-btn.is-active {
+      background: var(--surface);
+      color: var(--on-surface);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .mode-caption {
+      font-size: 12px;
+      color: var(--on-surface-variant);
+      font-family: var(--ff-mono);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .stage-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--surface-dim);
+      border-radius: var(--r-m);
+      padding: 20px 14px;
+      overflow-x: auto;
+    }
+
+    .ruler-bar {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      color: var(--on-surface-variant);
+      margin-bottom: 8px;
+      white-space: pre;
+      user-select: none;
+      display: none;
+    }
+
+    .ruler-bar.is-shown { display: block; }
+
+    /* Styled visual paper (80mm & 58mm) */
+    .paper-visual {
+      width: 344px;
+      max-width: 100%;
+      background: var(--surface-bright);
+      color: var(--on-surface);
+      border-radius: var(--r-s);
+      padding: 20px 18px 14px;
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      line-height: 1.45;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      transition: width 0.2s ease;
+    }
+
+    .paper-visual.mode-58 {
+      width: 252px;
+      padding: 16px 12px 12px;
+      font-size: 11px;
+    }
+
+    .v-center { text-align: center; }
+
+    .v-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
+      border: 1.5px solid var(--on-surface);
+      margin-bottom: 8px;
+    }
+
+    .v-title {
+      font-family: var(--ff-sans);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .paper-visual.mode-58 .v-title { font-size: 15px; }
+
+    .v-tagline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .v-tagline-line {
+      height: 1px;
+      width: 18px;
+      background: var(--outline);
+      flex-shrink: 0;
+    }
+
+    .v-addr { color: var(--on-surface-variant); margin-bottom: 6px; }
+    .v-gstin { font-weight: 700; margin-bottom: 10px; }
+
+    .v-dash {
+      border-top: 1px dashed var(--outline);
+      margin: 10px 0;
+    }
+
+    .v-meta-row {
+      display: grid;
+      grid-template-columns: 96px 12px 1fr;
+      align-items: baseline;
+      margin: 2px 0;
+    }
+
+    .paper-visual.mode-58 .v-meta-row {
+      grid-template-columns: 74px 10px 1fr;
+    }
+
+    .v-meta-key { font-weight: 600; }
+    .v-meta-val { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .v-items-head {
+      display: grid;
+      grid-template-columns: 1fr 28px 64px 66px;
+      gap: 4px;
+      font-weight: 700;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid var(--on-surface);
+      margin-bottom: 4px;
+    }
+
+    .v-item-row {
+      display: grid;
+      grid-template-columns: 1fr 28px 64px 66px;
+      gap: 4px;
+      padding: 5px 0;
+      border-bottom: 1px dashed var(--stroke-default);
+      font-variant-numeric: tabular-nums;
+      align-items: start;
+    }
+
+    .paper-visual.mode-58 .v-items-head,
+    .paper-visual.mode-58 .v-item-row {
+      grid-template-columns: 1fr 26px 64px;
+    }
+
+    .v-item-row:last-child { border-bottom: none; }
+
+    /* Task 2 clamps: 80mm = 2 lines, 58mm = 3 lines */
+    .v-item-name {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .paper-visual.mode-58 .v-item-name {
+      -webkit-line-clamp: 3;
+    }
+
+    .v-item-sub {
+      grid-column: 1 / -1;
+      font-size: 10px;
+      color: var(--on-surface-variant);
+      padding-left: 14px;
+      margin-top: 1px;
+    }
+
+    .v-num { text-align: right; white-space: nowrap; }
+    .v-bold { font-weight: 700; }
+
+    .v-sum-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 3px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .v-txn-val {
+      text-align: right;
+      word-break: break-all;
+      font-weight: 600;
+    }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--on-surface-variant);
+      margin: -6px 0 10px;
+    }
+
+    .v-grand {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: var(--ff-sans);
+      font-size: 15px;
+      font-weight: 700;
+      padding: 6px 0;
+      border-top: 1.5px solid var(--on-surface);
+      border-bottom: 1.5px solid var(--on-surface);
+      margin: 8px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .v-footer-star {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 8px 0 0;
+    }
+
+    .v-barcode-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .v-barcode-svg {
+      width: 210px;
+      max-width: 100%;
+      height: 44px;
+      display: block;
+    }
+
+    .paper-visual.mode-58 .v-barcode-svg {
+      width: 184px;
+      height: 38px;
+    }
+
+    .v-barcode-hri {
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+      margin-top: 3px;
+      color: var(--on-surface);
+    }
+
+    .v-feed-spacer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 2px dotted var(--outline);
+      border-right: 2px dotted var(--outline);
+      margin: 12px 6px 6px;
+      color: var(--on-surface-variant);
+      font-size: 10px;
+      font-family: var(--ff-mono);
+      transition: height 0.15s ease;
+    }
+
+    .v-cut-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      color: var(--cut-accent);
+      font-family: var(--ff-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .v-cut-dashes {
+      flex: 1;
+      border-top: 1.5px dashed var(--cut-accent);
+    }
+
+    .paper-mono {
+      display: none;
+      background: var(--surface-bright);
+      color: var(--on-surface);
+      border-radius: var(--r-s);
+      padding: 18px 20px;
+      font-family: var(--ff-mono);
+      font-size: 12.5px;
+      line-height: 1.45;
+      white-space: pre;
+      margin: 0;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .is-hidden { display: none; }
+    .is-shown { display: block; }
+
+    /* Side controls panel */
+    .side-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--stroke-default);
+      border-radius: var(--r-m);
+      padding: 16px;
+    }
+
+    .panel-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--on-surface-variant);
+      margin-bottom: 4px;
+    }
+
+    .text-input, .num-input, .select-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--stroke-default);
+      border-radius: 8px;
+      font-family: var(--ff-sans);
+      font-size: 13px;
+      color: var(--on-surface);
+      background: var(--surface);
+      margin-bottom: 10px;
+    }
+
+    .text-input:focus, .num-input:focus, .select-input:focus {
+      outline: 2px solid #2563eb;
+      outline-offset: 1px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font-family: var(--ff-sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover { opacity: 0.92; }
+
+    .btn-secondary {
+      width: 100%;
+      border: 1px solid var(--stroke-default);
+      background: var(--surface);
+      color: var(--on-surface);
+      font-family: var(--ff-sans);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover { background: var(--bg-page); }
+
+    .preset-list {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--stroke-default);
+    }
+
+    .preset-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--stroke-default);
+      background: var(--bg-page);
+      color: var(--on-surface);
+      font-family: var(--ff-sans);
+      font-size: 12px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .preset-btn:hover { background: var(--accent-soft); }
+
+    .item-chip-list {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--stroke-default);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .item-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      background: var(--bg-page);
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+
+    .item-chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .item-del-btn {
+      border: none;
+      background: transparent;
+      color: var(--on-surface-variant);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+
+    .item-del-btn:hover { color: var(--cut-accent); }
+
+    .code-card {
+      background: var(--code-bg);
+      color: var(--code-fg);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 6px;
+      font-family: var(--ff-mono);
+      font-size: 11.5px;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+
+    .code-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-family: var(--ff-sans);
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .copy-btn {
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #f8fafc;
+      font-family: var(--ff-sans);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover { background: #334155; }
+
+    .code-pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Complete Specification Section */
+    .spec-section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .spec-card {
+      background: var(--surface);
+      border: 1px solid var(--stroke-default);
+      border-radius: var(--r-m);
+      padding: 16px 18px;
+      overflow-x: auto;
+    }
+
+    .spec-card-title {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .spec-table th, .spec-table td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--stroke-default);
+      vertical-align: top;
+    }
+
+    .spec-table th {
+      font-weight: 700;
+      background: var(--bg-page);
+      color: var(--on-surface);
+      white-space: nowrap;
+    }
+
+    .spec-table tr:last-child td { border-bottom: none; }
+
+    .spec-table code {
+      font-family: var(--ff-mono);
+      font-size: 11.5px;
+      background: var(--bg-page);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="header-row">
+      <div>
+        <h1 class="header-title">URQR Thermal Receipt — Complete Specification &amp; Live Preview</h1>
+        <p class="header-sub">Finalized 80mm &amp; 58mm receipt layout with item wrapping/clamping, live item tester, footer payment mode, and ESC/POS paper cut commands.</p>
+      </div>
+      <div class="rule-badges">
+        <span class="rule-badge b80">80mm: 48 cols · max 2 lines</span>
+        <span class="rule-badge b58">58mm: 32 cols · max 3 lines</span>
+      </div>
+    </div>
+
+    <div class="top-bar">
+      <div class="segmented-group" role="group" aria-label="Receipt render mode">
+        <button type="button" class="segmented-btn is-active" data-mode="visual80">Styled 80mm</button>
+        <button type="button" class="segmented-btn" data-mode="esc80">80mm ESC/POS (48 cols)</button>
+        <button type="button" class="segmented-btn" data-mode="visual58">Styled 58mm</button>
+        <button type="button" class="segmented-btn" data-mode="esc58">58mm ESC/POS (32 cols)</button>
+      </div>
+      <span class="mode-caption" id="mode-caption">80mm Raster (576 dots) · 2-line clamp</span>
+    </div>
+
+    <div class="main-grid">
+      <div class="stage-wrap">
+        <div id="ruler-bar" class="ruler-bar" aria-hidden="true"></div>
+
+        <div id="view-visual" class="paper-visual">
+          <div class="v-center">
+            <div class="v-logo" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 3v7a2 2 0 0 0 4 0V3" fill="none"/>
+                <line x1="9" y1="3" x2="9" y2="21"/>
+                <path d="M16 3c2 2 2 7 0 9v9" fill="none"/>
+              </svg>
+            </div>
+            <div class="v-title">YOUR RESTAURANT</div>
+            <div class="v-tagline">
+              <span class="v-tagline-line"></span>
+              <span>GOOD FOOD. GREAT MEMORIES.</span>
+              <span class="v-tagline-line"></span>
+            </div>
+            <div class="v-addr">
+              Your Restaurant Address<br>
+              Bengaluru, Karnataka 560001<br>
+              Ph: 080-4567-8910
+            </div>
+            <div class="v-gstin">GSTIN: 29ABCDE1234F1Z5</div>
+          </div>
+
+          <div class="v-dash"></div>
+
+          <div class="v-meta-row"><span class="v-meta-key">Bill No.</span><span>:</span><span class="v-meta-val">SKB/25-05/0142</span></div>
+          <div class="v-meta-row"><span class="v-meta-key">Date</span><span>:</span><span class="v-meta-val">25 Nov 2026</span></div>
+          <div class="v-meta-row"><span class="v-meta-key">Time</span><span>:</span><span class="v-meta-val">15:16</span></div>
+          <div class="v-meta-row"><span class="v-meta-key">Order Type</span><span>:</span><span class="v-meta-val">Dine In</span></div>
+          <div class="v-meta-row"><span class="v-meta-key">Order No.</span><span>:</span><span class="v-meta-val v-bold">YOU202611250001</span></div>
+
+          <div class="v-dash"></div>
+
+          <div id="visual-items-head" class="v-items-head"></div>
+          <div id="visual-items-body"></div>
+
+          <div class="v-dash"></div>
+
+          <div class="v-sum-row"><span>SUBTOTAL</span><span class="v-bold" id="v-subtotal"></span></div>
+          <div class="v-sum-row"><span>CGST (2.5%)</span><span id="v-cgst"></span></div>
+          <div class="v-sum-row"><span>SGST (2.5%)</span><span id="v-sgst"></span></div>
+
+          <div class="v-grand">
+            <span>GRAND TOTAL</span>
+            <span id="v-grand"></span>
+          </div>
+
+          <div class="v-sum-row"><span>Payment Mode</span><span class="v-bold" id="v-pay-mode">UPI</span></div>
+          <div class="v-sum-row" id="v-txn-row"><span id="v-txn-label">Transaction ID</span><span class="v-txn-val" id="v-txn-val">UPI2611251516908421</span></div>
+
+          <div class="v-dash"></div>
+
+          <div class="v-center" style="margin-top: 10px;">
+            <div class="v-bold">THANK YOU, VISIT AGAIN!</div>
+            <div class="v-barcode-wrap" aria-label="Order barcode YOU202611250001">
+              <svg class="v-barcode-svg" viewBox="0 0 212 44" fill="currentColor" aria-hidden="true">
+                <rect x="4" y="0" width="3" height="44"/><rect x="9" y="0" width="1.5" height="44"/><rect x="13" y="0" width="2" height="44"/>
+                <rect x="18" y="0" width="1.5" height="44"/><rect x="22" y="0" width="4" height="44"/><rect x="28" y="0" width="1.5" height="44"/>
+                <rect x="32" y="0" width="2.5" height="44"/><rect x="37" y="0" width="1.5" height="44"/><rect x="41" y="0" width="3" height="44"/>
+                <rect x="47" y="0" width="2" height="44"/><rect x="51" y="0" width="1.5" height="44"/><rect x="55" y="0" width="4" height="44"/>
+                <rect x="61" y="0" width="1.5" height="44"/><rect x="65" y="0" width="2" height="44"/><rect x="70" y="0" width="3" height="44"/>
+                <rect x="75" y="0" width="1.5" height="44"/><rect x="79" y="0" width="2.5" height="44"/><rect x="84" y="0" width="4" height="44"/>
+                <rect x="90" y="0" width="1.5" height="44"/><rect x="94" y="0" width="2" height="44"/><rect x="99" y="0" width="1.5" height="44"/>
+                <rect x="103" y="0" width="3.5" height="44"/><rect x="109" y="0" width="2" height="44"/><rect x="113" y="0" width="1.5" height="44"/>
+                <rect x="118" y="0" width="3" height="44"/><rect x="123" y="0" width="1.5" height="44"/><rect x="127" y="0" width="4" height="44"/>
+                <rect x="133" y="0" width="2" height="44"/><rect x="138" y="0" width="1.5" height="44"/><rect x="142" y="0" width="2.5" height="44"/>
+                <rect x="147" y="0" width="3" height="44"/><rect x="152" y="0" width="1.5" height="44"/><rect x="156" y="0" width="2" height="44"/>
+                <rect x="161" y="0" width="4" height="44"/><rect x="167" y="0" width="1.5" height="44"/><rect x="171" y="0" width="2.5" height="44"/>
+                <rect x="176" y="0" width="1.5" height="44"/><rect x="180" y="0" width="3" height="44"/><rect x="186" y="0" width="2" height="44"/>
+                <rect x="190" y="0" width="1.5" height="44"/><rect x="194" y="0" width="3.5" height="44"/><rect x="200" y="0" width="1.5" height="44"/>
+                <rect x="204" y="0" width="4" height="44"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="v-feed-spacer" id="v-feed-spacer" style="height: 36px;">
+            FEED 4 LINES (ESC d 4)
+          </div>
+          <div class="v-cut-line">
+            <span aria-hidden="true">&#9986;</span>
+            <span class="v-cut-dashes"></span>
+            <span id="v-cut-label">PARTIAL CUT (GS V 66 0)</span>
+            <span class="v-cut-dashes"></span>
+          </div>
+        </div>
+
+        <pre id="view-mono" class="paper-mono"></pre>
+      </div>
+
+      <aside class="side-stack">
+        <!-- Add Items Panel -->
+        <div class="panel">
+          <h2 class="panel-title">Add Items to Preview</h2>
+          <form id="add-item-form">
+            <label class="field-label" for="item-name-input">Item Description</label>
+            <input id="item-name-input" class="text-input" type="text" placeholder="e.g. Smoked Tandoori Paneer Sizzler Platter" required>
+
+            <div class="two-col">
+              <div>
+                <label class="field-label" for="item-qty-input">Qty</label>
+                <input id="item-qty-input" class="num-input" type="number" min="1" max="999" value="1" required>
+              </div>
+              <div>
+                <label class="field-label" for="item-price-input">Unit Price (Rs.)</label>
+                <input id="item-price-input" class="num-input" type="number" min="1" max="9999" step="0.5" value="249" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Add Item to Receipt</button>
+            <button type="button" id="reset-btn" class="btn-secondary">Reset Sample Items</button>
+          </form>
+
+          <div class="preset-list">
+            <span class="field-label">Quick Edge-Case Presets</span>
+            <button type="button" class="preset-btn" data-preset="Classic South Indian Filter Coffee">Medium name (2-line 80mm / 3-line 58mm)</button>
+            <button type="button" class="preset-btn" data-preset="Hyderabadi Royal Dum Biryani Family Combo Pack with Raita and Salan">Long name (clamped on both widths)</button>
+            <button type="button" class="preset-btn" data-preset="COMBO-DELUXE-SUPERFAMILY-SPECIAL-2026">Unbroken SKU token (hyphenated)</button>
+          </div>
+
+          <div id="item-chip-list" class="item-chip-list" aria-label="Current receipt items"></div>
+        </div>
+
+        <!-- Payment & Paper Cut Controls -->
+        <div class="panel">
+          <h2 class="panel-title">Footer &amp; Paper Cut Controls</h2>
+
+          <label class="field-label" for="pay-mode-select">Payment Mode</label>
+          <select id="pay-mode-select" class="select-input">
+            <option value="UPI" selected>UPI</option>
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <div id="txn-field-wrap">
+            <label class="field-label" for="txn-id-input">Transaction ID (Non-Cash Only)</label>
+            <input id="txn-id-input" class="text-input" type="text" value="UPI2611251516908421" placeholder="Gateway / POS reference ID">
+            <div class="field-hint" id="txn-hint">Printed for UPI, Card, and Other; omitted automatically for Cash.</div>
+          </div>
+
+          <label class="field-label" for="feed-lines-select">Feed Before Cut (ESC d n)</label>
+          <select id="feed-lines-select" class="select-input">
+            <option value="3">3 lines (~10 mm)</option>
+            <option value="4" selected>4 lines (~14 mm · Recommended)</option>
+            <option value="5">5 lines (~18 mm)</option>
+            <option value="6">6 lines (~21 mm)</option>
+          </select>
+
+          <label class="field-label" for="cut-mode-select">Paper Cut Command</label>
+          <select id="cut-mode-select" class="select-input">
+            <option value="partial_b" selected>Partial Cut — GS V 66 0 (Recommended)</option>
+            <option value="full_b">Full Cut — GS V 65 0</option>
+            <option value="partial_a">Legacy Partial Cut — GS V 1</option>
+            <option value="tear_only">Manual Tear Bar (58mm, Feed Only)</option>
+          </select>
+
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>Go 1.27.4 URQR-Bridge Bytes</span>
+              <button type="button" id="copy-go-btn" class="copy-btn">Copy</button>
+            </div>
+            <pre id="go-bytes-out" class="code-pre"></pre>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Complete Receipt Specification -->
+    <section class="spec-section" aria-label="Complete Receipt Specification">
+      <div class="spec-card">
+        <h2 class="spec-card-title">1. Paper Geometry, Column Budget &amp; Wrapping Rules</h2>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Specification</th>
+              <th>80mm Thermal Roll (Standard)</th>
+              <th>58mm Thermal Roll (Compact)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Printable Width / Font</strong></td>
+              <td>576 dots (72 mm) · Font A (12×24) · <strong>48 columns</strong></td>
+              <td>384 dots (48 mm) · Font A (12×24) · <strong>32 columns</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Item Table Columns</strong></td>
+              <td><code>ITEM</code> (22, L) · <code>1sp</code> · <code>QTY</code> (3, R) · <code>1sp</code> · <code>UNIT</code> (10, R) · <code>1sp</code> · <code>TOTAL</code> (10, R)</td>
+              <td><code>ITEM</code> (16, L) · <code>1sp</code> · <code>QTY</code> (3, R) · <code>1sp</code> · <code>TOTAL</code> (11, R); unit printed on indented sub-line <code>(qty x unit)</code></td>
+            </tr>
+            <tr>
+              <td><strong>Line Clamp (Hard Cap)</strong></td>
+              <td><strong>Max 2 lines</strong> per item name (1 primary + 1 continuation)</td>
+              <td><strong>Max 3 lines</strong> per item name (1 primary + up to 2 continuation)</td>
+            </tr>
+            <tr>
+              <td><strong>Wrapping &amp; Hanging Indent</strong></td>
+              <td>Word-boundary wrap; continuation indented by prefix width (<code>3</code> spaces for <code>1. </code>, <code>4</code> for <code>10. </code>); numeric cols stay on Line 1</td>
+              <td>Same word-boundary wrap and dynamic hanging indent; <code>(qty x unit)</code> prints directly below the last wrapped name line</td>
+            </tr>
+            <tr>
+              <td><strong>Truncation &amp; Encoding</strong></td>
+              <td>Truncate final line to <code>avail - 3</code> (strip trailing spaces/punctuation) + ASCII <code>...</code>; normalize <code>₹</code> → <code>Rs.</code> and smart quotes to ASCII (CP437/858)</td>
+              <td>Same ASCII <code>...</code> truncation and unbroken SKU hyphenation (<code>avail - 1</code> + <code>-</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="spec-card">
+        <h2 class="spec-card-title">2. Section-by-Section Finalized Receipt Layout</h2>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Fields Included</th>
+              <th>Formatting &amp; Constraints</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Store Header</strong></td>
+              <td>Logo (raster), Restaurant Name, Tagline, Address, Phone, <code>GSTIN</code></td>
+              <td>Centered; GSTIN is placed strictly in the header (not repeated in footer).</td>
+            </tr>
+            <tr>
+              <td><strong>Order Metadata</strong></td>
+              <td><code>Bill No.</code>, <code>Date</code>, <code>Time</code>, <code>Order Type</code>, <code>Order No.</code></td>
+              <td>Key-value aligned with <code>:</code> separator; Order No. follows <code>&lt;3-letter code&gt;YYYYMMDD0001</code> (15 chars, bold). No Table/Token No.</td>
+            </tr>
+            <tr>
+              <td><strong>Items Table</strong></td>
+              <td>Numbered items, Qty, Unit Price, Line Total</td>
+              <td>Separated by <code>-</code> above header and <code>=</code> below header; tabular right-aligned amounts.</td>
+            </tr>
+            <tr>
+              <td><strong>Tax &amp; Totals</strong></td>
+              <td><code>SUBTOTAL</code>, <code>CGST (2.5%)</code>, <code>SGST (2.5%)</code>, <code>GRAND TOTAL</code></td>
+              <td>Flat 5% GST split (2.5% + 2.5%) on top of subtotal; <code>GRAND TOTAL</code> framed by double <code>=</code> dividers.</td>
+            </tr>
+            <tr>
+              <td><strong>Bottom Footer</strong></td>
+              <td><code>Payment Mode</code>, conditional <code>Transaction ID</code> (non-cash), dashed divider, <code>THANK YOU, VISIT AGAIN!</code>, Code 128 Order Barcode (HRI off)</td>
+              <td>Print <code>Transaction ID</code> on 80mm (<code>Txn ID</code> on 58mm; wrap right-aligned if &gt;24 chars) whenever Payment Mode is <code>UPI</code>, <code>Card</code>, or <code>Other</code>. <strong>Omit completely for <code>Cash</code>.</strong> No Customer Name and no GSTIN in footer.</td>
+            </tr>
+            <tr>
+              <td><strong>Feed &amp; Paper Cut</strong></td>
+              <td>Feed 4 lines (<code>ESC d 4</code>) + Partial Cut (<code>GS V 66 0</code>)</td>
+              <td>Clears 12–18 mm printhead-to-cutter offset; 58mm manual-tear printers ignore <code>GS V</code> safely while keeping the 4-line tear margin.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="spec-card">
+        <h2 class="spec-card-title">3. ESC/POS Command Mapping (Go 1.27.4 URQR-Bridge)</h2>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Mnemonic</th>
+              <th>Hex Bytes</th>
+              <th>Go Byte Slice</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Initialize Printer</td>
+              <td><code>ESC @</code></td>
+              <td><code>1B 40</code></td>
+              <td><code>[]byte{0x1B, 0x40}</code></td>
+              <td>Resets printer state before each receipt job.</td>
+            </tr>
+            <tr>
+              <td>Align Left / Center / Right</td>
+              <td><code>ESC a n</code></td>
+              <td><code>1B 61 00/01/02</code></td>
+              <td><code>[]byte{0x1B, 0x61, 0x01}</code></td>
+              <td>Centers header and closing block; resets to left for tables.</td>
+            </tr>
+            <tr>
+              <td>Bold On / Off</td>
+              <td><code>ESC E 1/0</code></td>
+              <td><code>1B 45 01</code> / <code>00</code></td>
+              <td><code>[]byte{0x1B, 0x45, 0x01}</code></td>
+              <td>Emphasizes store title, Order No., Grand Total, Payment Mode, and closing line.</td>
+            </tr>
+            <tr>
+              <td>Select Font A (12×24)</td>
+              <td><code>ESC M 0</code></td>
+              <td><code>1B 4D 00</code></td>
+              <td><code>[]byte{0x1B, 0x4D, 0x00}</code></td>
+              <td>Locks 48 columns on 80mm and 32 columns on 58mm.</td>
+            </tr>
+            <tr>
+              <td>Code 128 Barcode (Order No.)</td>
+              <td><code>GS h 50</code> · <code>GS w 2</code> · <code>GS H 0</code> · <code>GS k 73</code></td>
+              <td><code>1D 68 32</code> · <code>1D 77 02</code> · <code>1D 48 00</code> · <code>1D 6B 49 ...</code></td>
+              <td><code>[]byte{0x1D, 0x6B, 0x49, 0x11, 0x7B, 0x42, ...}</code></td>
+              <td>Prints centered Code 128 barcode of <code>Order No.</code> directly below closing line with HRI text disabled (<code>GS H 0</code>) to avoid duplicating Order No.</td>
+            </tr>
+            <tr>
+              <td>Feed 4 Lines</td>
+              <td><code>ESC d 4</code></td>
+              <td><code>1B 64 04</code></td>
+              <td><code>[]byte{0x1B, 0x64, 0x04}</code></td>
+              <td>Feeds paper past cutter blade / tear bar before cutting.</td>
+            </tr>
+            <tr>
+              <td>Partial Cut (Default)</td>
+              <td><code>GS V 66 0</code></td>
+              <td><code>1D 56 42 00</code></td>
+              <td><code>[]byte{0x1D, 0x56, 0x42, 0x00}</code></td>
+              <td>Function B partial cut leaving a small center tab.</td>
+            </tr>
+            <tr>
+              <td>Full Cut (Optional)</td>
+              <td><code>GS V 65 0</code></td>
+              <td><code>1D 56 41 00</code></td>
+              <td><code>[]byte{0x1D, 0x56, 0x41, 0x00}</code></td>
+              <td>Function B full cut for kiosks or catch-tray setups.</td>
+            </tr>
+            <tr>
+              <td>Legacy Partial Cut</td>
+              <td><code>GS V 1</code></td>
+              <td><code>1D 56 01</code></td>
+              <td><code>[]byte{0x1D, 0x56, 0x01}</code></td>
+              <td>Fallback for older printers without Function B.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const DEFAULT_ITEMS = [
+      { name: 'Masala Dosa', qty: 1, unit: 149.00 },
+      { name: 'Paneer Roll', qty: 1, unit: 249.00 },
+      { name: 'Tea', qty: 2, unit: 49.00 },
+      { name: 'Gulab Jamun', qty: 2, unit: 89.00 }
+    ];
+
+    const CUT_MODES = {
+      partial_b: { label: 'PARTIAL CUT (GS V 66 0)', goBytes: '0x1D, 0x56, 0x42, 0x00' },
+      full_b: { label: 'FULL CUT (GS V 65 0)', goBytes: '0x1D, 0x56, 0x41, 0x00' },
+      partial_a: { label: 'LEGACY PARTIAL CUT (GS V 1)', goBytes: '0x1D, 0x56, 0x01' },
+      tear_only: { label: 'MANUAL TEAR BAR (NO CUTTER)', goBytes: '' }
+    };
+
+    let items = DEFAULT_ITEMS.map(item => ({ ...item }));
+    let currentMode = 'visual80';
+
+    function sanitizeAscii(str) {
+      return String(str)
+        .replace(/₹/g, 'Rs.')
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/[–—]/g, '-')
+        .replace(/…/g, '...')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function padRight(str, width) {
+      return str.length >= width ? str.slice(0, width) : str + ' '.repeat(width - str.length);
+    }
+
+    function padLeft(str, width) {
+      return str.length >= width ? str.slice(0, width) : ' '.repeat(width - str.length) + str;
+    }
+
+    function centerText(str, width) {
+      if (str.length >= width) return str.slice(0, width);
+      const left = Math.floor((width - str.length) / 2);
+      const right = width - str.length - left;
+      return ' '.repeat(left) + str + ' '.repeat(right);
+    }
+
+    function formatRs(val) { return 'Rs.' + val.toFixed(2); }
+    function formatInr(val) { return '\u20B9' + val.toFixed(2); }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function wrapAndClampItem(prefix, rawName, itemColWidth, maxLines) {
+      const clean = sanitizeAscii(rawName);
+      const avail = Math.max(6, itemColWidth - prefix.length);
+      const indent = ' '.repeat(prefix.length);
+      const rawWords = clean.length ? clean.split(' ') : ['Item'];
+      const words = [];
+
+      for (const w of rawWords) {
+        if (w.length <= avail) {
+          words.push(w);
+        } else {
+          let rem = w;
+          while (rem.length > avail) {
+            words.push(rem.slice(0, avail - 1) + '-');
+            rem = rem.slice(avail - 1);
+          }
+          if (rem.length) words.push(rem);
+        }
+      }
+
+      const lines = [];
+      let line = '';
+      for (const word of words) {
+        const candidate = line ? line + ' ' + word : word;
+        if (candidate.length <= avail) {
+          line = candidate;
+        } else {
+          lines.push(line);
+          line = word;
+        }
+      }
+      if (line) lines.push(line);
+
+      if (lines.length > maxLines) {
+        const kept = lines.slice(0, maxLines);
+        const overflowJoined = (kept[maxLines - 1] + ' ' + lines[maxLines]).trim();
+        const cutLen = Math.max(1, avail - 3);
+        let truncated = overflowJoined.slice(0, cutLen).replace(/[\s,\-;:/]+$/, '');
+        if (!truncated) truncated = overflowJoined.slice(0, cutLen).trim();
+        kept[maxLines - 1] = truncated + '...';
+        return kept.map((txt, idx) => (idx === 0 ? prefix + txt : indent + txt));
+      }
+
+      return lines.map((txt, idx) => (idx === 0 ? prefix + txt : indent + txt));
+    }
+
+    function formatKeyValRows(label, val, totalWidth) {
+      if (label.length + 1 + val.length <= totalWidth) {
+        return [label + ' '.repeat(totalWidth - label.length - val.length) + val];
+      }
+      const lines = [label];
+      for (let i = 0; i < val.length; i += totalWidth) {
+        lines.push(padLeft(val.slice(i, i + totalWidth), totalWidth));
+      }
+      return lines;
+    }
+
+    function getState() {
+      const payMode = document.getElementById('pay-mode-select').value;
+      const txnId = sanitizeAscii(document.getElementById('txn-id-input').value);
+      const showTxn = payMode !== 'Cash' && Boolean(txnId);
+      const feedLines = parseInt(document.getElementById('feed-lines-select').value, 10) || 4;
+      const cutKey = document.getElementById('cut-mode-select').value;
+      const cut = CUT_MODES[cutKey] || CUT_MODES.partial_b;
+      return { payMode, txnId, showTxn, feedLines, cut };
+    }
+
+    function calcTotals() {
+      const subtotal = items.reduce((sum, it) => sum + it.qty * it.unit, 0);
+      const cgst = +(subtotal * 0.025).toFixed(2);
+      const sgst = +(subtotal * 0.025).toFixed(2);
+      const grand = +(subtotal + cgst + sgst).toFixed(2);
+      return { subtotal, cgst, sgst, grand };
+    }
+
+    function buildEscPos(is58) {
+      const W = is58 ? 32 : 48;
+      const st = getState();
+      const { subtotal, cgst, sgst, grand } = calcTotals();
+      const labelW = is58 ? 11 : 16;
+
+      const out = [
+        centerText('YOUR RESTAURANT', W),
+        centerText(is58 ? 'GOOD FOOD. GREAT MEMORIES.' : '-- GOOD FOOD. GREAT MEMORIES. --', W),
+        centerText('Your Restaurant Address', W),
+        centerText('Bengaluru, Karnataka 560001', W),
+        centerText('Ph: 080-4567-8910', W),
+        centerText('GSTIN: 29ABCDE1234F1Z5', W),
+        '-'.repeat(W),
+        padRight('Bill No.', labelW) + ':' + padLeft('SKB/25-05/0142', W - labelW - 1),
+        padRight('Date', labelW) + ':' + padLeft('25 Nov 2026', W - labelW - 1),
+        padRight('Time', labelW) + ':' + padLeft('15:16', W - labelW - 1),
+        padRight('Order Type', labelW) + ':' + padLeft('Dine In', W - labelW - 1),
+        padRight('Order No.', labelW) + ':' + padLeft('YOU202611250001', W - labelW - 1),
+        '-'.repeat(W)
+      ];
+
+      if (is58) {
+        out.push(padRight('ITEM', 16) + ' ' + padLeft('QTY', 3) + ' ' + padLeft('TOTAL', 11));
+      } else {
+        out.push(padRight('ITEM', 22) + ' ' + padLeft('QTY', 3) + ' ' + padLeft('UNIT', 10) + ' ' + padLeft('TOTAL', 10));
+      }
+      out.push('='.repeat(W));
+
+      items.forEach((it, idx) => {
+        const prefix = (idx + 1) + '. ';
+        const indent = ' '.repeat(prefix.length);
+        const wrapped = wrapAndClampItem(prefix, it.name, is58 ? 16 : 22, is58 ? 3 : 2);
+        const lineTotal = it.qty * it.unit;
+
+        wrapped.forEach((txt, lineIdx) => {
+          if (lineIdx === 0) {
+            if (is58) {
+              out.push(padRight(txt, 16) + ' ' + padLeft(String(it.qty), 3) + ' ' + padLeft(formatRs(lineTotal), 11));
+            } else {
+              out.push(
+                padRight(txt, 22) + ' ' +
+                padLeft(String(it.qty), 3) + ' ' +
+                padLeft(formatRs(it.unit), 10) + ' ' +
+                padLeft(formatRs(lineTotal), 10)
+              );
+            }
+          } else {
+            out.push(txt);
+          }
+        });
+
+        if (is58) {
+          out.push(indent + '(' + it.qty + ' x ' + it.unit.toFixed(2) + ')');
+        }
+      });
+
+      const half = W / 2;
+      out.push(
+        '-'.repeat(W),
+        padRight('SUBTOTAL', half) + padLeft(formatRs(subtotal), half),
+        padRight('CGST (2.5%)', half) + padLeft(formatRs(cgst), half),
+        padRight('SGST (2.5%)', half) + padLeft(formatRs(sgst), half),
+        '='.repeat(W),
+        padRight('GRAND TOTAL', half) + padLeft(formatRs(grand), half),
+        '='.repeat(W),
+        padRight('Payment Mode', half) + padLeft(st.payMode, half),
+        ...(st.showTxn ? formatKeyValRows(is58 ? 'Txn ID' : 'Transaction ID', st.txnId, W) : []),
+        '-'.repeat(W),
+        centerText('THANK YOU, VISIT AGAIN!', W),
+        '',
+        centerText('|| ||| | ||| || | ||| ||', W),
+        centerText('|| ||| | ||| || | ||| ||', W),
+        centerText('[GS k 73 -> CODE128 (HRI OFF)]', W),
+        '',
+        centerText('[ESC d ' + st.feedLines + ' -> FEED ' + st.feedLines + ' LINES]', W),
+        centerText('[' + st.cut.label + ']', W)
+      );
+
+      return out.join('\n');
+    }
+
+    function renderVisual(is58) {
+      const visualEl = document.getElementById('view-visual');
+      const headEl = document.getElementById('visual-items-head');
+      const bodyEl = document.getElementById('visual-items-body');
+      const st = getState();
+      const { subtotal, cgst, sgst, grand } = calcTotals();
+
+      visualEl.classList.toggle('mode-58', is58);
+
+      if (is58) {
+        headEl.innerHTML = '<span>ITEM</span><span class="v-num">QTY</span><span class="v-num">TOTAL</span>';
+      } else {
+        headEl.innerHTML = '<span>ITEM</span><span class="v-num">QTY</span><span class="v-num">UNIT</span><span class="v-num">TOTAL</span>';
+      }
+
+      bodyEl.innerHTML = items.map((it, idx) => {
+        const total = it.qty * it.unit;
+        const label = (idx + 1) + '. ' + escapeHtml(it.name);
+        if (is58) {
+          return (
+            '<div class="v-item-row">' +
+              '<span class="v-item-name" title="' + escapeHtml(it.name) + '">' + label + '</span>' +
+              '<span class="v-num">' + it.qty + '</span>' +
+              '<span class="v-num v-bold">' + formatInr(total) + '</span>' +
+              '<span class="v-item-sub">(' + it.qty + ' x ' + it.unit.toFixed(2) + ')</span>' +
+            '</div>'
+          );
+        }
+        return (
+          '<div class="v-item-row">' +
+            '<span class="v-item-name" title="' + escapeHtml(it.name) + '">' + label + '</span>' +
+            '<span class="v-num">' + it.qty + '</span>' +
+            '<span class="v-num">' + formatInr(it.unit) + '</span>' +
+            '<span class="v-num v-bold">' + formatInr(total) + '</span>' +
+          '</div>'
+        );
+      }).join('');
+
+      document.getElementById('v-subtotal').textContent = formatInr(subtotal);
+      document.getElementById('v-cgst').textContent = formatInr(cgst);
+      document.getElementById('v-sgst').textContent = formatInr(sgst);
+      document.getElementById('v-grand').textContent = formatInr(grand);
+      document.getElementById('v-pay-mode').textContent = st.payMode;
+      const txnRow = document.getElementById('v-txn-row');
+      document.getElementById('v-txn-label').textContent = is58 ? 'Txn ID' : 'Transaction ID';
+      document.getElementById('v-txn-val').textContent = st.txnId;
+      txnRow.classList.toggle('is-hidden', !st.showTxn);
+
+      const feedSpacer = document.getElementById('v-feed-spacer');
+      feedSpacer.style.height = (st.feedLines * 9) + 'px';
+      feedSpacer.textContent = 'FEED ' + st.feedLines + ' LINES (ESC d ' + st.feedLines + ')';
+      document.getElementById('v-cut-label').textContent = st.cut.label;
+    }
+
+    function renderItemChips() {
+      const listEl = document.getElementById('item-chip-list');
+      listEl.innerHTML = items.map((it, idx) => (
+        '<div class="item-chip">' +
+          '<span class="item-chip-name" title="' + escapeHtml(it.name) + '">' + (idx + 1) + '. ' + escapeHtml(it.name) + ' (' + it.qty + '×)</span>' +
+          '<button type="button" class="item-del-btn" data-remove-idx="' + idx + '" aria-label="Remove item">&times;</button>' +
+        '</div>'
+      )).join('');
+    }
+
+    function renderGoBytes() {
+      const st = getState();
+      const feedHex = st.feedLines.toString(16).toUpperCase().padStart(2, '0');
+      const lines = [
+        '// Feed ' + st.feedLines + ' lines (ESC d ' + st.feedLines + ')',
+        'feedCmd := []byte{0x1B, 0x64, 0x' + feedHex + '}'
+      ];
+      if (st.cut.goBytes) {
+        lines.push(
+          '// ' + st.cut.label,
+          'cutCmd  := []byte{' + st.cut.goBytes + '}',
+          'payload = append(payload, feedCmd...)',
+          'payload = append(payload, cutCmd...)'
+        );
+      } else {
+        lines.push(
+          '// Manual tear bar (no cutter command)',
+          'payload = append(payload, feedCmd...)'
+        );
+      }
+      document.getElementById('go-bytes-out').textContent = lines.join('\n');
+    }
+
+    function render() {
+      const visualEl = document.getElementById('view-visual');
+      const monoEl = document.getElementById('view-mono');
+      const captionEl = document.getElementById('mode-caption');
+      const rulerEl = document.getElementById('ruler-bar');
+
+      renderItemChips();
+      renderGoBytes();
+      const isCash = document.getElementById('pay-mode-select').value === 'Cash';
+      document.getElementById('txn-id-input').disabled = isCash;
+      document.getElementById('txn-hint').textContent = isCash
+        ? 'Hidden on receipt because Payment Mode is Cash.'
+        : 'Printed for UPI, Card, and Other; omitted automatically for Cash.';
+
+      if (currentMode === 'visual80') {
+        visualEl.classList.remove('is-hidden');
+        monoEl.classList.remove('is-shown');
+        rulerEl.classList.remove('is-shown');
+        renderVisual(false);
+        captionEl.textContent = '80mm Raster (576 dots) · 2-line clamp';
+      } else if (currentMode === 'visual58') {
+        visualEl.classList.remove('is-hidden');
+        monoEl.classList.remove('is-shown');
+        rulerEl.classList.remove('is-shown');
+        renderVisual(true);
+        captionEl.textContent = '58mm Raster (384 dots) · 3-line clamp';
+      } else if (currentMode === 'esc80') {
+        visualEl.classList.add('is-hidden');
+        monoEl.textContent = buildEscPos(false);
+        monoEl.classList.add('is-shown');
+        rulerEl.textContent = '123456789012345678901234567890123456789012345678  (48 cols)';
+        rulerEl.classList.add('is-shown');
+        captionEl.textContent = 'Font A (12x24) · 48 cols · 2-line clamp';
+      } else {
+        visualEl.classList.add('is-hidden');
+        monoEl.textContent = buildEscPos(true);
+        monoEl.classList.add('is-shown');
+        rulerEl.textContent = '12345678901234567890123456789012  (32 cols)';
+        rulerEl.classList.add('is-shown');
+        captionEl.textContent = 'Font A (12x24) · 32 cols · 3-line clamp';
+      }
+    }
+
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        currentMode = btn.dataset.mode;
+        render();
+      });
+    });
+
+    document.getElementById('add-item-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('item-name-input');
+      const qtyInput = document.getElementById('item-qty-input');
+      const priceInput = document.getElementById('item-price-input');
+      const name = nameInput.value.trim();
+      const qty = Math.max(1, Math.min(999, parseInt(qtyInput.value, 10) || 1));
+      const unit = Math.max(0.01, Math.min(9999.99, parseFloat(priceInput.value) || 1));
+      if (!name) return;
+      items.push({ name, qty, unit });
+      nameInput.value = '';
+      render();
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      items = DEFAULT_ITEMS.map(item => ({ ...item }));
+      render();
+    });
+
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('item-name-input').value = btn.dataset.preset;
+        document.getElementById('item-name-input').focus();
+      });
+    });
+
+    document.getElementById('item-chip-list').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-remove-idx]');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.removeIdx, 10);
+      if (!Number.isNaN(idx) && items.length > 1) {
+        items.splice(idx, 1);
+        render();
+      }
+    });
+
+    ['pay-mode-select', 'feed-lines-select', 'cut-mode-select'].forEach(id => {
+      document.getElementById(id).addEventListener('change', render);
+    });
+    document.getElementById('txn-id-input').addEventListener('input', render);
+
+    document.getElementById('copy-go-btn').addEventListener('click', () => {
+      const text = document.getElementById('go-bytes-out').textContent;
+      const btn = document.getElementById('copy-go-btn');
+      const done = () => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          done();
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        done();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
