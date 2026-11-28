@@ -43,7 +43,7 @@ export const SessionTimeoutModal = ({
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  // Handle logout when timer hits 0 (Moved out of setState to prevent StrictMode double-fire)
+  // Handle logout when timer hits 0 (Auto Expiry)
   useEffect(() => {
     if (isOpen && secondsLeft === 0) {
       onLogout();
@@ -65,9 +65,6 @@ export const SessionTimeoutModal = ({
           <Button variant="outline" onClick={onLogout}>
             Log Out Now
           </Button>
-          {/* Note: In your custom PopupModal, the first focusable element gets auto-focused, 
-              which is the Log Out button. If you strictly want Extend Session focused, 
-              you can swap the order here or add autoFocus to the Extend button. */}
           <Button variant="primary" onClick={onExtend} autoFocus>
             Extend Session
           </Button>
