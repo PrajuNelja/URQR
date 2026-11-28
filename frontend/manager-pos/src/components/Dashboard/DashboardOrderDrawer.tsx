@@ -15,16 +15,25 @@ export function DashboardOrderDrawer({
   const [rendered, setRendered] = useState(isOpen);
   const [visible, setVisible] = useState(false);
 
+  if (isOpen && !rendered) {
+    setRendered(true);
+  }
+
   useEffect(() => {
+    let animTimer: ReturnType<typeof setTimeout>;
+    let closeTimer: ReturnType<typeof setTimeout>;
+
     if (isOpen) {
-      setRendered(true);
-      const timer = setTimeout(() => setVisible(true), 10);
-      return () => clearTimeout(timer);
+      animTimer = setTimeout(() => setVisible(true), 10);
     } else {
-      setVisible(false);
-      const timer = setTimeout(() => setRendered(false), 300);
-      return () => clearTimeout(timer);
+      animTimer = setTimeout(() => setVisible(false), 0);
+      closeTimer = setTimeout(() => setRendered(false), 300);
     }
+
+    return () => {
+      clearTimeout(animTimer);
+      clearTimeout(closeTimer);
+    };
   }, [isOpen]);
 
   useEffect(() => {
