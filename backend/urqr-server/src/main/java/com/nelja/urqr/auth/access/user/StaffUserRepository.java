@@ -6,10 +6,10 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StaffUserRepository extends JpaRepository<StaffUser, UUID> {
-    Optional<StaffUser> findByHotelIdAndUsernameIgnoreCase(UUID hotelId, String username);
-    java.util.List<StaffUser> findAllByHotelIdOrderByUsername(UUID hotelId);
-    Optional<StaffUser> findByIdAndHotelId(UUID id, UUID hotelId);
-    boolean existsByHotelIdAndUsernameIgnoreCase(UUID hotelId, String username);
+    Optional<StaffUser> findByHotelIdAndUsernameIgnoreCase(String hotelId, String username);
+    java.util.List<StaffUser> findAllByHotelIdOrderByUsername(String hotelId);
+    Optional<StaffUser> findByIdAndHotelId(UUID id, String hotelId);
+    boolean existsByHotelIdAndUsernameIgnoreCase(String hotelId, String username);
     boolean existsByUsernameIgnoreCase(String username);
-    long countByHotelIdAndRoleIdAndStatus(UUID hotelId, UUID roleId, String status);
+    long countByHotelIdAndRoleIdAndStatus(String hotelId, UUID roleId, String status);
 }

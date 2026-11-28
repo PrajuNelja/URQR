@@ -27,7 +27,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
 
-    private static final UUID HOTEL_ID = UUID.randomUUID();
+    private static final String HOTEL_ID = UUID.randomUUID().toString();
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID ITEM_ID = UUID.randomUUID();

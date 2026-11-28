@@ -39,7 +39,7 @@ public class CentrifugoPublisher {
 
         List<Map<String, Object>> commands = events.stream()
                 .map(event -> Map.<String, Object>of("publish", Map.of(
-                        "channel", "orders:" + event.hotelId(),
+                        "channel", "orders:hotel-" + event.hotelId(),
                         "data", publication(event),
                         // Centrifugo suppresses duplicates if the outbox worker retries after a crash.
                         "idempotency_key", event.eventId().toString())))

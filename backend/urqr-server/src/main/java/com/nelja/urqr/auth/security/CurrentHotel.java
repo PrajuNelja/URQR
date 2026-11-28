@@ -8,8 +8,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class CurrentHotel {
-    public UUID hotelId(Jwt jwt) { return claim(jwt, "hotel_id"); }
-    public UUID userId(Jwt jwt) { return claim(jwt, "uid"); }
+    public String hotelId(Jwt jwt) { return stringClaim(jwt, "hotel_id"); }
+    public UUID userId(Jwt jwt) { return uuidClaim(jwt, "uid"); }
     public String username(Jwt jwt) { return jwt.getSubject(); }
     public String role(Jwt jwt) {
         Object roles = jwt.getClaims().get("roles");
@@ -18,7 +18,14 @@ public class CurrentHotel {
         }
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid identity token");
     }
-    private UUID claim(Jwt jwt, String name) {
+    private static String stringClaim(Jwt jwt, String name) {
+        String value = jwt.getClaimAsString(name);
+        if (value == null || value.isBlank() || value.length() > 64 || value.chars().anyMatch(Character::isISOControl)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid identity token");
+        }
+        return value;
+    }
+    private static UUID uuidClaim(Jwt jwt, String name) {
         try {
             return UUID.fromString(jwt.getClaimAsString(name));
         } catch (Exception exception) {

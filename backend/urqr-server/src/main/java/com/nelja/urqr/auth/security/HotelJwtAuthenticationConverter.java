@@ -38,7 +38,10 @@ public class HotelJwtAuthenticationConverter implements Converter<Jwt, JwtAuthen
                 return new JwtAuthenticationToken(jwt,
                         List.of(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN")), jwt.getSubject());
             }
-            UUID hotel = UUID.fromString(jwt.getClaimAsString("hotel_id"));
+            String hotel = jwt.getClaimAsString("hotel_id");
+            if (hotel == null || hotel.isBlank() || hotel.length() > 64) {
+                throw new BadCredentialsException("Missing hotel identity");
+            }
             UUID userId = UUID.fromString(jwt.getClaimAsString("uid"));
             String role = authState.staffRole(hotel, userId);
             return new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_" + role)),

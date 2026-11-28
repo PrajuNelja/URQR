@@ -26,7 +26,7 @@ public class StaffAuthorizationLookup {
     }
 
     @Transactional(readOnly = true)
-    public String findActiveRole(UUID hotelId, UUID userId) {
+    public String findActiveRole(String hotelId, UUID userId) {
         // JWT authentication runs before controller transactions, so bind RLS in this lookup transaction.
         rlsContext.bindHotel(hotelId);
         if (hotels.findByIdAndStatus(hotelId, "ACTIVE").isEmpty()) {

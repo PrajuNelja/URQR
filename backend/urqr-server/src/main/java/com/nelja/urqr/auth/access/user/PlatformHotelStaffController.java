@@ -56,7 +56,7 @@ public class PlatformHotelStaffController {
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
     @Operation(summary = "Add a Manager or Cashier account to one active hotel")
-    public PlatformStaffUserResponse create(@PathVariable UUID hotelId,
+    public PlatformStaffUserResponse create(@PathVariable String hotelId,
             @Valid @RequestBody CreatePlatformStaffUserRequest request) {
         hotels.findByIdAndStatus(hotelId, "ACTIVE")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -108,6 +108,6 @@ public class PlatformHotelStaffController {
         CASHIER
     }
 
-    public record PlatformStaffUserResponse(UUID id, UUID hotelId, String username, String role,
+    public record PlatformStaffUserResponse(UUID id, String hotelId, String username, String role,
             String status, Instant createdAt) { }
 }

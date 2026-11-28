@@ -112,6 +112,7 @@ class UrqrServerApplicationTests {
     @Autowired
     private HotelRlsContext rlsContext;
 
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -154,10 +155,11 @@ class UrqrServerApplicationTests {
     }
 
     @Test
-    void publishesCatalogContractAsOpenApi31() throws Exception {
+    void publishesMenuContractAsOpenApi31() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openapi").value("3.1.0"))
+                .andExpect(jsonPath("$.paths['/api/v1/realtime/token'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/menu/categories'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/menu/categories'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/menu/categories/{id}'].get").exists())
@@ -193,7 +195,7 @@ class UrqrServerApplicationTests {
 
     @Test
     void platformAdminCanAddManagerAndCashierAccountsAndStaffCanReadCategories() throws Exception {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         insertHotelWithStaffRoles(hotelId);
         MvcResult platformLogin = mockMvc.perform(post("/api/v1/platform/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -263,8 +265,8 @@ class UrqrServerApplicationTests {
 
     @Test
     void tamperingWithTenantHeaderIsOverriddenByVerifiedJwtClaims() throws Exception {
-        UUID hotelIdA = UUID.randomUUID();
-        UUID hotelIdB = UUID.randomUUID();
+        String hotelIdA = UUID.randomUUID().toString();
+        String hotelIdB = UUID.randomUUID().toString();
         insertHotelWithStaffRoles(hotelIdA);
         insertHotelWithStaffRoles(hotelIdB);
 
@@ -298,7 +300,7 @@ class UrqrServerApplicationTests {
 
     @Test
     void bindsTheAuthenticatedHotelToTheSpringTransaction() throws Exception {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         UUID userId = insertHotelWithPaidOrder(hotelId);
         Jwt jwt = Jwt.withTokenValue("test-token")
                 .header("alg", "RS256")
@@ -339,7 +341,7 @@ class UrqrServerApplicationTests {
 
     @Test
     void completesConcurrentBillingRequestsWithoutDeadlockOrPoolStarvation() throws Exception {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         UUID userId = insertHotelWithMenuItem(hotelId);
         UUID menuItemId = findMenuItem(hotelId);
         int workerCount = 16;
@@ -374,7 +376,7 @@ class UrqrServerApplicationTests {
 
     @Test
     void deliversOutboxEventsToCentrifugoWithinTheLatencyTarget() throws Exception {
-        UUID hotelId = UUID.randomUUID();
+        String hotelId = UUID.randomUUID().toString();
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement hotel = owner.prepareStatement("""
@@ -391,7 +393,7 @@ class UrqrServerApplicationTests {
         transaction.executeWithoutResult(status -> {
             rlsContext.bindHotel(hotelId);
             for (int sequence = 0; sequence < 20; sequence++) {
-                eventIds.add(outbox.enqueue(hotelId, "LATENCY_TEST", "Test", hotelId,
+                eventIds.add(outbox.enqueue(hotelId, "LATENCY_TEST", "Test", UUID.randomUUID(),
                         java.util.Map.of("sequence", sequence)));
             }
         });
@@ -432,7 +434,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static int countDelivered(UUID hotelId) throws Exception {
+    private static int countDelivered(String hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement("""
@@ -447,7 +449,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static List<Double> deliveryLatenciesMillis(UUID hotelId) throws Exception {
+    private static List<Double> deliveryLatenciesMillis(String hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement("""
@@ -464,11 +466,11 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private UUID enqueueEvent(UUID hotelId, int sequence, String eventType) {
+    private UUID enqueueEvent(String hotelId, int sequence, String eventType) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         return transaction.execute(status -> {
             rlsContext.bindHotel(hotelId);
-            return outbox.enqueue(hotelId, eventType, "Test", hotelId,
+            return outbox.enqueue(hotelId, eventType, "Test", UUID.randomUUID(),
                     java.util.Map.of("sequence", sequence));
         });
     }
@@ -485,7 +487,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static double deliveryLatencyMillis(UUID hotelId, UUID eventId) throws Exception {
+    private static double deliveryLatencyMillis(String hotelId, UUID eventId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement("""
@@ -502,7 +504,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static UUID insertHotelWithPaidOrder(UUID hotelId) throws Exception {
+    private static UUID insertHotelWithPaidOrder(String hotelId) throws Exception {
         UUID roleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -552,7 +554,7 @@ class UrqrServerApplicationTests {
         return userId;
     }
 
-    private static void insertHotelWithStaffRoles(UUID hotelId) throws Exception {
+    private static void insertHotelWithStaffRoles(String hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             owner.setAutoCommit(false);
@@ -575,7 +577,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static UUID insertHotelWithMenuItem(UUID hotelId) throws Exception {
+    private static UUID insertHotelWithMenuItem(String hotelId) throws Exception {
         UUID roleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
@@ -621,7 +623,7 @@ class UrqrServerApplicationTests {
         return userId;
     }
 
-    private static UUID findMenuItem(UUID hotelId) throws Exception {
+    private static UUID findMenuItem(String hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement(
@@ -634,7 +636,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static int countOrders(UUID hotelId) throws Exception {
+    private static int countOrders(String hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement query = owner.prepareStatement(
@@ -647,7 +649,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static void setHotelAuthentication(UUID hotelId) {
+    private static void setHotelAuthentication(String hotelId) {
         Jwt jwt = Jwt.withTokenValue("load-test-token")
                 .header("alg", "none")
                 .claim("hotel_id", hotelId.toString())
@@ -657,7 +659,7 @@ class UrqrServerApplicationTests {
                 List.of(new SimpleGrantedAuthority("ROLE_MANAGER"))));
     }
 
-    private static void printOrderSearchPlan(UUID hotelId) throws Exception {
+    private static void printOrderSearchPlan(String hotelId) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 Statement analyze = owner.createStatement()) {
@@ -682,7 +684,7 @@ class UrqrServerApplicationTests {
         }
     }
 
-    private static void insertOrders(UUID hotelId, UUID userId, int count) throws Exception {
+    private static void insertOrders(String hotelId, UUID userId, int count) throws Exception {
         try (Connection owner = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 PreparedStatement order = owner.prepareStatement("""

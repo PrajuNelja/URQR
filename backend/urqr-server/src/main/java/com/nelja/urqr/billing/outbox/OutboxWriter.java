@@ -19,7 +19,7 @@ public class OutboxWriter {
         this.objectMapper = objectMapper;
     }
 
-    public UUID enqueue(UUID hotelId, String eventType, String aggregateType, UUID aggregateId,
+    public UUID enqueue(String hotelId, String eventType, String aggregateType, UUID aggregateId,
             Map<String, ?> payload) {
         UUID eventId = UUID.randomUUID();
         try {

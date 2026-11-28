@@ -10,19 +10,19 @@ public class Role {
     @Id
     @GeneratedValue(strategy=GenerationType.UUID)
     private UUID id;
-    @Column(name="hotel_id", nullable=false)
-    private UUID hotelId;
+    @Column(name = "hotel_id", nullable = false, length = 64)
+    private String hotelId;
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="hotel_id",referencedColumnName="id",insertable=false,updatable=false)
     private Hotel hotel;
     @Column(nullable=false, length=50)
     private String name;
     protected Role() { }
-    public Role(UUID hotelId, String name) {
+    public Role(String hotelId, String name) {
         this.hotelId=hotelId;
         rename(name); }
     public UUID getId(){return id;}
-    public UUID getHotelId(){return hotelId;}
+    public String getHotelId(){return hotelId;}
     public String getName(){return name;}
     public void rename(String name){
         if(name==null||name.isBlank()||name.length()>50)

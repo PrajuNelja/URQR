@@ -5,8 +5,8 @@ public class Receipt {
  @Id
  @GeneratedValue(strategy=GenerationType.UUID)
  private UUID id;
- @Column(name="hotel_id",nullable=false)
- private UUID hotelId;
+ @Column(name = "hotel_id", nullable = false, length = 64)
+ private String hotelId;
  @Column(name="order_id",nullable=false,unique=true)
  private UUID orderId;
  @ManyToOne(fetch=FetchType.LAZY)
@@ -17,6 +17,6 @@ public class Receipt {
     @Column(nullable=false,columnDefinition="jsonb")
     private Map<String,Object> snapshot;
  @Column(name="created_at",nullable=false,updatable=false) private Instant createdAt;
- protected Receipt(){} public Receipt(UUID h,UUID o,String n,Map<String,Object>s){hotelId=h;orderId=o;receiptNumber=n;snapshot=Map.copyOf(s);createdAt=Instant.now();}
- public UUID getId(){return id;} public UUID getHotelId(){return hotelId;} public UUID getOrderId(){return orderId;} public String getReceiptNumber(){return receiptNumber;} public Map<String,Object> getSnapshot(){return snapshot;} public Instant getCreatedAt(){return createdAt;}
+ protected Receipt(){} public Receipt(String h,UUID o,String n,Map<String,Object>s){hotelId=h;orderId=o;receiptNumber=n;snapshot=Map.copyOf(s);createdAt=Instant.now();}
+ public UUID getId(){return id;} public String getHotelId(){return hotelId;} public UUID getOrderId(){return orderId;} public String getReceiptNumber(){return receiptNumber;} public Map<String,Object> getSnapshot(){return snapshot;} public Instant getCreatedAt(){return createdAt;}
 }

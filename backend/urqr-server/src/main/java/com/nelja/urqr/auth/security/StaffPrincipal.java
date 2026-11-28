@@ -8,7 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-public record StaffPrincipal(UUID staffId, UUID hotelId, String username, String password,
+public record StaffPrincipal(UUID staffId, String hotelId, String username, String password,
         String role, boolean enabled) implements UserDetails, AuthenticatedStaff {
     public static StaffPrincipal from(StaffUser user, String roleName) {
         return new StaffPrincipal(user.getId(), user.getHotelId(), user.getUsername(),

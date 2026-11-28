@@ -1,9 +1,8 @@
 package com.nelja.urqr.auth.hotel;
 
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface HotelRepository extends JpaRepository<Hotel, UUID> {
-    Optional<Hotel> findByIdAndStatus(UUID hotelId, String status);
+public interface HotelRepository extends JpaRepository<Hotel, String> {
+    Optional<Hotel> findByIdAndStatus(String hotelId, String status);
 }

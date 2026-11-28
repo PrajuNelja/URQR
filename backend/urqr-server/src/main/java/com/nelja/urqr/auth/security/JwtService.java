@@ -66,8 +66,7 @@ public class JwtService {
         String hotelClaim = (String) claims.getClaims().get("hotel_id");
         String userClaim = (String) claims.getClaims().get("uid");
         authState.registerToken(token.getId(), tokenType, claims.getExpiresAt(),
-                hotelClaim == null ? null : UUID.fromString(hotelClaim),
-                userClaim == null ? null : UUID.fromString(userClaim));
+                hotelClaim, userClaim == null ? null : UUID.fromString(userClaim));
         return token.getTokenValue();
     }
     public Instant expiresAt(){return Instant.now().plusSeconds(ttlMinutes*60);}

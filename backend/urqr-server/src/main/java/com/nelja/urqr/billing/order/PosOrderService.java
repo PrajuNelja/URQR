@@ -63,7 +63,7 @@ public class PosOrderService {
 
     /** Order, lines, any initial payments, audit, and outbox row commit as one unit. */
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public OrderView create(UUID hotelId, UUID userId, List<LineInput> inputs, List<PaymentInput> initialPayments) {
+    public OrderView create(String hotelId, UUID userId, List<LineInput> inputs, List<PaymentInput> initialPayments) {
         validateLines(inputs);
         Order order = orders.save(new Order(hotelId, userId,
                 "ORD-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase()));
@@ -81,13 +81,13 @@ public class PosOrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderView get(UUID hotelId, UUID id) {
+    public OrderView get(String hotelId, UUID id) {
         Order order = order(hotelId, id);
         return view(order, lines.findAllByHotelIdAndOrderIdOrderById(hotelId, id), null);
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderView> list(UUID hotelId, OrderStatus status, Instant from, Instant to, Pageable pageable) {
+    public Page<OrderView> list(String hotelId, OrderStatus status, Instant from, Instant to, Pageable pageable) {
         Page<Order> page = orders.search(hotelId, status == null ? null : status.name(), from, to,
                 nativePageable(pageable));
         List<UUID> ids = page.getContent().stream().map(Order::getId).toList();
@@ -126,7 +126,7 @@ public class PosOrderService {
     }
 
     @Transactional
-    public OrderView update(UUID hotelId, UUID userId, UUID id, List<LineInput> inputs) {
+    public OrderView update(String hotelId, UUID userId, UUID id, List<LineInput> inputs) {
         Order order = orders.findForUpdate(id, hotelId).orElseThrow(() -> missing("Order not found"));
         editable(order);
         if (payments.sumAmount(hotelId, id).signum() > 0) {
@@ -141,7 +141,7 @@ public class PosOrderService {
     }
 
     @Transactional
-    public OrderView cancel(UUID hotelId, UUID userId, UUID id, String reason) {
+    public OrderView cancel(String hotelId, UUID userId, UUID id, String reason) {
         Order order = orders.findForUpdate(id, hotelId).orElseThrow(() -> missing("Order not found"));
         if (payments.sumAmount(hotelId, id).signum() > 0) {
             throw conflict("An order with recorded payments cannot be cancelled");
@@ -158,10 +158,10 @@ public class PosOrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderView bill(UUID hotelId, UUID id) { return get(hotelId, id); }
+    public OrderView bill(String hotelId, UUID id) { return get(hotelId, id); }
 
     @Transactional
-    public PaymentView recordPayment(UUID hotelId, UUID userId, UUID orderId,
+    public PaymentView recordPayment(String hotelId, UUID userId, UUID orderId,
             PaymentMethod method, BigDecimal amount, String reference) {
         Order order = orders.findForUpdate(orderId, hotelId).orElseThrow(() -> missing("Order not found"));
         if (order.getStatus() != OrderStatus.OPEN) throw conflict("Payments can only be recorded for open orders");
@@ -192,18 +192,18 @@ public class PosOrderService {
     }
 
     @Transactional(readOnly = true)
-    public Receipt receiptForOrder(UUID hotelId, UUID orderId) {
+    public Receipt receiptForOrder(String hotelId, UUID orderId) {
         order(hotelId, orderId);
         return receipts.findByHotelIdAndOrderId(hotelId, orderId).orElseThrow(() -> missing("Receipt not found"));
     }
 
     @Transactional(readOnly = true)
-    public Receipt receiptByNumber(UUID hotelId, String number) {
+    public Receipt receiptByNumber(String hotelId, String number) {
         return receipts.findByHotelIdAndReceiptNumber(hotelId, number)
                 .orElseThrow(() -> missing("Receipt not found"));
     }
 
-    private CalculatedTotals replaceLines(Order order, UUID hotelId, List<LineInput> inputs) {
+    private CalculatedTotals replaceLines(Order order, String hotelId, List<LineInput> inputs) {
         validateLines(inputs);
         Set<UUID> itemIds = new HashSet<>();
         for (LineInput input : inputs) {
@@ -256,7 +256,7 @@ public class PosOrderService {
         return new CalculatedTotals(subtotal, discounts, taxes, total);
     }
 
-    private void applyInitialPayments(Order order, UUID hotelId, List<PaymentInput> initialPayments) {
+    private void applyInitialPayments(Order order, String hotelId, List<PaymentInput> initialPayments) {
         if (initialPayments == null || initialPayments.isEmpty()) return;
         BigDecimal paid = BigDecimal.ZERO.setScale(2);
         for (PaymentInput input : initialPayments) {
@@ -275,7 +275,7 @@ public class PosOrderService {
         }
     }
 
-    private void saveReceipt(UUID hotelId, Order order) {
+    private void saveReceipt(String hotelId, Order order) {
         if (receipts.findByHotelIdAndOrderId(hotelId, order.getId()).isPresent()) return;
         Hotel hotel = hotels.findByIdAndStatus(hotelId, "ACTIVE").orElseThrow(() -> missing("Hotel not found"));
         List<Map<String, Object>> lineSnapshot = lines.findAllByHotelIdAndOrderIdOrderById(hotelId, order.getId())
@@ -299,12 +299,12 @@ public class PosOrderService {
                 "R-" + UUID.randomUUID().toString().substring(0, 16).toUpperCase(), snapshot));
     }
 
-    private String currencyFor(UUID hotelId) {
+    private String currencyFor(String hotelId) {
         return hotels.findByIdAndStatus(hotelId, "ACTIVE").map(Hotel::getCurrencyCode)
                 .orElseThrow(() -> missing("Hotel not found"));
     }
 
-    private Order order(UUID hotelId, UUID id) {
+    private Order order(String hotelId, UUID id) {
         return orders.findByIdAndHotelId(id, hotelId).orElseThrow(() -> missing("Order not found"));
     }
 

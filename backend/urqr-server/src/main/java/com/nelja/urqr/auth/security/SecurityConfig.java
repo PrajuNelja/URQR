@@ -4,8 +4,11 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -13,6 +16,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,14 +32,16 @@ public class SecurityConfig {
     private final JsonAccessDeniedHandler accessDeniedHandler;
     private final HotelJwtAuthenticationConverter jwtConverter;
     private final TenantFilter tenantFilter;
+    private final OrderIdempotencyFilter orderIdempotencyFilter;
 
     public SecurityConfig(JsonAuthenticationEntryPoint authenticationEntryPoint,
             JsonAccessDeniedHandler accessDeniedHandler, HotelJwtAuthenticationConverter jwtConverter,
-            TenantFilter tenantFilter) {
+            TenantFilter tenantFilter, OrderIdempotencyFilter orderIdempotencyFilter) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
         this.jwtConverter = jwtConverter;
         this.tenantFilter = tenantFilter;
+        this.orderIdempotencyFilter = orderIdempotencyFilter;
     }
 
     @Bean
@@ -47,6 +53,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders")
+                        .hasAnyRole("MANAGER", "CASHIER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/realtime/token")
+                        .hasAnyRole("MANAGER", "CASHIER")
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/v3/api-docs/**",
                                 "/swagger-ui/**", "/swagger-ui.html", "/api/v1/auth/login", "/api/v1/auth/refresh",
                                 "/api/v1/platform/auth/login", "/api/v1/platform/auth/refresh")
@@ -56,7 +66,19 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
                 .addFilterAfter(tenantFilter, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
+                .addFilterAfter(orderIdempotencyFilter, AuthorizationFilter.class)
                 .build();
+    }
+
+    @Bean
+    FilterRegistrationBean<OrderIdempotencyFilter> orderIdempotencyFilterRegistration(
+            OrderIdempotencyFilter filter) {
+        FilterRegistrationBean<OrderIdempotencyFilter> registration = new FilterRegistrationBean<>(filter);
+        // Keep the servlet registration after Spring Security. The filter's
+        // effective execution stays in the security chain, where JWT auth exists.
+        registration.setOrder(Ordered.LOWEST_PRECEDENCE);
+        registration.setEnabled(true);
+        return registration;
     }
 
     @Bean
@@ -74,7 +96,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", "X-Correlation-ID", "X-Request-Id", "X-Hotel-ID"));
+        configuration.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", "Idempotency-Key",
+                "X-Correlation-ID", "X-Request-Id", "X-Hotel-ID", "X-Tenant-ID"));
         configuration.setExposedHeaders(List.of("X-Correlation-ID", "X-Request-Id"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(1800L);

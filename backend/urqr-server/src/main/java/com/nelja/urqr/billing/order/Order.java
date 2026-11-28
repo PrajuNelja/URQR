@@ -30,8 +30,8 @@ public class Order {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(name = "hotel_id", nullable = false)
-    private UUID hotelId;
+    @Column(name = "hotel_id", nullable = false, length = 64)
+    private String hotelId;
     @Column(name = "order_number", nullable = false, length = 40)
     private String orderNumber;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -66,7 +66,7 @@ public class Order {
 
     protected Order() { }
 
-    public Order(UUID hotelId, UUID userId, String number) {
+    public Order(String hotelId, UUID userId, String number) {
         this.hotelId = hotelId;
         createdBy = userId;
         orderNumber = number;
@@ -76,7 +76,7 @@ public class Order {
     @PreUpdate void touch() { updatedAt = Instant.now(); }
 
     public UUID getId() { return id; }
-    public UUID getHotelId() { return hotelId; }
+    public String getHotelId() { return hotelId; }
     public String getOrderNumber() { return orderNumber; }
     public OrderStatus getStatus() { return status; }
     public PaymentStatus getPaymentStatus() { return paymentStatus; }

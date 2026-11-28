@@ -73,6 +73,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CENTRIFUGO_API_URL: http://centrifugo:8000/api
       CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY:-urqr-local-api-key-change-me}
+      CENTRIFUGO_TOKEN_SECRET: ${CENTRIFUGO_TOKEN_SECRET:-urqr-local-token-secret-change-me}
+      CENTRIFUGO_TOKEN_TTL_SECONDS: ${CENTRIFUGO_TOKEN_TTL_SECONDS:-300}
+      IDEMPOTENCY_RESPONSE_TTL_SECONDS: ${IDEMPOTENCY_RESPONSE_TTL_SECONDS:-86400}
       OUTBOX_ENABLED: "true"
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"

@@ -20,7 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 @ExtendWith(MockitoExtension.class)
 class DailySalesControllerTest {
 
-    private static final UUID HOTEL_ID = UUID.randomUUID();
+    private static final String HOTEL_ID = UUID.randomUUID().toString();
 
     @Mock private DailySalesService service;
     @Mock private CurrentHotel tenant;

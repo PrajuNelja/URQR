@@ -41,8 +41,8 @@ class RlsAndAtomicityIntegrationTest {
 
     @Test
     void hotelASeesOnlyItsRowsAndRuntimeRoleCannotBypassRls() throws Exception {
-        UUID hotelA = UUID.randomUUID();
-        UUID hotelB = UUID.randomUUID();
+        String hotelA = UUID.randomUUID().toString();
+        String hotelB = UUID.randomUUID().toString();
         UUID categoryA = UUID.randomUUID();
         UUID categoryB = UUID.randomUUID();
 
@@ -84,7 +84,7 @@ class RlsAndAtomicityIntegrationTest {
 
     @Test
     void orderItemsPaymentsAndOutboxRollbackTogether() throws Exception {
-        UUID hotel = UUID.randomUUID();
+        String hotel = UUID.randomUUID().toString();
         UUID role = UUID.randomUUID();
         UUID user = UUID.randomUUID();
         UUID category = UUID.randomUUID();
@@ -167,7 +167,7 @@ class RlsAndAtomicityIntegrationTest {
         }
     }
 
-    private static void insertCategory(UUID hotelId, UUID categoryId) throws Exception {
+    private static void insertCategory(String hotelId, UUID categoryId) throws Exception {
         try (Connection owner = ownerConnection();
                 PreparedStatement insert = owner.prepareStatement(
                         "INSERT INTO menu_category(id,hotel_id,name,active) VALUES (?,?,?,true)")) {

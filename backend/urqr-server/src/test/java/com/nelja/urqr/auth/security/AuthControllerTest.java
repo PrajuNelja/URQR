@@ -40,7 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
-    private static final UUID HOTEL_ID = UUID.randomUUID();
+    private static final String HOTEL_ID = UUID.randomUUID().toString();
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID ROLE_ID = UUID.randomUUID();
 

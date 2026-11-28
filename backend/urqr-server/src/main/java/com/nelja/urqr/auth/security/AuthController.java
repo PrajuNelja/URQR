@@ -100,7 +100,10 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
         try {
-            UUID hotelId = UUID.fromString(refresh.getClaimAsString("hotel_id"));
+            String hotelId = refresh.getClaimAsString("hotel_id");
+            if (hotelId == null || hotelId.isBlank() || hotelId.length() > 64) {
+                throw new IllegalArgumentException("Invalid hotel identity");
+            }
             UUID userId = UUID.fromString(refresh.getClaimAsString("uid"));
             rls.bindHotel(hotelId);
             var hotel = hotels.findByIdAndStatus(hotelId, "ACTIVE");
@@ -128,5 +131,5 @@ public class AuthController {
     public record RefreshRequest(@NotBlank String refreshToken) { }
     public record LoginResponse(String accessToken, String tokenType, Instant expiresAt,
             String refreshToken, Instant refreshExpiresAt,
-            UUID userId, UUID hotelId, String username, String role) { }
+            UUID userId, String hotelId, String username, String role) { }
 }

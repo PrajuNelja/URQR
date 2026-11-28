@@ -21,8 +21,8 @@ public class OrderItem {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(name = "hotel_id", nullable = false)
-    private UUID hotelId;
+    @Column(name = "hotel_id", nullable = false, length = 64)
+    private String hotelId;
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
     @Column(name = "menu_item_id", nullable = false)
@@ -58,7 +58,7 @@ public class OrderItem {
 
     protected OrderItem() { }
 
-    public OrderItem(UUID hotelId, UUID orderId, UUID menuItemId, String name, BigDecimal price, int quantity,
+    public OrderItem(String hotelId, UUID orderId, UUID menuItemId, String name, BigDecimal price, int quantity,
             BigDecimal discount, BigDecimal cgst, BigDecimal sgst, BigDecimal vat, BigDecimal total) {
         this.hotelId = hotelId;
         this.orderId = orderId;
@@ -74,7 +74,7 @@ public class OrderItem {
     }
 
     public UUID getId() { return id; }
-    public UUID getHotelId() { return hotelId; }
+    public String getHotelId() { return hotelId; }
     public UUID getOrderId() { return orderId; }
     public UUID getMenuItemId() { return menuItemId; }
     public String getNameSnapshot() { return nameSnapshot; }
