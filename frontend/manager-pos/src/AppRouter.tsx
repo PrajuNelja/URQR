@@ -13,6 +13,7 @@ import Showcase from "./components/Showcase/Showcase";
 import Dashboard from "./pages/Table_Management/Components/Dashboard/Dashboard";
 import ManagerLogin from "./pages/Table_Management/Components/ManagerLogin";
 import Billing from "./pages/Table_Management/Components/Billing/Billing";
+import PosLayout from "./components/Layout/PosLayout";
 import { useAuthStore } from "./lib/authStore";
 
 // 1. Define the search schema for the login route (Day 3 Afternoon Task 2)
@@ -80,6 +81,12 @@ const loginRoute = createRoute({
   },
 });
 
+const posRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/pos",
+  component: PosLayout,
+});
+
 // 5. Dashboard route (PROTECTED)
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -107,8 +114,8 @@ const legacyDashboardRoute = createRoute({
 
 // 6. Billing route (Accessible directly in POS standalone mode)
 const billingRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/pos/billing",
+  getParentRoute: () => posRoute,
+  path: "billing",
   component: Billing,
 });
 
@@ -126,7 +133,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   dashboardRoute,
   legacyDashboardRoute,
-  billingRoute,
+  posRoute.addChildren([billingRoute]),
   showcaseRoute,
 ]);
 

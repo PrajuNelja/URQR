@@ -1,9 +1,13 @@
 import {
   useEffect,
+  useCallback,
+  useMemo,
   useRef,
   useState,
 } from "react";
 
+
+import { PosIcon } from "../../../../components/Icons/PosIcon";
 import { Button } from "../../../../components/Buttons/Button";
 import { OrderTotals } from "../../../../components/Cart/OrderTotals";
 import { useNotification } from "../../../../components/Notification/useNotification";
@@ -12,8 +16,7 @@ import { VirtualKeyboard } from "../../../../components/Keyboard/VirtualKeyboard
 import { TAX_RATE } from "../../Config/billing.config";
 import { useBilling } from "../../Hooks/useBilling";
 
-import { BillingHeader } from "./BillingHeader";
-import { BillingSidebar } from "./BillingSidebar";
+import { usePosPageHeader } from "../../../../components/Layout/PosLayoutContext";
 import { BillingCatalog } from "./BillingCatalog";
 import { BillingCart } from "./BillingCart";
 import { OrderSummarySkeleton } from "./BillingSkeleton";
@@ -25,6 +28,7 @@ const generateOrderId = (): string =>
   String(
     Math.floor(1000 + Math.random() * 9000)
   );
+  
 
 export default function Billing() {
   // ==========================================
@@ -66,13 +70,10 @@ export default function Billing() {
   // MODAL STATES
   // ==========================================
 
-  const [sidebarCollapsed, setSidebarCollapsed] =
+  const [showSkeleton] =
     useState(false);
 
-  const [showSkeleton, setShowSkeleton] =
-    useState(false);
-
-  const [isDark, setIsDark] = useState(() => {
+  const [isDark] = useState(() => {
     if (typeof document !== "undefined") {
       return document.documentElement.classList.contains("dark");
     }
@@ -169,18 +170,30 @@ export default function Billing() {
   // VIRTUAL KEYBOARD
   // ==========================================
 
-  const toggleKeyboard = () => {
+  const toggleKeyboard = useCallback(() => {
     if (billingLocked) return;
 
     setKeyboardOpen(
       (previous) => !previous
     );
-  };
+  }, [billingLocked]);
 
-  const clearProductSearch = () => {
+  const clearProductSearch = useCallback(() => {
     setSearchQuery("");
     setActiveTab("all");
-  };
+  }, [setSearchQuery, setActiveTab]);
+
+  const pageHeader = useMemo(() => ({
+    searchText: searchQuery,
+    onSearchChange: setSearchQuery,
+    searchInputRef: searchRef,
+    isKeyboardOpen: keyboardOpen,
+    onToggleKeyboard: toggleKeyboard,
+    onClearSearch: clearProductSearch,
+    navigationLocked: billingLocked,
+  }), [searchQuery, setSearchQuery, keyboardOpen, toggleKeyboard, clearProductSearch, billingLocked]);
+
+  usePosPageHeader(pageHeader);
 
   const closeKeyboard = () => {
     setKeyboardOpen(false);
@@ -268,59 +281,9 @@ export default function Billing() {
   // ==========================================
 
   return (
-    <main
-      className={`urqr-billing-screen dashboard-shell${sidebarCollapsed ? " dashboard-shell--collapsed" : ""}`}
-    >
-
-      {/* =================================
-          BILLING HEADER
-          ================================= */}
-
-      <BillingHeader
-        searchText={searchQuery}
-
-        onSearchChange={setSearchQuery}
-
-        searchInputRef={searchRef}
-
-        onMenuClick={() => {
-          if (!billingLocked) {
-            setSidebarCollapsed((collapsed) => !collapsed);
-          }
-        }}
-
-        menuOpen={!sidebarCollapsed}
-
-        isKeyboardOpen={keyboardOpen}
-
-        onToggleKeyboard={toggleKeyboard}
-
-        onClearSearch={clearProductSearch}
-
-        isSkeletonPreview={showSkeleton}
-
-        onToggleSkeleton={() => setShowSkeleton((prev) => !prev)}
-
-        isDark={isDark}
-
-        onToggleTheme={() => setIsDark((prev) => !prev)}
-      />
-
-      {/* =================================
-          BILLING SIDEBAR (MATCHES DASHBOARD)
-          ================================= */}
-
-      <BillingSidebar
-        collapsed={sidebarCollapsed}
-      />
-
+    <>
       <div
         className="urqr-billing-workspace"
-        style={{
-          marginLeft: sidebarCollapsed ? "72px" : "240px",
-          width: sidebarCollapsed ? "calc(100% - 72px)" : "calc(100% - 240px)",
-          transition: "margin-left 180ms ease, width 180ms ease",
-        }}
       >
 
         {/* =================================
@@ -441,6 +404,7 @@ export default function Billing() {
               {/* HOLD CART */}
 
               <Button
+                leftIcon={<PosIcon name="cart" size={20} aria-hidden="true" />}
                 variant="outline"
 
                 className="
@@ -467,7 +431,7 @@ export default function Billing() {
                   );
                 }}
               >
-                ⏸️ Hold Cart{" "}
+                Hold Cart{" "}
 
                 {heldCarts.length > 0 &&
                   `(${heldCarts.length})`}
@@ -614,7 +578,7 @@ export default function Billing() {
             </Button>
 
             {/* =================================
-                SELECT PAYMENT METHOD
+                Proceed to Pay
                 ================================= */}
 
             <Button
@@ -637,12 +601,9 @@ export default function Billing() {
             >
               {isCheckoutSubmitting
                 ? "PROCESSING PAYMENT..."
-                : "SELECT PAYMENT METHOD"}
+                : "Proceed to Pay"}
             </Button>
 
-            <p className="urqr-billing-pay-hint">
-              Cash · UPI · Others
-            </p>
           </div>
         </aside>
         )}
@@ -730,18 +691,18 @@ export default function Billing() {
 
         // =================================
         // TYPESCRIPT ERROR FIX
-        // Promise<boolean>, not Promise<void>
+        // Return backend confirmation or buffered status.
         // =================================
 
         onConfirmPayment={async (
           checkout
-        ): Promise<boolean> => {
+        ): Promise<boolean | "buffered"> => {
           const completed =
             await handleCompletePayment(
               checkout
             );
 
-          // Return actual API confirmation.
+          // Return actual checkout outcome.
           // Do not close checkout here.
           return completed;
         }}
@@ -767,6 +728,6 @@ export default function Billing() {
 
         receipt={receipt}
       />
-    </main>
+    </>
   );
 }

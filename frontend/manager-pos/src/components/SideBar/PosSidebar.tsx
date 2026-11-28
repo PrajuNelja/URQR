@@ -1,14 +1,12 @@
-// src/pages/Table_Management/Components/Billing/BillingSidebar.tsx
+// src/components/SideBar/PosSidebar.tsx
+import "../../Styles/PosNavigation.css";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  LayoutDashboard,
-  LogOut,
-  ReceiptText,
-} from "lucide-react";
+import { PosIcon } from "../Icons/PosIcon";
+import { Button } from "../Buttons/Button";
 
-import { useAuthStore } from "../../../../lib/authStore";
+import { useAuthStore } from "../../lib/authStore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,17 +14,16 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogTitle,
-} from "../../../../components/ui/alert-dialog";
+} from "../ui/alert-dialog";
 
-interface BillingSidebarProps {
+export interface PosSidebarProps {
   collapsed?: boolean;
-  isOpen?: boolean;
-  onClose?: () => void;
+
 }
 
-export function BillingSidebar({
+export function PosSidebar({
   collapsed = false,
-}: BillingSidebarProps) {
+}: PosSidebarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -45,31 +42,38 @@ export function BillingSidebar({
     <>
       <aside
         className={`dashboard-sidebar${collapsed ? " dashboard-sidebar--collapsed" : ""}`}
-        aria-label="Billing navigation"
+        id="pos-sidebar"
+        aria-label="POS navigation"
       >
         <nav className="dashboard-sidebar-nav">
           <Link
-            className="dashboard-nav-link dashboard-nav-link--active"
-            to="/pos/billing"
-            aria-current="page"
+            className="dashboard-nav-link"
+            activeProps={{ className: "dashboard-nav-link dashboard-nav-link--active", "aria-current": "page" }}
+            activeOptions={{ exact: true }}
+            to="/pos/billing" aria-label="Billing" title="Billing"
           >
-            <ReceiptText size={19} aria-hidden="true" />
+            <PosIcon name="billing" size={19} aria-hidden="true" />
             <span>Billing</span>
           </Link>
-          <Link className="dashboard-nav-link" to="/pos/dashboard">
-            <LayoutDashboard size={19} aria-hidden="true" />
+          <Link className="dashboard-nav-link" to="/pos/dashboard" aria-label="Dashboard" title="Dashboard"
+            activeProps={{ className: "dashboard-nav-link dashboard-nav-link--active", "aria-current": "page" }}
+            activeOptions={{ exact: true }}>
+            <PosIcon name="dashboard" size={19} aria-hidden="true" />
             <span>Dashboard</span>
           </Link>
         </nav>
         <div className="dashboard-sidebar-footer">
-          <button
+          <Button
+            variant="ghost"
+            fullWidth
+            aria-label="Logout"
+            leftIcon={<PosIcon name="logout" size={20} />}
             type="button"
             className="dashboard-nav-link dashboard-logout-button"
             onClick={() => setLogoutConfirmationOpen(true)}
           >
-            <LogOut size={19} aria-hidden="true" />
-            <span>Logout</span>
-          </button>
+            Logout
+          </Button>
         </div>
       </aside>
 
@@ -81,7 +85,7 @@ export function BillingSidebar({
           <div className="flex flex-col items-center text-center">
             {/* Centered Large Alert Icon Badge */}
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF1F1] dark:bg-[#361A1A] border-2 border-[#FEE2E2] dark:border-[#4A2020] text-[#B91C1C] dark:text-[#E55353] shadow-xs mb-4">
-              <LogOut size={28} strokeWidth={2.5} className="translate-x-0.5" aria-hidden="true" />
+              <PosIcon name="logout" size={28} strokeWidth={2.5} className="translate-x-0.5" aria-hidden="true" />
             </div>
 
             <AlertDialogTitle className="text-xl font-bold tracking-tight text-[#3B2A1E] dark:text-[#F5EEE0]">
@@ -110,4 +114,4 @@ export function BillingSidebar({
   );
 }
 
-export default BillingSidebar;
+export default PosSidebar;

@@ -1,5 +1,5 @@
 
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 // Header variants
 export type HeaderVariant =
@@ -15,6 +15,7 @@ export interface HeaderNavItem {
 
 // Reusable Header props
 export interface HeaderProps {
+  headerRef?: Ref<HTMLElement>;
   variant?: HeaderVariant;
 
   // Left side
