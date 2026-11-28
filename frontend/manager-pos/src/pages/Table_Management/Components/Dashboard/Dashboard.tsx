@@ -1,42 +1,34 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useAuthStore } from "../../../../lib/authStore";
+import { useSearch } from "@tanstack/react-router";
+import { BillingHeader } from "../Billing/BillingHeader";
+import { BillingSidebar } from "../Billing/BillingSidebar";
 import { DashboardKpiGrid } from "../../../../components/Dashboard/DashboardKpiGrid";
 import { DashboardBreakdown } from "../../../../components/Dashboard/DashboardBreakdown";
 import { DashboardOrdersTable } from "../../../../components/Dashboard/DashboardOrdersTable";
 import { DashboardOrderDrawer } from "../../../../components/Dashboard/DashboardOrderDrawer";
 import { downloadDashboardOrdersCsv } from "../../../../components/Dashboard/DashboardOrdersExport";
+import { VirtualKeyboard } from "../../../../components/Keyboard/VirtualKeyboard";
 import { MOCK_ORDERS, MOCK_ORDERS_DB } from "../../Config/Dashboard.config";
 import { useAnalyticsSummary } from "./useAnalyticsSummary";
 import "../../../../Styles/Dashboard.css";
 
 export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState("Custom");
   const [selectedOrderId, setSelectedOrderId] = useState<string>("#ORD1284");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const dateFilterBtnRef = useRef<HTMLButtonElement>(null);
   const datePopoverRef = useRef<HTMLDivElement>(null);
-
-  const clearAuth = useAuthStore((state) => state.clearAuth);
-  const navigate = useNavigate();
 
   const search = useSearch({ from: "/pos/dashboard" });
   const from = search.from ?? "2026-10-17";
   const to = search.to ?? "2026-10-23";
   const summaryQuery = useAnalyticsSummary(from, to);
-
-  // Sync sidebar collapse with document.body class
-  useEffect(() => {
-    if (sidebarCollapsed) {
-      document.body.classList.add("sidebar-collapsed");
-    } else {
-      document.body.classList.remove("sidebar-collapsed");
-    }
-  }, [sidebarCollapsed]);
 
   // Keyboard shortcut Ctrl+B / Cmd+B for sidebar toggle
   useEffect(() => {
@@ -47,7 +39,7 @@ export default function Dashboard() {
       }
       if (e.key === "Escape") {
         setDatePopoverOpen(false);
-        setLogoutModalOpen(false);
+        setKeyboardOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -70,12 +62,6 @@ export default function Dashboard() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [datePopoverOpen]);
-
-  const handleLogout = () => {
-    setLogoutModalOpen(false);
-    clearAuth();
-    void navigate({ to: "/login", replace: true });
-  };
 
   const handleSelectOrder = (orderId: string) => {
     setSelectedOrderId(orderId);
@@ -124,119 +110,27 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="bg-[#F5EEE0] min-h-screen text-[#3B2A1E] antialiased" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
-      {/* ================= FIXED TOPBAR ================= */}
-      <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-[#FFFDF8] border-b border-[#E4D8C3] shadow-[0_1px_4px_rgba(59,42,30,0.04)] px-6 flex items-center justify-between">
-        <div className="flex items-center gap-4 w-64">
-          <button
-            type="button"
-            id="sidebarToggleBtn"
-            aria-label="Toggle Navigation Menu"
-            aria-expanded={!sidebarCollapsed}
-            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-            className="w-10 h-10 -ml-1 rounded-lg flex items-center justify-center text-[#3B2A1E] hover:bg-[#FAF3E6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/20 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[20px]">menu</span>
-          </button>
-          <div className="w-10 h-10 rounded bg-[#5C3D26] flex items-center justify-center text-[#FFFDF8] font-bold shadow-sm">
-            <span className="material-symbols-outlined text-[20px]">restaurant</span>
-          </div>
-          <div className="flex flex-col">
-            <span
-              className="text-base font-bold text-[#5C3D26] tracking-tight leading-none"
-              style={{ fontFamily: "Newsreader, Georgia, serif" }}
-            >
-              GRAND HORIZON
-            </span>
-            <span className="text-[10px] text-[#7A6A5A] tracking-wider uppercase mt-0.5 font-semibold">
-              URQR POS v2.4
-            </span>
-          </div>
-        </div>
+    <div
+      className={`dashboard-shell urqr-dashboard-screen antialiased${
+        sidebarCollapsed ? " dashboard-shell--collapsed" : ""
+      }`}
+      style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}
+    >
+      <BillingHeader
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        searchInputRef={searchInputRef}
+        onMenuClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        menuOpen={!sidebarCollapsed}
+        isKeyboardOpen={keyboardOpen}
+        onToggleKeyboard={() => setKeyboardOpen((open) => !open)}
+        onClearSearch={() => setSearchText("")}
+      />
 
-        {/* Global Search Bar */}
-        <div className="flex-1 max-w-xl mx-6">
-          <div className="relative flex items-center w-full">
-            <span className="material-symbols-outlined absolute left-4 text-[#7A6A5A] text-[20px] pointer-events-none">
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Search items, reports, orders..."
-              className="w-full h-10 pl-10 pr-12 rounded-lg bg-[#FAF3E6] border border-[#E4D8C3] text-sm text-[#3B2A1E] placeholder:text-[#7A6A5A] focus:outline-none focus:bg-[#FFFDF8] focus:border-[#8B5E3C] focus:ring-2 focus:ring-[#8B5E3C]/20 transition-all"
-            />
-            <span
-              className="absolute right-2 px-1 py-0.5 rounded bg-[#FFFDF8] border border-[#E4D8C3] text-[#7A6A5A] text-[11px]"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              F2
-            </span>
-          </div>
-        </div>
+      <BillingSidebar collapsed={sidebarCollapsed} />
 
-        {/* Status & Clock */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 px-4 py-1 rounded-full bg-[#EEF3E8] border border-[#3F6B3A]/20 text-[#3F6B3A] text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-[#3F6B3A] animate-pulse" />
-            <span>Online</span>
-          </div>
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#FAF3E6] border border-[#E4D8C3] text-[#7A6A5A] text-xs">
-            <span className="material-symbols-outlined text-[18px]">schedule</span>
-            <span>Thu, 26 Nov, 2026</span>
-          </div>
-        </div>
-      </header>
-
-      {/* ================= FIXED SIDEBAR ================= */}
-      <aside
-        id="mainSidebar"
-        aria-label="Main Navigation"
-        className="fixed left-0 top-16 bottom-0 w-64 bg-[#FFFDF8] border-r border-[#E4D8C3] z-40 flex flex-col justify-between py-4 px-4 shadow-[1px_0_6px_rgba(59,42,30,0.02)] transition-all duration-300 overflow-hidden"
-      >
-        <nav className="flex flex-col gap-1">
-          <Link
-            to="/pos/billing"
-            data-path="billing"
-            className="flex items-center gap-4 px-4 py-2.5 rounded-lg text-sm text-[#7A6A5A] hover:bg-[#FAF3E6] hover:text-[#3B2A1E] transition-all font-medium"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              point_of_sale
-            </span>
-            <span>Billing</span>
-          </Link>
-          <Link
-            to="/pos/dashboard"
-            data-path="dashboard"
-            aria-current="page"
-            className="flex items-center gap-4 px-4 py-2.5 rounded-lg transition-all bg-[#5C3D26] text-[#FFFFFF] font-bold shadow-[0_2px_8px_rgba(92,61,38,0.25)]"
-          >
-            <span className="material-symbols-outlined text-[20px]">analytics</span>
-            <span>Dashboard</span>
-          </Link>
-        </nav>
-
-        <div className="pt-4 border-t border-[#E4D8C3] mt-auto">
-          <button
-            type="button"
-            id="logoutBtn"
-            onClick={() => setLogoutModalOpen(true)}
-            className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-sm text-[#7A6A5A] hover:bg-[#FDF1E1] hover:text-[#B91C1C] transition-all focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/20"
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* ================= MAIN CONTENT WRAPPER ================= */}
-      <div
-        id="mainContentWrapper"
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? "pl-20" : "pl-64"
-        }`}
-      >
-        <main className="relative pt-[88px] min-h-screen bg-[#F5EEE0] w-full px-6 pb-6">
-          <div className="flex flex-col w-full text-[#3B2A1E]">
+      <main className="dashboard-main">
+        <div className="flex flex-col w-full text-[#3B2A1E]">
             {/* Header Controls & Telemetry Action Bar */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4">
               <div className="flex flex-col">
@@ -277,9 +171,8 @@ export default function Dashboard() {
                     </span>
                     <span
                       id="dateChevron"
-                      className={`material-symbols-outlined text-[18px] text-[#7A6A5A] transition-transform duration-200 ${
-                        datePopoverOpen ? "rotate-180" : ""
-                      }`}
+                      className={`material-symbols-outlined text-[18px] text-[#7A6A5A] transition-transform duration-200 ${datePopoverOpen ? "rotate-180" : ""
+                        }`}
                     >
                       expand_more
                     </span>
@@ -312,11 +205,10 @@ export default function Dashboard() {
                               key={preset}
                               type="button"
                               onClick={() => setSelectedPreset(preset)}
-                              className={`py-1.5 text-xs transition-all rounded cursor-pointer ${
-                                isActive
-                                  ? "font-bold text-[#FFFFFF] bg-[#5C3D26] shadow-sm"
-                                  : "font-semibold text-[#7A6A5A] hover:bg-[#FFFDF8]"
-                              }`}
+                              className={`py-1.5 text-xs transition-all rounded cursor-pointer ${isActive
+                                ? "font-bold text-[#FFFFFF] bg-[#5C3D26] shadow-sm"
+                                : "font-semibold text-[#7A6A5A] hover:bg-[#FFFDF8]"
+                                }`}
                             >
                               {preset}
                             </button>
@@ -517,9 +409,24 @@ export default function Dashboard() {
 
             {/* Order Details Table Section */}
             <DashboardOrdersTable onSelectOrder={handleSelectOrder} />
-          </div>
-        </main>
-      </div>
+        </div>
+      </main>
+
+      {keyboardOpen && (
+        <div
+          className="dashboard-keyboard-dock"
+          role="region"
+          aria-label="Dashboard touch keyboard"
+        >
+          <VirtualKeyboard
+            isOpen={keyboardOpen}
+            onKeyPress={(key) => setSearchText((prev) => prev + key)}
+            onBackspace={() => setSearchText((prev) => prev.slice(0, -1))}
+            onClear={() => setSearchText("")}
+            onEnter={() => setKeyboardOpen(false)}
+          />
+        </div>
+      )}
 
       {/* ================= ORDER DETAIL DRAWER ================= */}
       <DashboardOrderDrawer
@@ -527,58 +434,6 @@ export default function Dashboard() {
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       />
-
-      {/* ================= LOGOUT CONFIRMATION MODAL ================= */}
-      {logoutModalOpen && (
-        <div
-          id="logoutModal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="logoutModalTitle"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3B2A1E]/45 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setLogoutModalOpen(false);
-          }}
-        >
-          <div className="w-full max-w-md bg-[#FFFDF8] border border-[#E4D8C3] rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#FDF1E1] border border-[#E4D8C3] text-[#B91C1C] flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[22px]">logout</span>
-              </div>
-              <div>
-                <h4
-                  id="logoutModalTitle"
-                  className="text-lg font-bold text-[#3B2A1E]"
-                  style={{ fontFamily: "Newsreader, Georgia, serif" }}
-                >
-                  Sign out of URQR POS?
-                </h4>
-                <p className="text-xs text-[#7A6A5A] mt-0.5">
-                  Your active shift session and register will remain securely saved.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#E4D8C3]">
-              <button
-                type="button"
-                id="cancelLogoutBtn"
-                onClick={() => setLogoutModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-[#FAF3E6] border border-[#E4D8C3] text-[#3B2A1E] text-xs font-semibold hover:bg-[#E4D8C3]/40 transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                id="confirmLogoutBtn"
-                onClick={handleLogout}
-                className="px-4 py-2 rounded-lg bg-[#B91C1C] hover:bg-[#991B1B] text-[#FFFFFF] text-xs font-bold transition-all shadow-sm cursor-pointer"
-              >
-                Confirm Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
