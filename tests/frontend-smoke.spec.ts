@@ -30,15 +30,16 @@ test('URQR frontend server and asset bundles are available without network drop'
     const response = await page.goto(frontendUrl, { timeout: 10000 });
     expect(response).not.toBeNull();
     expect(response!.status()).toBe(200);
-
-    // Verify main app root container exists and renders
-    const rootOrBody = page.locator('#root, body');
-    await expect(rootOrBody).not.toBeEmpty();
-
-    // Verify asset delivery integrity
-    expect(failedAssets).toEqual([]);
-    expect(jsAssets.length).toBeGreaterThan(0);
   } catch (error) {
     test.skip(true, 'Frontend dev server not running on port 5173. Start dev server to test live assets.');
+    return;
   }
+
+  // Verify main app root container exists and renders
+  const rootOrBody = page.locator('#root, body');
+  await expect(rootOrBody).not.toBeEmpty();
+
+  // Verify asset delivery integrity
+  expect(failedAssets).toEqual([]);
+  expect(jsAssets.length).toBeGreaterThan(0);
 });

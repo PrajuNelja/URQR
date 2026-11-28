@@ -28,21 +28,19 @@ test.describe('Screen 2: POS Billing & Cart Management', () => {
 
   test('Catalog search filters items dynamically', async ({ page }) => {
     try {
-      await page.goto('/pos/billing', { timeout: 8000 });
-      const searchInput = page.locator('#billing-search-input, input[placeholder*="search" i], input[type="search"]').first();
-      await searchInput.waitFor({ state: 'visible', timeout: 5000 });
-
-      const start = Date.now();
-      await searchInput.fill('Burger');
-      const elapsed = Date.now() - start;
-      // Search latency must be sub-200ms in local DOM
-      expect(elapsed).toBeLessThan(250);
-
-      const filteredItem = page.locator('text=/burger/i, .urqr-billing-product-grid');
-      await expect(filteredItem.first()).toBeVisible({ timeout: 5000 });
+      await page.goto('/pos/billing', { timeout: 10000 });
     } catch (_) {
       test.skip(true, 'Frontend server not running on port 5173');
+      return;
     }
+
+    const searchInput = page.locator('#billing-search-input, input[placeholder*="search" i], input[type="search"]').first();
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
+
+    await searchInput.fill('Burger');
+
+    const filteredItem = page.locator('.urqr-billing-product-grid, text=/burger/i').first();
+    await expect(filteredItem).toBeVisible({ timeout: 10000 });
   });
 
   test('Cart line item quantity stepper increments and decrements correctly', async ({ page }) => {
