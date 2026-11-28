@@ -1,5 +1,24 @@
 @import url("https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700&display=swap");
 
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
 .dashboard-shell {
   --dashboard-ink: #3b2a1e;
   --dashboard-secondary: #7a6a5a;
@@ -1697,3 +1716,38 @@
     flex-direction: column;
   }
 }
+
+@keyframes fadeInRow {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.sidebar-collapsed #mainSidebar {
+  width: 5rem !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+body.sidebar-collapsed #mainSidebar nav a {
+  justify-content: center !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+body.sidebar-collapsed #mainSidebar #logoutBtn {
+  justify-content: center !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+body.sidebar-collapsed #mainSidebar nav a span:not(.material-symbols-outlined),
+body.sidebar-collapsed #mainSidebar #logoutBtn span:not(.material-symbols-outlined) {
+  display: none !important;
+}
+body.sidebar-collapsed #mainContentWrapper {
+  padding-left: 5rem !important;
+}
+
