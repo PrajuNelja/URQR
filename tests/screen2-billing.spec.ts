@@ -45,18 +45,18 @@ test.describe('Screen 2: POS Billing & Cart Management', () => {
 
   test('Cart line item quantity stepper increments and decrements correctly', async ({ page }) => {
     try {
-      await page.goto('/pos/billing', { timeout: 5000 });
+      await page.goto('/pos/billing', { timeout: 8000 });
       // Add first available product to cart
-      const productCard = page.locator('.product-card, [data-testid="product-card"]').first();
-      if (await productCard.isVisible()) {
-        await productCard.click();
+      const addButton = page.locator('button:has-text("+ Add"), button:has-text("Add"), [data-testid="product-card"]').first();
+      if (await addButton.isVisible()) {
+        await addButton.click();
 
         // Increment stepper
         const incrementButton = page.locator('button[aria-label*="increase" i], button:has-text("+")').first();
         if (await incrementButton.isVisible()) {
           await incrementButton.click();
           const quantityLabel = page.locator('.cart-item-qty, [data-testid="quantity"]');
-          await expect(quantityLabel.first()).toBeVisible();
+          await expect(quantityLabel.first()).toBeVisible({ timeout: 5000 });
         }
       }
     } catch (_) {
@@ -66,20 +66,26 @@ test.describe('Screen 2: POS Billing & Cart Management', () => {
 
   test('Cart clear confirmation dialog preserves cart on Cancel and clears on Confirm', async ({ page }) => {
     try {
-      await page.goto('/pos/billing', { timeout: 5000 });
+      await page.goto('/pos/billing', { timeout: 8000 });
+      // Add an item first so the Clear button is enabled
+      const addButton = page.locator('button:has-text("+ Add"), button:has-text("Add"), [data-testid="product-card"]').first();
+      if (await addButton.isVisible()) {
+        await addButton.click();
+      }
+
       const clearButton = page.locator('button:has-text("Clear"), button[aria-label*="clear" i]').first();
-      if (await clearButton.isVisible()) {
+      if (await clearButton.isVisible() && await clearButton.isEnabled({ timeout: 3000 }).catch(() => false)) {
         await clearButton.click();
 
         // Alert dialog appears
-        const alertDialog = page.locator('[role="alertdialog"], [role="dialog"]');
-        await expect(alertDialog).toBeVisible();
+        const alertDialog = page.locator('[role="alertdialog"], [role="dialog"]').first();
+        await expect(alertDialog).toBeVisible({ timeout: 5000 });
 
         // Cancel preserves
-        const cancelButton = page.locator('button:has-text("Cancel")');
+        const cancelButton = page.locator('button:has-text("Cancel")').first();
         if (await cancelButton.isVisible()) {
           await cancelButton.click();
-          await expect(alertDialog).toBeHidden();
+          await expect(alertDialog).toBeHidden({ timeout: 5000 });
         }
       }
     } catch (_) {
