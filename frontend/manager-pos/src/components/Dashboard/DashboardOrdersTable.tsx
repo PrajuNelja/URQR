@@ -82,9 +82,9 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
   };
 
   return (
-    <div className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl shadow-sm overflow-hidden mb-6">
+    <div className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl shadow-sm overflow-hidden mb-gutter-lg">
       {/* Top Section Header */}
-      <div className="p-6 border-b border-[#E4D8C3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-space-lg border-b border-[#E4D8C3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h3
             className="text-xl font-bold text-[#3B2A1E]"
@@ -108,7 +108,7 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
         <div className="flex items-center flex-wrap gap-2.5">
           {/* Search + Filter Dropdown */}
           <div className="relative flex items-center" id="orderSearchFilterWrapper">
-            <span className="material-symbols-outlined absolute left-3 text-[#7A6A5A] text-[18px] pointer-events-none">
+            <span className="material-symbols-outlined absolute left-space-md text-[#7A6A5A] text-[18px] pointer-events-none">
               search
             </span>
             <input
@@ -117,7 +117,7 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by Order ID, Items..."
-              className="h-9 pl-9 pr-8 rounded-lg bg-[#FAF3E6] border border-[#E4D8C3] text-xs text-[#3B2A1E] placeholder:text-[#7A6A5A] focus:outline-none focus:bg-[#FFFDF8] focus:border-[#8B5E3C] transition-all w-64"
+              className="h-9 pl-9 pr-8 rounded-lg bg-[#FAF3E6] border border-[#E4D8C3] font-body-md text-xs text-[#3B2A1E] placeholder:text-[#7A6A5A] focus:outline-none focus:bg-[#FFFDF8] focus:border-[#8B5E3C] transition-all w-64"
             />
             <button
               ref={dropdownBtnRef}
@@ -126,7 +126,7 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
               aria-label="Filter payment modes"
               aria-expanded={dropdownOpen}
               onClick={() => setDropdownOpen((open) => !open)}
-              className="absolute right-2 text-[#7A6A5A] hover:text-[#3B2A1E] flex items-center justify-center p-0.5 rounded cursor-pointer transition-colors"
+              className="absolute right-space-sm text-[#7A6A5A] hover:text-[#3B2A1E] flex items-center justify-center p-0.5 rounded cursor-pointer transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">
                 filter_list
@@ -183,7 +183,7 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
           <button
             type="button"
             onClick={() => downloadDashboardOrdersCsv(MOCK_ORDERS)}
-            className="h-9 px-4 bg-[#5C3D26] hover:bg-[#3B2A1E] text-[#FFFFFF] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="h-9 px-space-md bg-[#5C3D26] hover:bg-[#3B2A1E] text-[#FFFFFF] font-label-md text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">download</span>
             <span>Export CSV</span>
@@ -194,26 +194,26 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
       {/* Orders Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-[#FAF3E6] text-[#7A6A5A] text-[11px] uppercase tracking-wider border-b border-[#E4D8C3]">
+          <thead className="bg-[#FAF3E6] text-[#7A6A5A] font-label-sm text-[11px] uppercase tracking-wider border-b border-[#E4D8C3]">
             <tr>
-              <th className="py-3 px-4 font-bold">Date</th>
-              <th className="py-3 px-4 font-bold">Time</th>
-              <th className="py-3 px-4 font-bold">Order ID</th>
-              <th className="py-3 px-4 font-bold">Items</th>
-              <th className="py-3 px-4 font-bold text-right">Before Tax</th>
-              <th className="py-3 px-4 font-bold text-right">After Tax</th>
-              <th className="py-3 px-4 font-bold">Payment Mode</th>
-              <th className="py-3 px-4 font-bold text-center">Status</th>
-              <th className="py-3 px-4 font-bold text-center">Action</th>
+              <th className="py-3 px-space-md font-bold">Date</th>
+              <th className="py-3 px-space-md font-bold">Time</th>
+              <th className="py-3 px-space-md font-bold">Order ID</th>
+              <th className="py-3 px-space-md font-bold">Items</th>
+              <th className="py-3 px-space-md font-bold text-right">Before Tax</th>
+              <th className="py-3 px-space-md font-bold text-right">After Tax</th>
+              <th className="py-3 px-space-md font-bold">Payment Mode</th>
+              <th className="py-3 px-space-md font-bold text-center">Status</th>
+              <th className="py-3 px-space-md font-bold text-center">Action</th>
             </tr>
           </thead>
           <tbody
             id="orderTableBody"
-            className="divide-y divide-[#E4D8C3]/60 text-xs text-[#3B2A1E]"
+            className="divide-y divide-[#E4D8C3]/60 text-xs font-body-md text-[#3B2A1E]"
           >
             {filteredOrders.length === 0 ? (
               <tr id="orderEmptyStateRow">
-                <td className="py-8 px-4 text-center" colSpan={9}>
+                <td className="py-8 px-space-md text-center" colSpan={9}>
                   <div className="flex flex-col items-center justify-center gap-2">
                     <span className="material-symbols-outlined text-3xl text-[#7A6A5A]/70">
                       search_off
@@ -238,35 +238,35 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
                     onClick={() => onSelectOrder?.(order.orderId)}
                     className="order-table-row hover:bg-[#FAF3E6]/60 transition-colors cursor-pointer"
                   >
-                    <td className="py-3 px-4 whitespace-nowrap font-medium">
+                    <td className="py-3 px-space-md whitespace-nowrap font-medium">
                       {order.date}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap text-[#7A6A5A]">
+                    <td className="py-3 px-space-md whitespace-nowrap text-[#7A6A5A]">
                       {order.time}
                     </td>
                     <td
-                      className="py-3 px-4 whitespace-nowrap font-ticket-mono font-bold text-[#5C3D26]"
+                      className="py-3 px-space-md whitespace-nowrap font-ticket-mono font-bold text-[#5C3D26]"
                       style={{ fontFamily: "'JetBrains Mono', monospace" }}
                     >
                       {order.orderId}
                     </td>
-                    <td className="py-3 px-4 font-medium text-[#3B2A1E]">
+                    <td className="py-3 px-space-md font-medium text-[#3B2A1E]">
                       {order.items}
                     </td>
                     <td
-                      className="py-3 px-4 whitespace-nowrap text-right font-ticket-mono text-[#7A6A5A]"
+                      className="py-3 px-space-md whitespace-nowrap text-right font-ticket-mono text-[#7A6A5A]"
                       style={{ fontFamily: "'JetBrains Mono', monospace" }}
                     >
                       {order.beforeTax}
                     </td>
                     <td
-                      className="py-3 px-4 whitespace-nowrap text-right font-ticket-mono font-bold text-[#3B2A1E]"
+                      className="py-3 px-space-md whitespace-nowrap text-right font-ticket-mono font-bold text-[#3B2A1E]"
                       style={{ fontFamily: "'JetBrains Mono', monospace" }}
                     >
                       {order.afterTax}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FAF3E6] border border-[#E4D8C3] text-[11px] font-medium text-[#7A6A5A]">
+                    <td className="py-3 px-space-md whitespace-nowrap">
+                      <span className="inline-flex items-center gap-space-xs px-2 py-0.5 rounded bg-[#FAF3E6] border border-[#E4D8C3] text-[11px] font-medium text-[#7A6A5A]">
                         <span
                           className="w-1.5 h-1.5 rounded-full"
                           style={{
@@ -276,9 +276,9 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
                         {getPaymentLabel(order.paymentMode)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap text-center">
+                    <td className="py-3 px-space-md whitespace-nowrap text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${
+                        className={`inline-flex items-center gap-space-xs px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${
                           isCancelled
                             ? "bg-[#FDF1E1] border-[#B91C1C]/20 text-[#B91C1C]"
                             : "bg-[#EEF3E8] border-[#3F6B3A]/20 text-[#3F6B3A]"
@@ -292,7 +292,7 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
                         {isCancelled ? "Cancelled" : "Completed"}
                       </span>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap text-center">
+                    <td className="py-3 px-space-md whitespace-nowrap text-center">
                       <button
                         type="button"
                         data-order-id={order.orderId}
@@ -317,7 +317,7 @@ export function DashboardOrdersTable({ onSelectOrder }: DashboardOrdersTableProp
       </div>
 
       {/* Pagination Footer */}
-      <div className="p-4 border-t border-[#E4D8C3] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#7A6A5A]">
+      <div className="p-space-md border-t border-[#E4D8C3] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#7A6A5A]">
         <div>
           Showing{" "}
           <span className="font-bold text-[#3B2A1E]" id="paginationShowingRange">

@@ -95,11 +95,12 @@ export function DashboardOrderDrawer({
                     id="drawerStatusBadge"
                   >
                     <span
+                      id="drawerStatusDot"
                       className={`w-1.5 h-1.5 rounded-full ${
                         isCancelled ? "bg-[#B91C1C]" : "bg-[#3F6B3A]"
                       }`}
                     />
-                    <span>{order.status}</span>
+                    <span id="drawerStatusText">{order.status}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-[#7A6A5A] font-label-md">
@@ -107,10 +108,10 @@ export function DashboardOrderDrawer({
                     <span className="material-symbols-outlined text-[15px] text-[#8B5E3C]">
                       schedule
                     </span>
-                    <span>{order.date}</span>
+                    <span id="drawerDateTime">{order.date}</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1 font-semibold text-[#3B2A1E]">
+                  <span className="flex items-center gap-1 font-semibold text-[#3B2A1E]" id="drawerTableService">
                     {order.service}
                   </span>
                 </div>
@@ -131,10 +132,10 @@ export function DashboardOrderDrawer({
             {/* Meta Badges Strip */}
             <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#E4D8C3]/60 text-xs">
               <div className="p-2 rounded-lg bg-[#FAF3E6]/70 border border-[#E4D8C3]/70 flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider font-label-sm">
                   Payment
                 </span>
-                <span className="font-bold text-[#3B2A1E] truncate mt-0.5 flex items-center gap-1">
+                <span id="drawerPaymentMode" className="font-bold text-[#3B2A1E] truncate mt-0.5 flex items-center gap-1">
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
                     style={{ backgroundColor: order.paymentColor || "#5C3D26" }}
@@ -143,10 +144,11 @@ export function DashboardOrderDrawer({
                 </span>
               </div>
               <div className="p-2 rounded-lg bg-[#FAF3E6]/70 border border-[#E4D8C3]/70 flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider font-label-sm">
                   Terminal
                 </span>
                 <span
+                  id="drawerTerminal"
                   className="font-ticket-mono text-[11px] font-semibold text-[#3B2A1E] truncate mt-0.5"
                   style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
@@ -154,10 +156,11 @@ export function DashboardOrderDrawer({
                 </span>
               </div>
               <div className="p-2 rounded-lg bg-[#FAF3E6]/70 border border-[#E4D8C3]/70 flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider font-label-sm">
                   Token / Check
                 </span>
                 <span
+                  id="drawerCheckToken"
                   className="font-ticket-mono text-[11px] font-bold text-[#8B5E3C] truncate mt-0.5"
                   style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
@@ -176,13 +179,13 @@ export function DashboardOrderDrawer({
                   <span className="material-symbols-outlined text-[16px]">person</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider">
+                  <span className="text-[10px] uppercase font-bold text-[#7A6A5A] tracking-wider font-label-sm">
                     Captain / Cashier
                   </span>
-                  <span className="font-bold text-[#3B2A1E]">{order.cashier}</span>
+                  <span id="drawerCashier" className="font-bold text-[#3B2A1E]">{order.cashier}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[#3F6B3A] font-semibold">
+              <div className="flex items-center gap-1.5 text-[#3F6B3A] font-semibold font-label-md">
                 <span className="w-2 h-2 rounded-full bg-[#3F6B3A]" />
                 <span>Register Reconciled</span>
               </div>
@@ -191,11 +194,11 @@ export function DashboardOrderDrawer({
             {/* Itemized List Header */}
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <h4 className="font-title-md text-sm font-bold text-[#3B2A1E] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="font-title-md text-sm font-bold text-[#3B2A1E] uppercase tracking-wider font-label-sm flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px] text-[#8B5E3C]">
                     restaurant_menu
                   </span>
-                  Ordered Items ({order.items.length})
+                  Ordered Items (<span id="drawerItemCount">{order.items.length}</span>)
                 </h4>
                 <span
                   className="text-[11px] font-ticket-mono text-[#7A6A5A]"
@@ -364,7 +367,7 @@ export function DashboardOrderDrawer({
                 type="button"
                 id="drawerPrintBtn"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 px-4 bg-[#5C3D26] hover:bg-[#3B2A1E] text-[#FFFFFF] rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                className="flex-1 py-2.5 px-4 bg-[#5C3D26] hover:bg-[#3B2A1E] text-[#FFFFFF] rounded-lg font-label-md text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[17px]">print</span>
                 <span>Print Receipt</span>
@@ -373,7 +376,7 @@ export function DashboardOrderDrawer({
                 type="button"
                 id="drawerInvoiceBtn"
                 onClick={() => alert("Tax Invoice PDF prepared for download.")}
-                className="flex-1 py-2.5 px-4 bg-[#FAF3E6] hover:bg-[#E4D8C3]/50 text-[#3B2A1E] border border-[#E4D8C3] rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                className="flex-1 py-2.5 px-4 bg-[#FAF3E6] hover:bg-[#E4D8C3]/50 text-[#3B2A1E] border border-[#E4D8C3] rounded-lg font-label-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[17px] text-[#8B5E3C]">
                   description

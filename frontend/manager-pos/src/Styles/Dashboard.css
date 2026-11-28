@@ -773,6 +773,23 @@
   margin-top: 8px;
 }
 
+#paymentBarsContainer .rounded-full.overflow-hidden {
+  height: 16px !important;
+}
+
+#paymentBarsContainer .rounded-full.overflow-hidden > div {
+  height: 100% !important;
+}
+
+.category-pill-btn .check-icon {
+  font-size: 14px !important;
+  color: #ffffff !important;
+}
+
+.category-pill-btn .check-icon.hidden {
+  display: none !important;
+}
+
 .dashboard-payment-footer {
   display: flex;
   justify-content: space-between;

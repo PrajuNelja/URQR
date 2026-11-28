@@ -53,44 +53,18 @@ const categoryPillsMeta: Array<{
   id: ItemCategory;
   label: string;
   dotColor?: string;
-  icon?: string;
 }> = [
-  { id: "all", label: "All", icon: "done_all" },
+  { id: "all", label: "All" },
   { id: "mains", label: "Mains", dotColor: "#5C3D26" },
   { id: "sides", label: "Sides", dotColor: "#8B5E3C" },
   { id: "beverages", label: "Beverages", dotColor: "#7A6A5A" },
   { id: "desserts", label: "Desserts", dotColor: "#D9CDB8" },
 ];
 
-const paymentMethodsList = [
-  {
-    mode: "upi",
-    name: "UPI (QR / Direct Pay)",
-    orders: "885 orders",
-    amount: "₹1,14,483",
-    pct: "62%",
-    color: "#5C3D26",
-  },
-  {
-    mode: "card",
-    name: "Card (Credit / Debit Chip)",
-    orders: "343 orders",
-    amount: "₹44,316",
-    pct: "24%",
-    color: "#8B5E3C",
-  },
-  {
-    mode: "cash",
-    name: "Cash (Drawer Reconciled)",
-    orders: "200 orders",
-    amount: "₹25,851",
-    pct: "14%",
-    color: "#A68B75",
-  },
-];
 
 export function DashboardBreakdown() {
-  const [currentCategory, setCurrentCategory] = useState<ItemCategory>("mains");
+  const [currentCategory, setCurrentCategory] = useState<ItemCategory>("all");
+  const [hasClickedCategory, setHasClickedCategory] = useState(false);
   const [currentMetric, setCurrentMetric] = useState<ItemMetric>("units");
 
   const items = catalogData[currentCategory] || catalogData.all;
@@ -134,11 +108,11 @@ export function DashboardBreakdown() {
   }, [currentMetric, maxValue]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter-lg mb-gutter-lg">
       {/* Left Card: Top 5 Selling Items (Horizontal Bar Graph) */}
       <div
         id="topItemsCard"
-        className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl p-6 shadow-sm flex flex-col justify-between h-full"
+        className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl p-space-lg shadow-sm flex flex-col justify-between"
       >
         <div>
           <div className="flex flex-col gap-3 mb-4">
@@ -201,6 +175,7 @@ export function DashboardBreakdown() {
             >
               {categoryPillsMeta.map((pill) => {
                 const isSelected = currentCategory === pill.id;
+                const showTick = isSelected && hasClickedCategory;
                 return (
                   <button
                     key={pill.id}
@@ -208,33 +183,27 @@ export function DashboardBreakdown() {
                     role="tab"
                     aria-selected={isSelected}
                     data-category={pill.id}
-                    onClick={() => setCurrentCategory(pill.id)}
+                    onClick={() => {
+                      setHasClickedCategory(true);
+                      setCurrentCategory(pill.id);
+                    }}
                     className={`category-pill-btn px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap ${
                       isSelected
                         ? "bg-[#5C3D26] text-[#FFFFFF] font-bold"
                         : "bg-[#FFFDF8] border border-[#E4D8C3] text-[#5C3D26] hover:bg-[#FAF3E6] font-medium"
                     }`}
                   >
-                    {pill.id === "all" ? (
-                      <span
-                        className={`material-symbols-outlined text-[15px] check-icon ${
-                          isSelected ? "text-white" : "hidden text-[#7A6A5A]"
-                        }`}
-                      >
-                        done_all
-                      </span>
-                    ) : (
+                    {pill.dotColor && (
                       <span
                         className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: pill.dotColor }}
                       />
                     )}
                     <span>{pill.label}</span>
-                    {pill.id !== "all" && (
+                    {showTick && (
                       <span
-                        className={`material-symbols-outlined text-[14px] check-icon ${
-                          isSelected ? "text-white" : "hidden text-[#7A6A5A]"
-                        }`}
+                        className="material-symbols-outlined text-[14px] check-icon text-white"
+                        style={{ display: "inline-flex" }}
                       >
                         check
                       </span>
@@ -264,7 +233,7 @@ export function DashboardBreakdown() {
                   }}
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#3B2A1E] flex items-center gap-1.5">
+                    <span className="font-label-lg font-bold text-[#3B2A1E] flex items-center gap-1.5">
                       <span
                         className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: item.color }}
@@ -323,13 +292,13 @@ export function DashboardBreakdown() {
         </div>
       </div>
 
-      {/* Right Card: Payment Method Distribution */}
+      {/* Right Card: Payment Method Distribution (Horizontal Progress Tracks) */}
       <div
         id="paymentMethodsCard"
-        className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl p-6 shadow-sm flex flex-col justify-between h-full"
+        className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl p-space-lg shadow-sm flex flex-col justify-between"
       >
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-space-sm">
             <div className="flex items-center gap-2">
               <h3
                 className="text-xl font-bold text-[#3B2A1E]"
@@ -346,63 +315,155 @@ export function DashboardBreakdown() {
               <span id="paymentTotalSettledLabel">₹1,84,650</span> Total Settled
             </span>
           </div>
-          <p className="text-xs text-[#7A6A5A] mb-3">
+          <p className="font-body-sm text-xs text-[#7A6A5A] mb-3">
             Tender type allocation across all active POS terminals and tableside tablets
           </p>
 
           {/* Payment Bars List */}
           <div className="flex flex-col gap-4" id="paymentBarsContainer">
-            {paymentMethodsList.map((pay) => (
-              <div
-                key={pay.mode}
-                data-mode={pay.mode}
-                className="flex flex-col gap-1.5 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-3 rounded shrink-0"
-                      style={{ backgroundColor: pay.color }}
-                    />
-                    <span className="font-bold text-[#3B2A1E]">{pay.name}</span>
-                    <span
-                      className="font-ticket-mono text-[11px] text-[#7A6A5A]"
-                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                    >
-                      {pay.orders}
-                    </span>
-                  </div>
-                  <div
-                    className="flex items-center gap-2 font-ticket-mono"
+            {/* UPI Track (62%) */}
+            <div
+              className="flex flex-col gap-1.5 transition-all duration-300"
+              data-amount="114483"
+              data-mode="upi"
+              data-orders="885"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-[#5C3D26]" />
+                  <span className="font-label-lg font-bold text-[#3B2A1E]">
+                    UPI (QR / Direct Pay)
+                  </span>
+                  <span
+                    className="font-ticket-mono text-[11px] text-[#7A6A5A]"
                     style={{ fontFamily: "'JetBrains Mono', monospace" }}
                   >
-                    <span className="text-[#7A6A5A] text-[11px]">{pay.amount}</span>
-                    <span className="font-bold text-[#3B2A1E] text-sm mode-pct">
-                      {pay.pct}
-                    </span>
-                  </div>
+                    885 orders
+                  </span>
                 </div>
-                <div className="w-full bg-[#FAF3E6] border border-[#E4D8C3]/50 rounded-full h-4 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      backgroundColor: pay.color,
-                      width: pay.pct,
-                    }}
-                  />
+                <div
+                  className="flex items-center gap-2 font-ticket-mono"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <span className="text-[#7A6A5A] text-[11px]">₹1,14,483</span>
+                  <span className="font-bold text-[#3B2A1E] text-sm mode-pct">
+                    62%
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+              <div
+                className="w-full bg-[#FAF3E6] border border-[#E4D8C3]/50 rounded-full h-4 overflow-hidden"
+                style={{ height: "16px" }}
+              >
+                <div
+                  className="bg-[#5C3D26] h-full rounded-full transition-all duration-500"
+                  style={{ width: "62%", height: "100%" }}
+                />
+              </div>
+            </div>
 
-        {/* Payment Summary Footer aligning with Top Items axis ticks */}
-        <div
-          className="flex justify-between items-center text-[11px] font-ticket-mono text-[#7A6A5A] pt-6 border-t border-[#E4D8C3] mt-4"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
-          <span>3 payment modes</span>
-          <span>1,428 orders settled</span>
+            {/* Card Track (24%) */}
+            <div
+              className="flex flex-col gap-1.5 transition-all duration-300"
+              data-amount="44316"
+              data-mode="card"
+              data-orders="343"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-[#8B5E3C]" />
+                  <span className="font-label-lg font-bold text-[#3B2A1E]">
+                    Card (Credit / Debit Chip)
+                  </span>
+                  <span
+                    className="font-ticket-mono text-[11px] text-[#7A6A5A]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    343 orders
+                  </span>
+                </div>
+                <div
+                  className="flex items-center gap-2 font-ticket-mono"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <span className="text-[#7A6A5A] text-[11px]">₹44,316</span>
+                  <span className="font-bold text-[#3B2A1E] text-sm mode-pct">
+                    24%
+                  </span>
+                </div>
+              </div>
+              <div
+                className="w-full bg-[#FAF3E6] border border-[#E4D8C3]/50 rounded-full h-4 overflow-hidden"
+                style={{ height: "16px" }}
+              >
+                <div
+                  className="bg-[#8B5E3C] h-full rounded-full transition-all duration-500"
+                  style={{ width: "24%", height: "100%" }}
+                />
+              </div>
+            </div>
+
+            {/* Cash Track (14%) */}
+            <div
+              className="flex flex-col gap-1.5 transition-all duration-300"
+              data-amount="25851"
+              data-mode="cash"
+              data-orders="200"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-[#A68B75]" />
+                  <span className="font-label-lg font-bold text-[#3B2A1E]">
+                    Cash (Drawer Reconciled)
+                  </span>
+                  <span
+                    className="font-ticket-mono text-[11px] text-[#7A6A5A]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    200 orders
+                  </span>
+                </div>
+                <div
+                  className="flex items-center gap-2 font-ticket-mono"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <span className="text-[#7A6A5A] text-[11px]">₹25,851</span>
+                  <span className="font-bold text-[#3B2A1E] text-sm mode-pct">
+                    14%
+                  </span>
+                </div>
+              </div>
+              <div
+                className="w-full bg-[#FAF3E6] border border-[#E4D8C3]/50 rounded-full h-4 overflow-hidden"
+                style={{ height: "16px" }}
+              >
+                <div
+                  className="bg-[#A68B75] h-full rounded-full transition-all duration-500"
+                  style={{ width: "14%", height: "100%" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Empty State Notification (Hidden by default) */}
+          <div
+            className="hidden p-6 rounded-lg bg-[#FAF3E6] border border-dashed border-[#E4D8C3] text-center flex-col items-center justify-center gap-2"
+            id="paymentEmptyNotice"
+          >
+            <span className="material-symbols-outlined text-2xl text-[#7A6A5A]">
+              filter_alt_off
+            </span>
+            <span className="text-xs text-[#7A6A5A] font-semibold">
+              All payment modes are currently unselected.
+            </span>
+            <button
+              className="mt-1 px-3 py-1 bg-[#5C3D26] text-[#FFFFFF] rounded text-xs font-bold hover:bg-[#3B2A1E] transition-all cursor-pointer"
+              id="resetPaymentFiltersBtn"
+              type="button"
+            >
+              Reset to All
+            </button>
+          </div>
         </div>
       </div>
     </div>
