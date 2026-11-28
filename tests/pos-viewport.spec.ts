@@ -2,6 +2,7 @@
 import { test, expect } from '@playwright/test';
 
 const viewportProfiles: Record<string, { width: number; height: number; hasTouch?: boolean }> = {
+  'chromium': { width: 1280, height: 720, hasTouch: false },
   'POS-Counter-1366x768': { width: 1366, height: 768, hasTouch: true },
   'POS-Standard-1600x900': { width: 1600, height: 900, hasTouch: true },
   'POS-Desktop-1920x1080': { width: 1920, height: 1080, hasTouch: true },
