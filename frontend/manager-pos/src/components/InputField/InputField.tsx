@@ -42,10 +42,16 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       rightIcon ? "pr-12" : "",
       suffix ? "!pr-12" : "",
       fullWidth ? "w-full" : "",
+      "[&:-webkit-autofill]:!bg-white [&:-webkit-autofill]:!shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:!text-text",
       className,
     ]
       .filter(Boolean)
       .join(" ");
+
+    // 👇 DYNAMIC OUTER RING COLOR: Dark Red for Error, Dark Brown for Normal 👇
+    const outerRingColor = error 
+      ? "group-focus-within:border-[#D92D20]" 
+      : "group-focus-within:border-[#8B5E3C]"; 
 
     return (
       <div
@@ -63,7 +69,8 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           </label>
         )}
 
-        <div className="relative w-full">
+        <div className="relative w-full group">
+          
           {leftIcon && (
             <span className={INPUT_LEFT_ICON}>{leftIcon}</span>
           )}
@@ -93,6 +100,12 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
               {suffix}
             </span>
           )}
+
+          {/* Outer Ring */}
+          <div 
+            className={`pointer-events-none absolute -inset-[3px] rounded-[13px] border-2 border-transparent transition-colors duration-200 ${outerRingColor}`} 
+          />
+          
         </div>
 
         {error ? (

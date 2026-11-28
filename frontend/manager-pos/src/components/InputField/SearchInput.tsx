@@ -1,5 +1,3 @@
-// src/components/InputField/SearchInput.tsx
-
 import { forwardRef } from "react";
 import { Search, X } from "lucide-react";
 
@@ -34,46 +32,41 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     };
 
     return (
-      <div className="pos-search-shell">
-        <InputField
-          ref={ref}
-          type="search"
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
-          fieldSize={fieldSize}
-          autoComplete="off"
-          leftIcon={
-            <Search
-              size={18}
-              aria-hidden="true"
-              className="text-primary"
-            />
-          }
-          rightIcon={
-            hasValue && (onClear || onChange) ? (
-              <button
-                type="button"
-                onClick={handleClear}
-                aria-label="Clear search"
-                title="Clear search"
-                className={`${SEARCH_CLEAR_BUTTON} pos-search-clear`}
-              >
-                <X size={16} />
-              </button>
-            ) : !hasValue && shortcutHint ? (
-              <kbd className="pos-search-shortcut">
-                {shortcutHint}
-              </kbd>
-            ) : undefined
-          }
-          className={[
-            "pos-search-input",
-            className,
-          ].filter(Boolean).join(" ")}
-          {...rest}
-        />
-      </div>
+      <InputField
+        ref={ref}
+        type="search"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        fieldSize={fieldSize}
+        autoComplete="off"
+        leftIcon={
+          <Search
+            size={18}
+            aria-hidden="true"
+            className="text-text-secondary"
+          />
+        }
+        rightIcon={
+          hasValue && (onClear || onChange) ? (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear search"
+              title="Clear search"
+              className={`${SEARCH_CLEAR_BUTTON}`}
+            >
+              <X size={16} />
+            </button>
+          ) : !hasValue && shortcutHint ? (
+            <kbd className="text-[10px] font-sans font-semibold text-text-secondary bg-surface-alt px-1.5 py-0.5 rounded border border-border">
+              {shortcutHint}
+            </kbd>
+          ) : undefined
+        }
+        className={className}
+        {...rest}
+      />
     );
   }
 );

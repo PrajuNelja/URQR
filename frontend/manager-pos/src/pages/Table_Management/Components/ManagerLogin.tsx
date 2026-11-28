@@ -18,7 +18,8 @@ const formatToday = () => {
 };
 
 const ManagerLogin = () => {
-  const { form, feedback, isSubmitting, onSubmit, dismissFeedback } = useManagerLogin();
+  // 1. Destructure setFeedback from the hook
+  const { form, feedback, isSubmitting, onSubmit, dismissFeedback, setFeedback } = useManagerLogin();
   const { errors } = form.formState;
 
   const [showPassword, setShowPassword] = useState(false);
@@ -47,6 +48,25 @@ const ManagerLogin = () => {
     }
   }, [isDark]);
 
+  // 2. Add Handlers for the Modal buttons
+  const handleExtendSession = () => {
+    setIsTimeoutOpen(false);
+    setFeedback({
+      isOpen: true,
+      type: "success",
+      message: "Session Extended. Fresh JWT RS256 token issued.",
+    });
+  };
+
+  const handleLogout = () => {
+    setIsTimeoutOpen(false);
+    setFeedback({
+      isOpen: true,
+      type: "info",
+      message: "Logged Out. Returned to Screen 1 Manager Login.",
+    });
+  };
+
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-bg font-sans transition-colors duration-200">
       <Notification
@@ -62,7 +82,7 @@ const ManagerLogin = () => {
           
           {/* LOGO & BRAND */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-dashed border-primary/60 bg-surface-alt/60 text-[11px] font-semibold text-text-secondary">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-dashed border-primary/60 bg-surface-alt/60 text-[10px] font-medium text-text-secondary">
               Logo
             </div>
             <span className="text-[19px] font-bold leading-[22px] tracking-tight text-text">
@@ -89,7 +109,6 @@ const ManagerLogin = () => {
               Timeout Modal
             </button>
 
-            
             <button
               type="button"
               onClick={() => setIsDark((previous) => !previous)}
@@ -176,9 +195,6 @@ const ManagerLogin = () => {
                 <h2 className="mt-3 whitespace-pre-line text-[24px] font-semibold leading-[32px] tracking-tight text-text lg:mt-4 lg:text-[28px] lg:leading-[36px]">
                   {LOGIN_COPY.welcome}
                 </h2>
-                <p className="mt-2 text-[13px] font-normal leading-[20px] text-text-secondary lg:mt-3 lg:text-[14px] lg:leading-[22px]">
-                  {LOGIN_COPY.instructions}
-                </p>
               </div>
 
               <form
@@ -234,10 +250,6 @@ const ManagerLogin = () => {
                   {isSubmitting ? LOGIN_COPY.submittingLabel : LOGIN_COPY.submitLabel}
                 </Button>
               </form>
-
-              <p className="mt-[20px] text-center text-[13px] font-normal leading-[20px] text-text-secondary">
-                {LOGIN_COPY.demoHint}
-              </p>
             </div>
           </section>
         </div>
@@ -247,8 +259,8 @@ const ManagerLogin = () => {
         isOpen={isTimeoutOpen}
         onClose={() => setIsTimeoutOpen(false)}
         initialSeconds={60}
-        onExtend={() => setIsTimeoutOpen(false)}
-        onLogout={() => setIsTimeoutOpen(false)}
+        onExtend={handleExtendSession}
+        onLogout={handleLogout}
       />
     </main>
   );
