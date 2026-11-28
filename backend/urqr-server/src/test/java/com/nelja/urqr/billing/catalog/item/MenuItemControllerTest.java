@@ -14,6 +14,7 @@ import com.nelja.urqr.billing.catalog.category.MenuCategory;
 import com.nelja.urqr.billing.catalog.category.MenuCategoryRepository;
 import com.nelja.urqr.billing.catalog.dto.CatalogProductDto;
 import com.nelja.urqr.auth.security.CurrentHotel;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -34,14 +35,15 @@ import org.springframework.web.server.ResponseStatusException;
 class MenuItemControllerTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final UUID CATEGORY_ID = UUID.randomUUID();
+    private static final String USER_ID = "MGRTES01";
+    private static final String CATEGORY_ID = "CATTES001";
 
     @Mock private MenuItemRepository items;
     @Mock private MenuCatalogCache catalog;
     @Mock private MenuCategoryRepository categories;
     @Mock private CurrentHotel tenant;
     @Mock private AuditService audit;
+    @Mock private BusinessIdGenerator ids;
     @Captor private ArgumentCaptor<MenuItem> itemCaptor;
     @InjectMocks private MenuItemController controller;
 
@@ -60,10 +62,12 @@ class MenuItemControllerTest {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
         MenuCategory activeCategory = mock(MenuCategory.class);
+        when(activeCategory.getName()).thenReturn("Beverages");
         when(activeCategory.isActive()).thenReturn(true);
         when(categories.findByIdAndHotelId(CATEGORY_ID, HOTEL_ID)).thenReturn(Optional.of(activeCategory));
 
-        UUID itemId = UUID.randomUUID();
+        String itemId = "BEVTES0001";
+        when(ids.nextMenuItemId(HOTEL_ID, "Beverages")).thenReturn(itemId);
         MenuItem savedItem = mock(MenuItem.class);
         when(savedItem.getId()).thenReturn(itemId);
         when(savedItem.getCategoryId()).thenReturn(CATEGORY_ID);
@@ -107,9 +111,9 @@ class MenuItemControllerTest {
         when(activeCategory.isActive()).thenReturn(true);
         when(categories.findByIdAndHotelId(CATEGORY_ID, HOTEL_ID)).thenReturn(Optional.of(activeCategory));
         when(catalog.get(HOTEL_ID)).thenReturn(List.of(
-                new CatalogProductDto(UUID.randomUUID(), CATEGORY_ID, "Coffee", new BigDecimal("3.50"), true,
+                new CatalogProductDto("BEVTES0001", CATEGORY_ID, "Coffee", new BigDecimal("3.50"), true,
                         BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO),
-                new CatalogProductDto(UUID.randomUUID(), CATEGORY_ID, "Tea", new BigDecimal("2.50"), false,
+                new CatalogProductDto("BEVTES0002", CATEGORY_ID, "Tea", new BigDecimal("2.50"), false,
                         BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO)));
 
         List<MenuItemController.ItemDto> result = controller.list(jwt, CATEGORY_ID, true);
@@ -124,7 +128,7 @@ class MenuItemControllerTest {
     void listAllReturnsItemsAcrossCategoriesIncludingUnavailableItems() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         MenuItem chai = mock(MenuItem.class);
-        when(chai.getId()).thenReturn(UUID.randomUUID());
+        when(chai.getId()).thenReturn("BEVTES0001");
         when(chai.getCategoryId()).thenReturn(CATEGORY_ID);
         when(chai.getCategoryName()).thenReturn("Beverages");
         when(chai.getName()).thenReturn("Masala Chai");
@@ -136,8 +140,8 @@ class MenuItemControllerTest {
         when(chai.getVatRate()).thenReturn(BigDecimal.ZERO);
 
         MenuItem dosa = mock(MenuItem.class);
-        UUID dosaCategoryId = UUID.randomUUID();
-        when(dosa.getId()).thenReturn(UUID.randomUUID());
+        String dosaCategoryId = "CATTES002";
+        when(dosa.getId()).thenReturn("MAITES0001");
         when(dosa.getCategoryId()).thenReturn(dosaCategoryId);
         when(dosa.getCategoryName()).thenReturn("South Meals");
         when(dosa.getName()).thenReturn("Masala Dosa");
@@ -164,8 +168,8 @@ class MenuItemControllerTest {
     @Test
     void getReturnsOnlyAnActiveItemFromTheCurrentHotel() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
-        UUID itemId = UUID.randomUUID();
-        MenuItem item = new MenuItem(HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
+        String itemId = "BEVTES0001";
+        MenuItem item = new MenuItem(itemId, HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
         when(items.findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID)).thenReturn(Optional.of(item));
 
         MenuItemController.ItemDto result = controller.get(jwt, itemId);
@@ -179,11 +183,11 @@ class MenuItemControllerTest {
     void updateChangesTheItemAndEvictsTheCatalog() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
-        UUID itemId = UUID.randomUUID();
+        String itemId = "BEVTES0002";
         MenuCategory activeCategory = mock(MenuCategory.class);
         when(activeCategory.isActive()).thenReturn(true);
         when(categories.findByIdAndHotelId(CATEGORY_ID, HOTEL_ID)).thenReturn(Optional.of(activeCategory));
-        MenuItem item = new MenuItem(HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
+        MenuItem item = new MenuItem(itemId, HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
         when(items.findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID)).thenReturn(Optional.of(item));
 
         MenuItemController.ItemDto result = controller.update(jwt, itemId,
@@ -201,8 +205,8 @@ class MenuItemControllerTest {
     void availabilityCanBeChangedAndItemDeleteIsADeactivation() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
-        UUID itemId = UUID.randomUUID();
-        MenuItem item = new MenuItem(HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
+        String itemId = "BEVTES0003";
+        MenuItem item = new MenuItem(itemId, HOTEL_ID, CATEGORY_ID, "Coffee", new BigDecimal("3.50"));
         when(items.findByIdAndHotelIdAndActiveTrue(itemId, HOTEL_ID)).thenReturn(Optional.of(item));
 
         MenuItemController.ItemDto result = controller.availability(jwt, itemId,

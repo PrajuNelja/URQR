@@ -1,12 +1,12 @@
 # URQR Hotel POS Entities and Relationships
 
-This document describes the active hotel-owned JPA model after Flyway migration V11. The old tenant tables and their JPA mappings were removed. Hotel-owned rows use `hotel_id`; the transactional outbox is JDBC-managed and also uses `hotel_id`.
+This document describes the hotel-owned JPA model and supporting database tables after Flyway migrations through V14. The `Hotel.id` and every `hotel_id` column are strings (up to 64 characters). Staff, audit, category, menu item, order, order item, payment, and receipt identifiers are formatted strings (up to 96 characters). `Role.id` and outbox `event_id` remain UUIDs. Hotel data is isolated by `hotel_id` using PostgreSQL row-level security.
 
 ## Entities
 
 ### `Hotel` — table `hotel`
 
-- `id: UUID`
+- `id: String` — generated public hotel code, up to 64 characters
 - `name: String`
 - `currencyCode: String`
 - `timezone: String`
@@ -18,14 +18,14 @@ This document describes the active hotel-owned JPA model after Flyway migration 
 ### `Role` — table `hotel_role`
 
 - `id: UUID`
-- `hotelId: UUID`
+- `hotelId: String`
 - `hotel: Hotel` — association through `hotel_id`
 - `name: String`
 
 ### `StaffUser` — table `staff_user`
 
-- `id: UUID`
-- `hotelId: UUID`
+- `id: String` — `MGR`, `CSR`, `COOK`, or `WTR` + first three hotel-name letters + sequence
+- `hotelId: String`
 - `username: String`
 - `passwordHash: String`
 - `roleId: UUID`
@@ -35,10 +35,10 @@ This document describes the active hotel-owned JPA model after Flyway migration 
 
 ### `AuditRecord` — table `audit_record`
 
-- `id: UUID`
-- `hotelId: UUID`
+- `id: String` — `ADT` + first three hotel-name letters + UTC date + sequence
+- `hotelId: String`
 - `hotel: Hotel` — association through `hotel_id`
-- `userId: UUID` — nullable
+- `userId: String` — nullable staff ID
 - `user: StaffUser` — association through `(hotel_id, user_id)`
 - `action: String`
 - `entity: String`
@@ -49,17 +49,17 @@ This document describes the active hotel-owned JPA model after Flyway migration 
 
 ### `MenuCategory` — table `menu_category`
 
-- `id: UUID`
-- `hotelId: UUID`
+- `id: String` — `CAT` + first three hotel-name letters + sequence
+- `hotelId: String`
 - `hotel: Hotel` — association through `hotel_id`
 - `name: String`
 - `active: boolean`
 
 ### `MenuItem` — table `menu_item`
 
-- `id: UUID`
-- `hotelId: UUID`
-- `categoryId: UUID`
+- `id: String` — first three category-name letters + first three hotel-name letters + sequence
+- `hotelId: String`
+- `categoryId: String`
 - `category: MenuCategory` — association through `(hotel_id, category_id)`
 - `name: String`
 - `price: BigDecimal`
@@ -69,33 +69,33 @@ This document describes the active hotel-owned JPA model after Flyway migration 
 
 ### `Order` — table `pos_order`
 
-- `id: UUID`
-- `hotelId: UUID`
+- `id: String` — first three hotel-name letters + UTC date + sequence
+- `hotelId: String`
 - `hotel: Hotel` — association through `hotel_id`
 - `orderNumber: String`
 - `creator: StaffUser` — association through `(hotel_id, created_by)`
 - `status: OrderStatus`
 - `paymentStatus: PaymentStatus`
 - `subtotal`, `discountTotal`, `taxTotal`, `grandTotal: BigDecimal`
-- `createdBy: UUID`
+- `createdBy: String` — staff ID
 - `cancelReason: String` — nullable
 - `createdAt`, `updatedAt: Instant`
 
 ### `OrderItem` — table `order_item`
 
-- `id: UUID`
-- `hotelId: UUID`
-- `orderId: UUID`; `order: Order` — association through `(hotel_id, order_id)`
-- `menuItemId: UUID`; `menuItem: MenuItem` — association through `(hotel_id, menu_item_id)`
+- `id: String` — `OI` + first three hotel-name letters + sequence
+- `hotelId: String`
+- `orderId: String`; `order: Order` — association through `(hotel_id, order_id)`
+- `menuItemId: String`; `menuItem: MenuItem` — association through `(hotel_id, menu_item_id)`
 - `nameSnapshot: String`
 - `priceSnapshot`, `discountAmount`, `taxCgst`, `taxSgst`, `taxVat`, `lineTotal: BigDecimal`
 - `quantity: int`
 
 ### `Payment` — table `payment`
 
-- `id: UUID`
-- `hotelId: UUID`
-- `orderId: UUID`
+- `id: String` — payment method + first three hotel-name letters + UTC date + sequence
+- `hotelId: String`
+- `orderId: String`
 - `order: Order` — association through `(hotel_id, order_id)`
 - `method: PaymentMethod`
 - `amount: BigDecimal`
@@ -104,9 +104,9 @@ This document describes the active hotel-owned JPA model after Flyway migration 
 
 ### `Receipt` — table `receipt`
 
-- `id: UUID`
-- `hotelId: UUID`
-- `orderId: UUID`
+- `id: String` — `RPT` + first three hotel-name letters + UTC date + sequence
+- `hotelId: String`
+- `orderId: String` — unique per receipt record
 - `order: Order` — association through `(hotel_id, order_id)`
 - `receiptNumber: String`
 - `snapshot: Map<String, Object>` — JSONB
@@ -122,15 +122,15 @@ erDiagram
     HOTEL ||--o{ AUDIT_RECORD : hotel_id
     STAFF_USER o|--o{ AUDIT_RECORD : user_id_and_hotel_id
     HOTEL ||--o{ MENU_CATEGORY : hotel_id
-    HOTEL ||--o{ MENU_ITEM : hotel_id
     MENU_CATEGORY ||--o{ MENU_ITEM : category_id_and_hotel_id
+    HOTEL ||--o{ MENU_ITEM : hotel_id
     HOTEL ||--o{ POS_ORDER : hotel_id
     STAFF_USER ||--o{ POS_ORDER : created_by_and_hotel_id
     POS_ORDER ||--o{ ORDER_ITEM : order_id_and_hotel_id
     MENU_ITEM ||--o{ ORDER_ITEM : menu_item_id_and_hotel_id
     POS_ORDER ||--o{ PAYMENT : order_id_and_hotel_id
-    POS_ORDER ||--o| RECEIPT : order_id
+    POS_ORDER ||--o| RECEIPT : order_id_and_hotel_id
     HOTEL ||--o{ OUTBOX_EVENTS : hotel_id
 ```
 
-The outbox has no JPA entity. It is written in the same transaction as POS order changes and published asynchronously. Row-level security uses the transaction-local `app.hotel_id` setting, populated from the authenticated `hotel_id` claim.
+The `outbox_events` table has no JPA entity; application code writes and claims events with JDBC in the same transaction as order changes. It stores `event_id`, `hotel_id`, aggregate and event details, JSONB payload, delivery state, retry metadata, and timestamps. Row-level security uses the transaction-local `app.hotel_id` setting, populated from the authenticated hotel claim. Order request idempotency is stored in Redis and is not a relational entity.

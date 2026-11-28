@@ -1,7 +1,6 @@
 package com.nelja.urqr.auth.security;
 
 import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -42,7 +41,11 @@ public class HotelJwtAuthenticationConverter implements Converter<Jwt, JwtAuthen
             if (hotel == null || hotel.isBlank() || hotel.length() > 64) {
                 throw new BadCredentialsException("Missing hotel identity");
             }
-            UUID userId = UUID.fromString(jwt.getClaimAsString("uid"));
+            String userId = jwt.getClaimAsString("uid");
+            if (userId == null || userId.isBlank() || userId.length() > 64
+                    || userId.chars().anyMatch(Character::isISOControl)) {
+                throw new BadCredentialsException("Missing staff identity");
+            }
             String role = authState.staffRole(hotel, userId);
             return new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_" + role)),
                     jwt.getSubject());

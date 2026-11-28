@@ -35,7 +35,7 @@ class CentrifugoTokenServiceTest {
     @Test
     void signsConnectionAndSubscriptionTokensWithHmacSha256() throws Exception {
         String hotelId = UUID.fromString("4d886ed2-aa21-48cf-9694-0e75e2522043").toString();
-        UUID userId = UUID.fromString("be266253-ae63-4ff0-9239-8ee6cbafde78");
+        String userId = "MGRTES01";
 
         CentrifugoTokenService.TokenPair pair = service.issueOrderCredentials(hotelId, userId);
         DecodedJwt connection = decodeAndVerify(pair.connectionToken());
@@ -54,7 +54,7 @@ class CentrifugoTokenServiceTest {
     @Test
     void subscriptionTokenIsRestrictedToOneHotelOrdersChannel() throws Exception {
         String hotelId = UUID.randomUUID().toString();
-        UUID userId = UUID.randomUUID();
+        String userId = "MGRTES01";
 
         CentrifugoTokenService.TokenPair pair = service.issueOrderCredentials(hotelId, userId);
         DecodedJwt subscription = decodeAndVerify(pair.subscriptionToken());

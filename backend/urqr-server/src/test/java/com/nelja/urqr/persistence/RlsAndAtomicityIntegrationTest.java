@@ -43,8 +43,8 @@ class RlsAndAtomicityIntegrationTest {
     void hotelASeesOnlyItsRowsAndRuntimeRoleCannotBypassRls() throws Exception {
         String hotelA = UUID.randomUUID().toString();
         String hotelB = UUID.randomUUID().toString();
-        UUID categoryA = UUID.randomUUID();
-        UUID categoryB = UUID.randomUUID();
+        String categoryA = "CATHOT001";
+        String categoryB = "CATHOT002";
 
         try (Connection owner = ownerConnection();
                 PreparedStatement hotel = owner.prepareStatement("""
@@ -86,10 +86,12 @@ class RlsAndAtomicityIntegrationTest {
     void orderItemsPaymentsAndOutboxRollbackTogether() throws Exception {
         String hotel = UUID.randomUUID().toString();
         UUID role = UUID.randomUUID();
-        UUID user = UUID.randomUUID();
-        UUID category = UUID.randomUUID();
-        UUID menuItem = UUID.randomUUID();
-        UUID order = UUID.randomUUID();
+        String user = "MGRATO01";
+        String category = "CATATO001";
+        String menuItem = "FOOATO0001";
+        String order = "ATO202611280001";
+        String orderItem = "OIATO001";
+        String payment = "CASHATO20261128001";
         UUID event = UUID.randomUUID();
         try (Connection owner = ownerConnection()) {
             owner.setAutoCommit(false);
@@ -107,13 +109,13 @@ class RlsAndAtomicityIntegrationTest {
                 insertHotel.setString(3, "INR"); insertHotel.executeUpdate();
                 insertRole.setObject(1, role); insertRole.setObject(2, hotel);
                 insertRole.setString(3, "MANAGER"); insertRole.executeUpdate();
-                insertUser.setObject(1, user); insertUser.setObject(2, hotel);
+                insertUser.setString(1, user); insertUser.setObject(2, hotel);
                 insertUser.setString(3, "manager"); insertUser.setString(4, "hash");
                 insertUser.setObject(5, role); insertUser.executeUpdate();
-                insertCategory.setObject(1, category); insertCategory.setObject(2, hotel);
+                insertCategory.setString(1, category); insertCategory.setObject(2, hotel);
                 insertCategory.setString(3, "Food"); insertCategory.executeUpdate();
-                insertItem.setObject(1, menuItem); insertItem.setObject(2, hotel);
-                insertItem.setObject(3, category); insertItem.setString(4, "Meal"); insertItem.executeUpdate();
+                insertItem.setString(1, menuItem); insertItem.setObject(2, hotel);
+                insertItem.setString(3, category); insertItem.setString(4, "Meal"); insertItem.executeUpdate();
             }
             owner.commit();
         }
@@ -128,30 +130,30 @@ class RlsAndAtomicityIntegrationTest {
                         INSERT INTO pos_order(id,hotel_id,order_number,status,payment_status,subtotal,grand_total,
                             created_by,created_at,updated_at) VALUES (?,?,?,'COMPLETED','PAID',100,100,?,now(),now())
                         """)) {
-                    insertOrder.setObject(1, order); insertOrder.setObject(2, hotel);
-                    insertOrder.setString(3, "ROLLBACK"); insertOrder.setObject(4, user);
+                    insertOrder.setString(1, order); insertOrder.setObject(2, hotel);
+                    insertOrder.setString(3, "ROLLBACK"); insertOrder.setString(4, user);
                     insertOrder.executeUpdate();
                 }
                 try (PreparedStatement insertLine = app.prepareStatement("""
                         INSERT INTO order_item(id,hotel_id,order_id,menu_item_id,name_snapshot,price_snapshot,
                             quantity,line_total) VALUES (?,?,?,?,?,100,1,100)
                         """)) {
-                    insertLine.setObject(1, UUID.randomUUID()); insertLine.setObject(2, hotel);
-                    insertLine.setObject(3, order); insertLine.setObject(4, menuItem);
+                    insertLine.setString(1, orderItem); insertLine.setObject(2, hotel);
+                    insertLine.setString(3, order); insertLine.setString(4, menuItem);
                     insertLine.setString(5, "Meal"); insertLine.executeUpdate();
                 }
                 try (PreparedStatement insertPayment = app.prepareStatement("""
                         INSERT INTO payment(id,hotel_id,order_id,method,amount,created_at) VALUES (?,?,?,'CASH',100,now())
                         """)) {
-                    insertPayment.setObject(1, UUID.randomUUID()); insertPayment.setObject(2, hotel);
-                    insertPayment.setObject(3, order); insertPayment.executeUpdate();
+                    insertPayment.setString(1, payment); insertPayment.setObject(2, hotel);
+                    insertPayment.setString(3, order); insertPayment.executeUpdate();
                 }
                 try (PreparedStatement insertEvent = app.prepareStatement("""
                         INSERT INTO outbox_events(event_id,hotel_id,aggregate_type,aggregate_id,event_type,payload)
                         VALUES (?,?, 'Order', ?, 'ORDER_CREATED', '{"orderId":"rollback"}'::jsonb)
                         """)) {
                 insertEvent.setObject(1, event); insertEvent.setObject(2, hotel);
-                    insertEvent.setObject(3, order); insertEvent.executeUpdate();
+                insertEvent.setString(3, order); insertEvent.executeUpdate();
                 }
                 throw new IllegalStateException("simulate a failure after all writes");
             } catch (IllegalStateException expected) {
@@ -167,11 +169,11 @@ class RlsAndAtomicityIntegrationTest {
         }
     }
 
-    private static void insertCategory(String hotelId, UUID categoryId) throws Exception {
+    private static void insertCategory(String hotelId, String categoryId) throws Exception {
         try (Connection owner = ownerConnection();
                 PreparedStatement insert = owner.prepareStatement(
                         "INSERT INTO menu_category(id,hotel_id,name,active) VALUES (?,?,?,true)")) {
-            insert.setObject(1, categoryId);
+            insert.setString(1, categoryId);
             insert.setObject(2, hotelId);
             insert.setString(3, "Category " + categoryId);
             insert.executeUpdate();

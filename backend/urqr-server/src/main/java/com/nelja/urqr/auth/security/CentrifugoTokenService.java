@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +47,7 @@ public class CentrifugoTokenService {
         this.clock = clock;
     }
 
-    public TokenPair issueOrderCredentials(String hotelId, UUID userId) {
+    public TokenPair issueOrderCredentials(String hotelId, String userId) {
         if (hotelId == null || userId == null) {
             throw new IllegalArgumentException("Hotel and user IDs are required for realtime credentials");
         }
@@ -60,7 +59,7 @@ public class CentrifugoTokenService {
 
         Instant issuedAt = clock.instant().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         Instant expiresAt = issuedAt.plus(tokenTtl);
-        String subject = userId.toString();
+        String subject = userId;
         String channel = ordersChannel(hotelId);
 
         Map<String, Object> connectionClaims = new LinkedHashMap<>();

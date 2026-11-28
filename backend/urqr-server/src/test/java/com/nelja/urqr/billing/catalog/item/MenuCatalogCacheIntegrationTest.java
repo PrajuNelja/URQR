@@ -52,9 +52,9 @@ class MenuCatalogCacheIntegrationTest {
     @Test
     void cachesByTenantAndEvictsAfterProductChange() {
         String hotelId = UUID.randomUUID().toString();
-        UUID categoryId = UUID.randomUUID();
+        String categoryId = "CATGRA001";
         MenuItemRepository repository = mock(MenuItemRepository.class);
-        MenuItem item = new MenuItem(hotelId, categoryId, "Masala Chai", new BigDecimal("80.00"));
+        MenuItem item = new MenuItem("BEVGRA0001", hotelId, categoryId, "Masala Chai", new BigDecimal("80.00"));
         when(repository.findPosMenu(hotelId, null)).thenReturn(List.of(item));
         MenuCatalogCache cache = new MenuCatalogCache(redis, new ObjectMapper(), repository);
 
@@ -97,13 +97,13 @@ class MenuCatalogCacheIntegrationTest {
     void keepsCatalogEntriesSeparateForDifferentHotels() {
         String hotelA = UUID.randomUUID().toString();
         String hotelB = UUID.randomUUID().toString();
-        UUID categoryA = UUID.randomUUID();
-        UUID categoryB = UUID.randomUUID();
+        String categoryA = "CATGRA001";
+        String categoryB = "CATBLU001";
         MenuItemRepository repository = mock(MenuItemRepository.class);
         when(repository.findPosMenu(hotelA, null)).thenReturn(List.of(
-                new MenuItem(hotelA, categoryA, "Tenant A tea", new BigDecimal("10.00"))));
+                new MenuItem("TEAGRA0001", hotelA, categoryA, "Tenant A tea", new BigDecimal("10.00"))));
         when(repository.findPosMenu(hotelB, null)).thenReturn(List.of(
-                new MenuItem(hotelB, categoryB, "Tenant B tea", new BigDecimal("20.00"))));
+                new MenuItem("TEABLU0001", hotelB, categoryB, "Tenant B tea", new BigDecimal("20.00"))));
         MenuCatalogCache cache = new MenuCatalogCache(redis, new ObjectMapper(), repository);
 
         assertEquals("Tenant A tea", cache.get(hotelA).getFirst().name());

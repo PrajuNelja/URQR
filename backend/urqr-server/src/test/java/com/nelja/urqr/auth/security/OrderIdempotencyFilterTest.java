@@ -34,8 +34,8 @@ import jakarta.servlet.http.HttpServletResponse;
 class OrderIdempotencyFilterTest {
 
     private static final String HOTEL_ID = UUID.fromString("4d886ed2-aa21-48cf-9694-0e75e2522043").toString();
-    private static final UUID USER_ID = UUID.fromString("be266253-ae63-4ff0-9239-8ee6cbafde78");
-    private static final String BODY = "{\"items\":[{\"menuItemId\":\"12a02c9c-d0c2-4d03-8cd7-42397705a8a2\",\"quantity\":1}]}";
+    private static final String USER_ID = "MGRTES01";
+    private static final String BODY = "{\"items\":[{\"menuItemId\":\"BEVTEST0001\",\"quantity\":1}]}";
     private static final String KEY = "checkout-43a31e5b";
 
     private StringRedisTemplate redis;
@@ -55,8 +55,8 @@ class OrderIdempotencyFilterTest {
         Jwt jwt = Jwt.withTokenValue("test-token")
                 .header("alg", "none")
                 .claim("sub", "cashier")
-                .claim("hotel_id", HOTEL_ID.toString())
-                .claim("uid", USER_ID.toString())
+                .claim("hotel_id", HOTEL_ID)
+                .claim("uid", USER_ID)
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_CASHIER"))));

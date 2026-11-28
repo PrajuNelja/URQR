@@ -28,9 +28,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 class OrderControllerTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final UUID ORDER_ID = UUID.randomUUID();
-    private static final UUID ITEM_ID = UUID.randomUUID();
+    private static final String USER_ID = "MGRGRA01";
+    private static final String ORDER_ID = "GRA202611280001";
+    private static final String ITEM_ID = "MAIGRA0001";
 
     @Mock private PosOrderService service;
     @Mock private CurrentHotel tenant;
@@ -47,10 +47,10 @@ class OrderControllerTest {
                 .claim("sub", "cashier")
                 .build();
 
-        orderView = new PosOrderService.OrderView(ORDER_ID, "ORD-2026-001", OrderStatus.OPEN,
+        orderView = new PosOrderService.OrderView(ORDER_ID, "ORD-" + ORDER_ID, OrderStatus.OPEN,
                 PaymentStatus.UNPAID, new BigDecimal("100.00"), BigDecimal.ZERO, new BigDecimal("5.00"),
                 new BigDecimal("105.00"), USER_ID, null, Instant.now(), Instant.now(), UUID.randomUUID(),
-                List.of(new PosOrderService.LineView(UUID.randomUUID(), ITEM_ID, "Coffee", new BigDecimal("100.00"),
+                List.of(new PosOrderService.LineView("OIGRA001", ITEM_ID, "Coffee", new BigDecimal("100.00"),
                         1, BigDecimal.ZERO, new BigDecimal("2.50"), new BigDecimal("2.50"), BigDecimal.ZERO,
                         new BigDecimal("105.00"))));
     }
@@ -66,11 +66,11 @@ class OrderControllerTest {
                 List.of(new OrderController.PaymentRequest(PaymentMethod.CASH, new BigDecimal("105.00"), "CASH-1"))
         );
 
-        PosOrderService.OrderView result = controller.create(jwt, request);
+        PosOrderService.OrderView result = controller.create("checkout-test-key", jwt, request);
 
         assertNotNull(result);
         assertEquals(ORDER_ID, result.id());
-        assertEquals("ORD-2026-001", result.orderNumber());
+        assertEquals("ORD-" + ORDER_ID, result.orderNumber());
         verify(service).create(eq(HOTEL_ID), eq(USER_ID), any(), any());
     }
 

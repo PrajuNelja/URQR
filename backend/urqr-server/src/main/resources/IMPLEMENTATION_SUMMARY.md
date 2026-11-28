@@ -19,8 +19,9 @@ This note records the backend work and verification completed for the six-day ex
 - Order, items, payments, audit, and outbox event are written in one `READ_COMMITTED` transaction. Integration coverage proves tenant isolation and rollback.
 - Money uses `BigDecimal`/`NUMERIC`. Tax is rounded per line with `HALF_UP`. Example: ₹100.00 less a 10% discount gives ₹90.00 taxable; 9% CGST = ₹8.10 and 9% SGST = ₹8.10; total = ₹106.20.
 - The outbox poller uses `FOR UPDATE SKIP LOCKED`, retry backoff, dead-letter state, and event IDs. Centrifugo delivery uses its Server API.
+- V14 converts staff, audit, category, menu item, order, order item, payment, and receipt IDs to the requested no-underscore string formats. It remaps the related foreign keys and initializes atomic per-prefix counters; hotel role IDs and outbox event IDs remain UUIDs.
 - Receipt and order search are tenant-scoped and use stable ordering/indexes. Swagger publishes OpenAPI 3.1.
-- `db/dev-seed.sql` is an opt-in local seed script, not a Flyway migration. It requires a tenant UUID already present in both `tenants` and `hotel`.
+- `db/dev-seed.sql` is an opt-in local seed script, not a Flyway migration. It requires an existing hotel ID and uses the same formatted business IDs and counter table as the API.
 
 ## Verification results
 
@@ -48,7 +49,7 @@ The p95 burst delivery met the 150 ms target; the full 20-event batch acknowledg
 ## Remaining checks and risks
 
 - Docker CLI could not be resolved in the implementation environment, so the persistent Compose database was not queried or migrated. Only the clean Testcontainers PostgreSQL database is verified.
-- The local seed script was not run because it requires a real tenant/hotel UUID.
+- The local seed script was not run because it requires a real hotel ID.
 - GitHub Actions was not run remotely; the local Maven suite is the completed build verification.
 - Joint checkout-to-printer acceptance and team sign-off remain manual.
 - The PDF references “Section 11 Compatibility Gates” without including its content. The missing gates must come from the lead; they have not been invented here.

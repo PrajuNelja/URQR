@@ -3,13 +3,13 @@ package com.nelja.urqr.billing.catalog.category;
 import com.nelja.urqr.billing.catalog.item.MenuCatalogCache;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.security.CurrentHotel;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,20 +27,22 @@ public class MenuCategoryController {
     private final CurrentHotel tenant;
     private final AuditService audit;
     private final MenuCatalogCache catalog;
+    private final BusinessIdGenerator ids;
 
     public MenuCategoryController(MenuCategoryRepository categories, CurrentHotel tenant,
-            AuditService audit, MenuCatalogCache catalog) {
+            AuditService audit, MenuCatalogCache catalog, BusinessIdGenerator ids) {
         this.categories = categories;
         this.tenant = tenant;
         this.audit = audit;
         this.catalog = catalog;
+        this.ids = ids;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('MANAGER')")
     public CategoryDto create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CategoryRequest request) {
         String hotelId = tenant.hotelId(jwt);
-        MenuCategory category = categories.save(new MenuCategory(hotelId, request.name()));
+        MenuCategory category = categories.save(new MenuCategory(ids.nextCategoryId(hotelId), hotelId, request.name()));
         audit.record(hotelId, tenant.userId(jwt), "CATEGORY_CREATED", "MenuCategory",
                 category.getId().toString(), null, category.getName());
         catalog.evictAfterCommit(hotelId);
@@ -60,13 +62,13 @@ public class MenuCategoryController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER','CASHIER','COOK','WAITER')")
     @Operation(summary = "Get one menu category for the authenticated hotel")
-    public CategoryDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+    public CategoryDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
         return dto(find(id, tenant.hotelId(jwt)));
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public CategoryDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+    public CategoryDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable String id,
             @Valid @RequestBody CategoryRequest request) {
         String hotelId = tenant.hotelId(jwt);
         MenuCategory category = find(id, hotelId);
@@ -81,7 +83,7 @@ public class MenuCategoryController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('MANAGER')")
-    public CategoryDto status(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+    public CategoryDto status(@AuthenticationPrincipal Jwt jwt, @PathVariable String id,
             @RequestBody StatusRequest request) {
         String hotelId = tenant.hotelId(jwt);
         MenuCategory category = find(id, hotelId);
@@ -97,7 +99,7 @@ public class MenuCategoryController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('MANAGER')")
     @Operation(summary = "Deactivate a menu category without removing historical references")
-    public void deactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+    public void deactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
         String hotelId = tenant.hotelId(jwt);
         MenuCategory category = find(id, hotelId);
         category.setActive(false);
@@ -107,7 +109,7 @@ public class MenuCategoryController {
         catalog.evictAfterCommit(hotelId);
     }
 
-    private MenuCategory find(UUID id, String hotelId) {
+    private MenuCategory find(String id, String hotelId) {
         return categories.findByIdAndHotelId(id, hotelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
     }
@@ -118,5 +120,5 @@ public class MenuCategoryController {
 
     public record CategoryRequest(@NotBlank @Size(max = 120) String name) { }
     public record StatusRequest(boolean active) { }
-    public record CategoryDto(UUID id, String name, boolean active) { }
+    public record CategoryDto(String id, String name, boolean active) { }
 }

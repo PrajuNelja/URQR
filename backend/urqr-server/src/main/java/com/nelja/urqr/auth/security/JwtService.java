@@ -27,7 +27,7 @@ public class JwtService {
         var claims=JwtClaimsSet.builder().id(UUID.randomUUID().toString()).issuer("urqr-server").issuedAt(now)
                 .expiresAt(now.plusSeconds(ttlMinutes*60)).subject(user.username())
                 .claim("token_type", "access")
-                .claim("uid",user.staffId().toString()).claim("hotel_id",user.hotelId().toString())
+                .claim("uid",user.staffId()).claim("hotel_id",user.hotelId())
                 .claim("roles", List.of(user.role())).build();
         return encode(claims);
     }
@@ -36,8 +36,8 @@ public class JwtService {
         var claims = JwtClaimsSet.builder().id(UUID.randomUUID().toString()).issuer("urqr-server").issuedAt(now)
                 .expiresAt(now.plusSeconds(REFRESH_TTL_SECONDS)).subject(user.username())
                 .claim("token_type", "refresh")
-                .claim("uid", user.staffId().toString())
-                .claim("hotel_id", user.hotelId().toString())
+                .claim("uid", user.staffId())
+                .claim("hotel_id", user.hotelId())
                 .claim("roles", List.of(user.role())).build();
         return encode(claims);
     }
@@ -66,7 +66,7 @@ public class JwtService {
         String hotelClaim = (String) claims.getClaims().get("hotel_id");
         String userClaim = (String) claims.getClaims().get("uid");
         authState.registerToken(token.getId(), tokenType, claims.getExpiresAt(),
-                hotelClaim, userClaim == null ? null : UUID.fromString(userClaim));
+                hotelClaim, userClaim);
         return token.getTokenValue();
     }
     public Instant expiresAt(){return Instant.now().plusSeconds(ttlMinutes*60);}

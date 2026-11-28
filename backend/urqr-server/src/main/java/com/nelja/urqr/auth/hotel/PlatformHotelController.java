@@ -11,6 +11,7 @@ import com.nelja.urqr.auth.hotel.dto.HotelResponse;
 import com.nelja.urqr.auth.hotel.dto.HotelStatusRequest;
 import com.nelja.urqr.auth.security.HotelRlsContext;
 import com.nelja.urqr.auth.security.RedisAuthStateService;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -48,10 +49,11 @@ public class PlatformHotelController {
     private final RedisAuthStateService authState;
     private final HotelRlsContext rlsContext;
     private final HotelIdGenerator hotelIdGenerator;
+    private final BusinessIdGenerator businessIds;
 
     public PlatformHotelController(HotelRepository hotels, RoleRepository roles, StaffUserRepository users,
             PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState,
-            HotelRlsContext rlsContext, HotelIdGenerator hotelIdGenerator) {
+            HotelRlsContext rlsContext, HotelIdGenerator hotelIdGenerator, BusinessIdGenerator businessIds) {
         this.hotels = hotels;
         this.roles = roles;
         this.users = users;
@@ -60,6 +62,7 @@ public class PlatformHotelController {
         this.authState = authState;
         this.rlsContext = rlsContext;
         this.hotelIdGenerator = hotelIdGenerator;
+        this.businessIds = businessIds;
     }
 
     @PostMapping
@@ -86,7 +89,7 @@ public class PlatformHotelController {
         roles.save(new Role(hotel.getId(), "CASHIER"));
         StaffUser managerUser;
         try {
-            managerUser = users.saveAndFlush(new StaffUser(hotel.getId(), manager.getId(),
+            managerUser = users.saveAndFlush(new StaffUser(businessIds.nextStaffId(hotel.getId(), "MANAGER"), hotel.getId(), manager.getId(),
                     managerUsername, encoder.encode(request.managerPassword())));
         } catch (DataIntegrityViolationException exception) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,

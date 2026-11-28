@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -104,7 +103,11 @@ public class AuthController {
             if (hotelId == null || hotelId.isBlank() || hotelId.length() > 64) {
                 throw new IllegalArgumentException("Invalid hotel identity");
             }
-            UUID userId = UUID.fromString(refresh.getClaimAsString("uid"));
+            String userId = refresh.getClaimAsString("uid");
+            if (userId == null || userId.isBlank() || userId.length() > 64
+                    || userId.chars().anyMatch(Character::isISOControl)) {
+                throw new IllegalArgumentException("Invalid staff identity");
+            }
             rls.bindHotel(hotelId);
             var hotel = hotels.findByIdAndStatus(hotelId, "ACTIVE");
             var user = users.findByIdAndHotelId(userId, hotelId).filter(account -> account.isActive());
@@ -131,5 +134,5 @@ public class AuthController {
     public record RefreshRequest(@NotBlank String refreshToken) { }
     public record LoginResponse(String accessToken, String tokenType, Instant expiresAt,
             String refreshToken, Instant refreshExpiresAt,
-            UUID userId, String hotelId, String username, String role) { }
+            String userId, String hotelId, String username, String role) { }
 }

@@ -6,6 +6,7 @@ import com.nelja.urqr.auth.access.role.RoleRepository;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.security.CurrentHotel;
 import com.nelja.urqr.auth.security.RedisAuthStateService;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -45,15 +46,17 @@ public class StaffUserController {
     private final PasswordEncoder encoder;
     private final AuditService audit;
     private final RedisAuthStateService authState;
+    private final BusinessIdGenerator ids;
 
     public StaffUserController(StaffUserRepository users, RoleRepository roles, CurrentHotel tenant,
-            PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState) {
+            PasswordEncoder encoder, AuditService audit, RedisAuthStateService authState, BusinessIdGenerator ids) {
         this.users = users;
         this.roles = roles;
         this.tenant = tenant;
         this.encoder = encoder;
         this.audit = audit;
         this.authState = authState;
+        this.ids = ids;
     }
 
     @PostMapping
@@ -71,7 +74,7 @@ public class StaffUserController {
 
         StaffUser user;
         try {
-            user = users.saveAndFlush(new StaffUser(hotelId, role.getId(), username,
+            user = users.saveAndFlush(new StaffUser(ids.nextStaffId(hotelId, role.getName()), hotelId, role.getId(), username,
                     encoder.encode(request.password())));
         } catch (DataIntegrityViolationException exception) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -95,14 +98,14 @@ public class StaffUserController {
     }
 
     @GetMapping("/{id}")
-    public UserDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+    public UserDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
         String hotelId = tenant.hotelId(jwt);
         StaffUser user = findUser(id, hotelId);
         return dto(user, findRole(user.getRoleId(), hotelId));
     }
 
     @PatchMapping("/{id}")
-    public UserDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+    public UserDto update(@AuthenticationPrincipal Jwt jwt, @PathVariable String id,
             @Valid @RequestBody UpdateUser request) {
         String hotelId = tenant.hotelId(jwt);
         StaffUser user = findUser(id, hotelId);
@@ -134,7 +137,7 @@ public class StaffUserController {
     }
 
     @PatchMapping("/{id}/status")
-    public UserDto status(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @RequestBody Status request) {
+    public UserDto status(@AuthenticationPrincipal Jwt jwt, @PathVariable String id, @RequestBody Status request) {
         String hotelId = tenant.hotelId(jwt);
         StaffUser user = findUser(id, hotelId);
         Role role = findRole(user.getRoleId(), hotelId);
@@ -153,7 +156,7 @@ public class StaffUserController {
         return dto(user, role);
     }
 
-    private StaffUser findUser(UUID id, String hotelId) {
+    private StaffUser findUser(String id, String hotelId) {
         return users.findByIdAndHotelId(id, hotelId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
@@ -182,5 +185,5 @@ public class StaffUserController {
             @NotNull UUID roleId) { }
     public record UpdateUser(UUID roleId, String password) { }
     public record Status(boolean active) { }
-    public record UserDto(UUID id, String username, String status, UUID roleId, String role, Instant createdAt) { }
+    public record UserDto(String id, String username, String status, UUID roleId, String role, Instant createdAt) { }
 }

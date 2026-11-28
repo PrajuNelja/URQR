@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.security.CurrentHotel;
 import com.nelja.urqr.billing.catalog.item.MenuCatalogCache;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,12 +28,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 class MenuCategoryControllerTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID USER_ID = UUID.randomUUID();
+    private static final String USER_ID = "MGRTES01";
 
     @Mock private MenuCategoryRepository categories;
     @Mock private MenuCatalogCache catalog;
     @Mock private CurrentHotel tenant;
     @Mock private AuditService audit;
+    @Mock private BusinessIdGenerator ids;
     @Captor private ArgumentCaptor<MenuCategory> categoryCaptor;
     @InjectMocks private MenuCategoryController controller;
 
@@ -50,7 +52,8 @@ class MenuCategoryControllerTest {
     void createSavesCategoryForCurrentHotelAndRecordsAuditEvent() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
-        UUID categoryId = UUID.randomUUID();
+        String categoryId = "CATTES001";
+        when(ids.nextCategoryId(HOTEL_ID)).thenReturn(categoryId);
         MenuCategory savedCategory = mock(MenuCategory.class);
         when(savedCategory.getId()).thenReturn(categoryId);
         when(savedCategory.getName()).thenReturn("Drinks");
@@ -73,8 +76,8 @@ class MenuCategoryControllerTest {
     @Test
     void listUsesActiveOnlyFilterAndCanIncludeInactiveCategories() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
-        MenuCategory active = new MenuCategory(HOTEL_ID, "Drinks");
-        MenuCategory inactive = new MenuCategory(HOTEL_ID, "Seasonal");
+        MenuCategory active = new MenuCategory("CATTES001", HOTEL_ID, "Drinks");
+        MenuCategory inactive = new MenuCategory("CATTES002", HOTEL_ID, "Seasonal");
         inactive.setActive(false);
         when(categories.findAllByHotelIdAndActiveTrueOrderByName(HOTEL_ID)).thenReturn(List.of(active));
         when(categories.findAllByHotelIdOrderByName(HOTEL_ID)).thenReturn(List.of(active, inactive));
@@ -92,8 +95,8 @@ class MenuCategoryControllerTest {
     @Test
     void getReadsOneCategoryOnlyWithinTheCurrentHotel() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
-        UUID categoryId = UUID.randomUUID();
-        MenuCategory category = new MenuCategory(HOTEL_ID, "Desserts");
+        String categoryId = "CATTES003";
+        MenuCategory category = new MenuCategory(categoryId, HOTEL_ID, "Desserts");
         when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
 
         MenuCategoryController.CategoryDto result = controller.get(jwt, categoryId);
@@ -106,8 +109,8 @@ class MenuCategoryControllerTest {
     void updateRenamesCategoryAndEvictsTheHotelCatalog() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
-        UUID categoryId = UUID.randomUUID();
-        MenuCategory category = new MenuCategory(HOTEL_ID, "Old name");
+        String categoryId = "CATTES004";
+        MenuCategory category = new MenuCategory(categoryId, HOTEL_ID, "Old name");
         when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
 
         MenuCategoryController.CategoryDto result = controller.update(jwt, categoryId,
@@ -124,8 +127,8 @@ class MenuCategoryControllerTest {
     void statusEndpointDeactivatesCategoryAndRecordsAuditEvent() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
-        UUID categoryId = UUID.randomUUID();
-        MenuCategory category = new MenuCategory(HOTEL_ID, "Drinks");
+        String categoryId = "CATTES005";
+        MenuCategory category = new MenuCategory(categoryId, HOTEL_ID, "Drinks");
         when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
 
         MenuCategoryController.CategoryDto result = controller.status(jwt, categoryId,
@@ -141,8 +144,8 @@ class MenuCategoryControllerTest {
     void deleteSoftDeactivatesCategoryAndEvictsTheHotelCatalog() {
         when(tenant.hotelId(jwt)).thenReturn(HOTEL_ID);
         when(tenant.userId(jwt)).thenReturn(USER_ID);
-        UUID categoryId = UUID.randomUUID();
-        MenuCategory category = new MenuCategory(HOTEL_ID, "Seasonal");
+        String categoryId = "CATTES006";
+        MenuCategory category = new MenuCategory(categoryId, HOTEL_ID, "Seasonal");
         when(categories.findByIdAndHotelId(categoryId, HOTEL_ID)).thenReturn(Optional.of(category));
 
         controller.deactivate(jwt, categoryId);

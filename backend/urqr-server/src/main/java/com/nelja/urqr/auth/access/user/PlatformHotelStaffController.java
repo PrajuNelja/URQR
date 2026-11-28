@@ -5,6 +5,7 @@ import com.nelja.urqr.auth.access.role.RoleRepository;
 import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.hotel.HotelRepository;
 import com.nelja.urqr.auth.security.HotelRlsContext;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -41,15 +42,17 @@ public class PlatformHotelStaffController {
     private final PasswordEncoder passwordEncoder;
     private final HotelRlsContext rlsContext;
     private final AuditService audit;
+    private final BusinessIdGenerator ids;
 
     public PlatformHotelStaffController(HotelRepository hotels, RoleRepository roles, StaffUserRepository users,
-            PasswordEncoder passwordEncoder, HotelRlsContext rlsContext, AuditService audit) {
+            PasswordEncoder passwordEncoder, HotelRlsContext rlsContext, AuditService audit, BusinessIdGenerator ids) {
         this.hotels = hotels;
         this.roles = roles;
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.rlsContext = rlsContext;
         this.audit = audit;
+        this.ids = ids;
     }
 
     @PostMapping
@@ -81,7 +84,7 @@ public class PlatformHotelStaffController {
                     "Password must be at most 72 UTF-8 bytes for BCrypt");
         }
 
-        StaffUser user = new StaffUser(hotelId, role.getId(), username,
+        StaffUser user = new StaffUser(ids.nextStaffId(hotelId, roleName), hotelId, role.getId(), username,
                 passwordEncoder.encode(request.password()));
         try {
             user = users.saveAndFlush(user);
@@ -108,6 +111,6 @@ public class PlatformHotelStaffController {
         CASHIER
     }
 
-    public record PlatformStaffUserResponse(UUID id, String hotelId, String username, String role,
+    public record PlatformStaffUserResponse(String id, String hotelId, String username, String role,
             String status, Instant createdAt) { }
 }

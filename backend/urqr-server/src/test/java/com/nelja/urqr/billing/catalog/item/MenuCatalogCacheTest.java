@@ -21,7 +21,7 @@ import org.springframework.data.redis.core.ValueOperations;
 class MenuCatalogCacheTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID CATEGORY_ID = UUID.randomUUID();
+    private static final String CATEGORY_ID = "CATGRA001";
 
     private StringRedisTemplate redis;
     private ValueOperations<String, String> values;
@@ -40,7 +40,7 @@ class MenuCatalogCacheTest {
 
     @Test
     void loadsAndCachesMenuItemsWithinHotelScope() {
-        MenuItem tea = new MenuItem(HOTEL_ID, CATEGORY_ID, "Tea", new BigDecimal("4.50"));
+        MenuItem tea = new MenuItem("TEAGRA0001", HOTEL_ID, CATEGORY_ID, "Tea", new BigDecimal("4.50"));
         tea.setAvailable(false);
         when(values.get(cacheKey())).thenReturn(null);
         when(items.findPosMenu(HOTEL_ID, null)).thenReturn(List.of(tea));
@@ -57,7 +57,7 @@ class MenuCatalogCacheTest {
     @Test
     void returnsCachedCatalogWithoutQueryingTheRepository() throws Exception {
         String cached = new ObjectMapper().writeValueAsString(List.of(
-                new com.nelja.urqr.billing.catalog.dto.CatalogProductDto(CATEGORY_ID, CATEGORY_ID,
+                new com.nelja.urqr.billing.catalog.dto.CatalogProductDto("COFGRA0001", CATEGORY_ID,
                         "Coffee", new BigDecimal("7.00"), true, BigDecimal.ZERO,
                         BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO)));
         when(values.get(cacheKey())).thenReturn(cached);

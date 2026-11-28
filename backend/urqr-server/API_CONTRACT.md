@@ -27,7 +27,7 @@ The response uses Spring's page shape (`content`, `totalElements`, `totalPages`,
 ```json
 {
   "items": [
-    { "menuItemId": "<existing-menu-item-uuid>", "quantity": 1 }
+    { "menuItemId": "<existing-menu-item-id>", "quantity": 1 }
   ],
   "payments": [
     { "method": "CASH", "amount": 94.40, "reference": null }
@@ -35,15 +35,15 @@ The response uses Spring's page shape (`content`, `totalElements`, `totalPages`,
 }
 ```
 
-Use an existing menu item UUID and make the payment amount equal to the computed order total. Without a payment, the order remains open and unpaid. A full payment completes the order and stores its receipt snapshot in the same database transaction.
+Use an existing formatted menu item ID and make the payment amount equal to the computed order total. Business IDs are strings without underscores. Without a payment, the order remains open and unpaid. A full payment completes the order and stores its receipt snapshot in the same database transaction.
 
-The response includes the order UUID/number, status, payment status, subtotal, discount, tax and grand totals, an `eventId` for the outbox record, and item snapshots. The generated OpenAPI document is authoritative if a field changes.
+The response includes the formatted order ID/number, status, payment status, subtotal, discount, tax and grand totals, a UUID `eventId` for the outbox record, and item snapshots. The generated OpenAPI document is authoritative if a field changes.
 
 ## Search and reprint
 
 ```http
 GET /api/v1/orders?status=OPEN&from=2026-11-01T00:00:00Z&to=2026-12-01T00:00:00Z&page=0&size=20&sort=createdAt,desc
-GET /api/v1/orders/<order-uuid>/receipt
+GET /api/v1/orders/<order-id>/receipt
 ```
 
 The date range is inclusive at `from` and exclusive at `to`. Results are scoped to the authenticated hotel. A cashier from another hotel receives no order or receipt data.

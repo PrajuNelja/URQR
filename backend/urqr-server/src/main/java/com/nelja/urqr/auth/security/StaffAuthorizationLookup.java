@@ -3,7 +3,6 @@ package com.nelja.urqr.auth.security;
 import com.nelja.urqr.auth.access.role.RoleRepository;
 import com.nelja.urqr.auth.access.user.StaffUserRepository;
 import com.nelja.urqr.auth.hotel.HotelRepository;
-import java.util.UUID;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +25,7 @@ public class StaffAuthorizationLookup {
     }
 
     @Transactional(readOnly = true)
-    public String findActiveRole(String hotelId, UUID userId) {
+    public String findActiveRole(String hotelId, String userId) {
         // JWT authentication runs before controller transactions, so bind RLS in this lookup transaction.
         rlsContext.bindHotel(hotelId);
         if (hotels.findByIdAndStatus(hotelId, "ACTIVE").isEmpty()) {

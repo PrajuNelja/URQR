@@ -22,6 +22,7 @@ import com.nelja.urqr.billing.payment.Payment;
 import com.nelja.urqr.billing.payment.PaymentMethod;
 import com.nelja.urqr.billing.payment.PaymentRepository;
 import com.nelja.urqr.billing.receipt.ReceiptRepository;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -40,9 +41,9 @@ import org.springframework.web.server.ResponseStatusException;
 class PosOrderServiceTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final UUID CATEGORY_ID = UUID.randomUUID();
-    private static final UUID ITEM_ID = UUID.randomUUID();
+    private static final String USER_ID = "MGRGRA01";
+    private static final String CATEGORY_ID = "CATGRA001";
+    private static final String ITEM_ID = "MAIGRA0001";
 
     @Mock private OrderRepository orders;
     @Mock private OrderItemRepository lines;
@@ -53,6 +54,7 @@ class PosOrderServiceTest {
     @Mock private HotelRepository hotels;
     @Mock private AuditService audit;
     @Mock private OutboxWriter outbox;
+    @Mock private BusinessIdGenerator ids;
 
     @InjectMocks private PosOrderService service;
 
@@ -67,10 +69,9 @@ class PosOrderServiceTest {
         lenient().when(activeHotel.getName()).thenReturn("Grand Horizon");
         lenient().when(hotels.findByIdAndStatus(HOTEL_ID, "ACTIVE")).thenReturn(Optional.of(activeHotel));
 
-        menuItem = new MenuItem(HOTEL_ID, CATEGORY_ID, "Masala Dosa", new BigDecimal("120.00"));
+        menuItem = new MenuItem(ITEM_ID, HOTEL_ID, CATEGORY_ID, "Masala Dosa", new BigDecimal("120.00"));
         menuItem.update(CATEGORY_ID, "Masala Dosa", new BigDecimal("120.00"), new BigDecimal("2.50"),
                 new BigDecimal("2.50"), BigDecimal.ZERO, BigDecimal.ZERO);
-        ReflectionTestUtils.setField(menuItem, "id", ITEM_ID);
 
         menuCategory = mock(MenuCategory.class);
         lenient().when(menuCategory.getId()).thenReturn(CATEGORY_ID);
@@ -79,12 +80,16 @@ class PosOrderServiceTest {
         lenient().when(orders.save(any(Order.class))).thenAnswer(invocation -> {
             Order o = invocation.getArgument(0);
             if (o.getId() == null) {
-                ReflectionTestUtils.setField(o, "id", UUID.randomUUID());
+                ReflectionTestUtils.setField(o, "id", "GRA202611280001");
             }
             return o;
         });
 
         lenient().when(outbox.enqueue(eq(HOTEL_ID), any(), any(), any(), any())).thenReturn(UUID.randomUUID());
+        lenient().when(ids.nextOrderId(HOTEL_ID)).thenReturn("GRA202611280001");
+        lenient().when(ids.nextOrderItemId(HOTEL_ID)).thenReturn("OIGRA001");
+        lenient().when(ids.nextPaymentId(eq(HOTEL_ID), any())).thenReturn("CASHGRA20261128001");
+        lenient().when(ids.nextReceiptId(HOTEL_ID)).thenReturn("RPTGRA20261128001");
     }
 
     @Test
@@ -92,7 +97,7 @@ class PosOrderServiceTest {
         when(menu.findAllByHotelIdAndIdIn(HOTEL_ID, Set.of(ITEM_ID))).thenReturn(List.of(menuItem));
         when(categories.findAllByHotelIdAndIdInAndActiveTrue(HOTEL_ID, Set.of(CATEGORY_ID))).thenReturn(List.of(menuCategory));
 
-        OrderItem lineItem = new OrderItem(HOTEL_ID, UUID.randomUUID(), ITEM_ID, "Masala Dosa",
+        OrderItem lineItem = new OrderItem("OIGRA001", HOTEL_ID, "GRA202611280001", ITEM_ID, "Masala Dosa",
                 new BigDecimal("120.00"), 2, BigDecimal.ZERO, new BigDecimal("6.00"),
                 new BigDecimal("6.00"), BigDecimal.ZERO, new BigDecimal("252.00"));
         when(lines.findAllByHotelIdAndOrderIdOrderById(eq(HOTEL_ID), any())).thenReturn(List.of(lineItem));
@@ -183,8 +188,8 @@ class PosOrderServiceTest {
 
     @Test
     void cancelOrderSuccessfullyCancelsOpenUnpaidOrder() {
-        UUID orderId = UUID.randomUUID();
-        Order order = new Order(HOTEL_ID, USER_ID, "ORD-TEST-001");
+        String orderId = "GRA202611280001";
+        Order order = new Order(orderId, HOTEL_ID, USER_ID, "ORD-" + orderId);
         ReflectionTestUtils.setField(order, "id", orderId);
 
         when(orders.findForUpdate(orderId, HOTEL_ID)).thenReturn(Optional.of(order));
@@ -202,8 +207,8 @@ class PosOrderServiceTest {
 
     @Test
     void cancelOrderRejectsWhenPaymentsRecorded() {
-        UUID orderId = UUID.randomUUID();
-        Order order = new Order(HOTEL_ID, USER_ID, "ORD-TEST-002");
+        String orderId = "GRA202611280002";
+        Order order = new Order(orderId, HOTEL_ID, USER_ID, "ORD-" + orderId);
         ReflectionTestUtils.setField(order, "id", orderId);
 
         when(orders.findForUpdate(orderId, HOTEL_ID)).thenReturn(Optional.of(order));
@@ -216,8 +221,8 @@ class PosOrderServiceTest {
 
     @Test
     void recordPaymentCompletesOrderOnFullBalance() {
-        UUID orderId = UUID.randomUUID();
-        Order order = new Order(HOTEL_ID, USER_ID, "ORD-TEST-003");
+        String orderId = "GRA202611280003";
+        Order order = new Order(orderId, HOTEL_ID, USER_ID, "ORD-" + orderId);
         ReflectionTestUtils.setField(order, "id", orderId);
         order.setTotals(new BigDecimal("100.00"), BigDecimal.ZERO, new BigDecimal("5.00"), new BigDecimal("105.00"));
 
@@ -225,7 +230,7 @@ class PosOrderServiceTest {
         when(payments.sumAmount(HOTEL_ID, orderId)).thenReturn(BigDecimal.ZERO);
         when(payments.save(any(Payment.class))).thenAnswer(invocation -> {
             Payment p = invocation.getArgument(0);
-            ReflectionTestUtils.setField(p, "id", UUID.randomUUID());
+            ReflectionTestUtils.setField(p, "id", "UPIGRA20261128001");
             return p;
         });
 
@@ -241,8 +246,8 @@ class PosOrderServiceTest {
 
     @Test
     void recordPaymentRejectsOverpayment() {
-        UUID orderId = UUID.randomUUID();
-        Order order = new Order(HOTEL_ID, USER_ID, "ORD-TEST-004");
+        String orderId = "GRA202611280004";
+        Order order = new Order(orderId, HOTEL_ID, USER_ID, "ORD-" + orderId);
         ReflectionTestUtils.setField(order, "id", orderId);
         order.setTotals(new BigDecimal("100.00"), BigDecimal.ZERO, new BigDecimal("5.00"), new BigDecimal("105.00"));
 
