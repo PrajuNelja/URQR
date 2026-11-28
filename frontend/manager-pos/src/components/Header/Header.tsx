@@ -2,6 +2,7 @@ import { HEADER_VARIANTS, headerConfig } from "./Header.config";
 import type { HeaderProps } from "./Header.types";
 
 export const Header = ({
+  headerRef,
   variant = "dashboard",
   title,
   subtitle,
@@ -18,6 +19,7 @@ export const Header = ({
 
   return (
     <header
+      ref={headerRef}
       data-variant={variant}
       className={[
         headerConfig.base,

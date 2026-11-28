@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
-import { BillingHeader } from "../Billing/BillingHeader";
-import { BillingSidebar } from "../Billing/BillingSidebar";
+import { PosHeader } from "../../../../components/Header/PosHeader";
+import { PosSidebar } from "../../../../components/SideBar/PosSidebar";
 import { DashboardKpiGrid } from "../../../../components/Dashboard/DashboardKpiGrid";
 import { DashboardBreakdown } from "../../../../components/Dashboard/DashboardBreakdown";
 import { DashboardOrdersTable } from "../../../../components/Dashboard/DashboardOrdersTable";
@@ -15,6 +15,14 @@ import "../../../../Styles/Dashboard.css";
 export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  );
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.classList.toggle("light", !isDark);
+  }, [isDark]);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState("Custom");
@@ -116,7 +124,7 @@ export default function Dashboard() {
       }`}
       style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
-      <BillingHeader
+      <PosHeader
         searchText={searchText}
         onSearchChange={setSearchText}
         searchInputRef={searchInputRef}
@@ -125,9 +133,13 @@ export default function Dashboard() {
         isKeyboardOpen={keyboardOpen}
         onToggleKeyboard={() => setKeyboardOpen((open) => !open)}
         onClearSearch={() => setSearchText("")}
+        isSkeletonPreview={showSkeleton}
+        onToggleSkeleton={() => setShowSkeleton((prev) => !prev)}
+        isDark={isDark}
+        onToggleTheme={() => setIsDark((prev) => !prev)}
       />
 
-      <BillingSidebar collapsed={sidebarCollapsed} />
+      <PosSidebar collapsed={sidebarCollapsed} />
 
       <main className="dashboard-main">
         <div className="flex flex-col w-full text-[#3B2A1E]">
@@ -395,7 +407,7 @@ export default function Dashboard() {
             {/* KPI Bento Matrix (4 Cards) */}
             <DashboardKpiGrid
               summary={summaryQuery.data}
-              isLoading={summaryQuery.isPending}
+              isLoading={summaryQuery.isPending || showSkeleton}
               error={
                 summaryQuery.error instanceof Error
                   ? summaryQuery.error.message

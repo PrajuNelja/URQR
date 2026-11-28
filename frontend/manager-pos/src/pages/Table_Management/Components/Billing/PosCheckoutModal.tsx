@@ -5,11 +5,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Banknote,
-  CreditCard,
-  QrCode,
-} from "lucide-react";
+import { PosIcon } from "../../../../components/Icons/PosIcon";
 
 import {
   CheckoutRequestSchema,
@@ -88,7 +84,7 @@ interface PosCheckoutModalProps {
 
   onConfirmPayment: (
     checkout: CheckoutRequest
-  ) => Promise<boolean>;
+  ) => Promise<boolean | "buffered">;
 
   // Optional for backward compatibility
   // with existing Vishal test files.
@@ -418,7 +414,7 @@ export function PosCheckoutModal({
       // INTERNET DISCONNECTED
       // ====================================
 
-      if (!navigator.onLine) {
+      if (!navigator.onLine && (method !== "Cash" || retryLocked)) {
         setError({
           ...POS_ERRORS.INTERNET_DISCONNECTED,
 
@@ -501,6 +497,12 @@ export function PosCheckoutModal({
         // Show success only after
         // actual order confirmation.
 
+        if (completed === "buffered") {
+          setRetryLocked(false);
+          setError(null);
+          setCheckoutStatus("buffered");
+          return;
+        }
         if (completed !== true) {
           throw new Error(
             "Order confirmation was not completed."
@@ -893,6 +895,7 @@ export function PosCheckoutModal({
             onBackToCheckout={
               handleBackToCheckout
             }
+            onContinueBilling={handleClose}
           />
         </div>
       ) : (
@@ -936,7 +939,9 @@ export function PosCheckoutModal({
                   text-text-muted dark:text-[#A89888]
                 "
               >
-                {orderId !== undefined ? `Order #${orderId} · ` : ""}Read-only
+                {orderId !== undefined && orderId !== null
+                  ? `Order #${String(orderId).replace(/^#/, "")}`
+                  : ""}
               </span>
             </div>
 
@@ -1001,7 +1006,7 @@ export function PosCheckoutModal({
             className={`
               m-0 w-full min-w-0
               shrink-0 border-0
-              px-0 pt-3 pb-3
+              px-0 pt-3 pb-3 !mt-3
 
               ${
                 paymentDetailsLocked
@@ -1026,35 +1031,17 @@ export function PosCheckoutModal({
                 {
                   value: "Cash",
                   label: "Cash",
-
-                  icon: (
-                    <Banknote
-                      size={20}
-                      aria-hidden="true"
-                    />
-                  ),
-                },
-                {
-                  value: "Card",
-                  label: "Card",
-
-                  icon: (
-                    <CreditCard
-                      size={20}
-                      aria-hidden="true"
-                    />
-                  ),
+                  icon: <PosIcon name="cash" size={24} aria-hidden="true" />,
                 },
                 {
                   value: "UPI",
                   label: "UPI",
-
-                  icon: (
-                    <QrCode
-                      size={20}
-                      aria-hidden="true"
-                    />
-                  ),
+                  icon: <PosIcon name="upi" size={24} aria-hidden="true" />,
+                },
+                {
+                  value: "Card",
+                  label: "Card",
+                  icon: <PosIcon name="card" size={24} aria-hidden="true" />,
                 },
               ]}
 
@@ -1345,7 +1332,8 @@ export function PosCheckoutModal({
               "
             >
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-[#2E2015] dark:text-[#E5A86E] dark:border dark:border-[#523924] shadow-xs">
-                <CreditCard
+                <PosIcon
+                  name="card"
                   size={28}
                   aria-hidden="true"
                 />

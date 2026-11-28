@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { PosIcon } from "../../../../components/Icons/PosIcon";
+import { IconButton } from "../../../../components/Buttons/IconButton";
 
 import { Receipt } from "../../../../components/PopupModal/Receipt";
 import { Button } from "../../../../components/Buttons/Button";
@@ -172,15 +173,14 @@ export function BillingReceiptModal({
           {/* AUTHENTIC THERMAL BILL PAPER */}
           <article className="relative w-full max-h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-32px)] flex flex-col rounded-2xl border border-[#E3D9CB] dark:border-[#43352A] bg-[#FFFDF8] dark:bg-[#251D17] text-[#3B2A1E] dark:text-[#F5EEE0] shadow-2xl font-sans overflow-hidden">
             {/* CLOSE BUTTON AT TOP-RIGHT OF PREVIEW */}
-            <button
-              type="button"
+            <IconButton
+              label="Close preview"
+              variant="outline"
+              size="sm"
               onClick={onClose}
-              aria-label="Close preview"
-              title="Close"
-              className="w-8 h-8 absolute top-3.5 right-3.5 z-20 flex items-center justify-center rounded-full border border-[#D8C7B0] bg-[#FAF6F0] hover:bg-[#EFE5D5] active:scale-95 text-[#4A382A] shadow-xs dark:bg-[#251D17] dark:border-[#4A3728] dark:text-[#E8DEC8] dark:hover:bg-[#32271F] dark:hover:text-white transition-all cursor-pointer"
-            >
-              <X size={16} strokeWidth={2.5} />
-            </button>
+              icon={<PosIcon name="close" size={20} strokeWidth={2} className="!h-5 !w-5 shrink-0" />}
+              className="!absolute top-3 right-3 z-20 !h-9 !w-9 !rounded-full !border-[#D8C7B0] !bg-[#FAF6F0] !text-[#4A382A] hover:!bg-[#EFE5D5] dark:!bg-[#251D17] dark:!border-[#4A3728] dark:!text-[#E8DEC8] dark:hover:!bg-[#32271F] focus-visible:!outline-2 focus-visible:!outline-[#8B5E3C] focus-visible:outline-offset-2"
+            />
             
             {/* SCROLLABLE PREVIEW CONTENT */}
             <div className="overflow-y-auto flex-1 p-5 sm:p-6 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -328,15 +328,14 @@ export function BillingReceiptModal({
         {/* AUTHENTIC THERMAL BILL PAPER — NO NESTED OUTER CARD */}
         <article className="relative w-full max-h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-32px)] flex flex-col rounded-2xl border border-[#E3D9CB] dark:border-[#43352A] bg-white dark:bg-[#1E1712] text-[#111827] dark:text-[#F5EEE0] shadow-2xl overflow-hidden font-mono">
           {/* CLOSE BUTTON AT TOP-RIGHT INSIDE BILL HEADER */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close receipt"
-            title="Close"
-            className="w-8 h-8 absolute top-3.5 right-3.5 z-20 flex items-center justify-center rounded-full border border-[#D8C7B0] bg-[#FAF6F0] hover:bg-[#EFE5D5] active:scale-95 text-[#4A382A] shadow-xs dark:bg-[#251D17] dark:border-[#4A3728] dark:text-[#E8DEC8] dark:hover:bg-[#32271F] dark:hover:text-white transition-all cursor-pointer"
-          >
-            <X size={16} strokeWidth={2.5} />
-          </button>
+          <IconButton
+              label="Close receipt"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              icon={<PosIcon name="close" size={20} strokeWidth={2} className="!h-5 !w-5 shrink-0" />}
+              className="!absolute top-3 right-3 z-20 !h-9 !w-9 !rounded-full !border-[#D8C7B0] !bg-[#FAF6F0] !text-[#4A382A] hover:!bg-[#EFE5D5] dark:!bg-[#251D17] dark:!border-[#4A3728] dark:!text-[#E8DEC8] dark:hover:!bg-[#32271F] focus-visible:!outline-2 focus-visible:!outline-[#8B5E3C] focus-visible:outline-offset-2"
+            />
 
           {/* SCROLLABLE BILL CONTENT — FITS LAPTOP AND DESKTOP SCREENS WITHOUT CUTTING OFF */}
           <div className="overflow-y-auto flex-1 p-5 sm:p-6 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">

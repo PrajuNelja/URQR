@@ -1,3 +1,4 @@
+import { PosIcon } from "../../../../components/Icons/PosIcon";
 import {
   LoaderCircle,
   CheckCircle2,
@@ -19,6 +20,7 @@ import type {
 export type CheckoutStatusType =
   | "idle"
   | "processing"
+  | "buffered"
   | "success"
   | "error";
 
@@ -28,6 +30,7 @@ interface CheckoutStatusProps {
   error?: CheckoutErrorDetails | null;
   onViewReceipt: () => void;
   onBackToCheckout: () => void;
+  onContinueBilling?: () => void;
 }
 
 export function CheckoutStatus({
@@ -36,6 +39,7 @@ export function CheckoutStatus({
   error,
   onViewReceipt,
   onBackToCheckout,
+  onContinueBilling,
 }: CheckoutStatusProps) {
   const isProcessing =
     status === "processing";
@@ -224,6 +228,21 @@ export function CheckoutStatus({
             onClick={onViewReceipt}
           >
             View Receipt
+          </Button>
+        </>
+      )}
+
+      {status === "buffered" && (
+        <>
+          <PosIcon name="wifi-off" size={60} className="text-warning-text" />
+          <div role="status" aria-live="polite" className="space-y-3">
+            <h2 className="text-xl font-bold text-primary">Order Saved Offline</h2>
+            <p className="text-2xl font-bold text-primary">{formatINR(amountPaise)}</p>
+            <p className="font-semibold text-warning-text">Pending Sync</p>
+            <p className="text-sm text-text-muted">Cash order saved on this device. Server confirmation is pending.</p>
+          </div>
+          <Button type="button" variant="primary" fullWidth onClick={onContinueBilling}>
+            Continue Billing
           </Button>
         </>
       )}

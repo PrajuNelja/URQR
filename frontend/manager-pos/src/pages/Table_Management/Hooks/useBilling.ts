@@ -1,3 +1,6 @@
+import { bufferOfflineOrder } from "../../../lib/indexedDB/offlineOrderStorage";
+import { useAuthStore } from "../../../lib/authStore";
+import { CheckoutError } from "../Components/Billing/checkoutErrors";
 import {
   useState,
   useMemo,
@@ -5,7 +8,7 @@ import {
   useRef,
 } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useCatalogSync } from "./useCatalogSync";
 
 import {
   CheckoutRequestSchema,
@@ -20,14 +23,9 @@ import type {
 } from "../Types/billing.types";
 
 import {
-  DISHES,
   TAX_RATE,
   CATEGORIES,
 } from "../Config/billing.config";
-
-import {
-  POS_CATALOG_QUERY_KEY,
-} from "../../../queryClient";
 
 import {
   usePosHotkeys,
@@ -63,7 +61,14 @@ import type {
 // MAIN BILLING HOOK
 // ==========================================
 
+const EMPTY_CATALOG: Dish[] = [];
+
+export type CheckoutResult = boolean | "buffered";
+
 export const useBilling = () => {
+  const tenantId = useAuthStore((state) => state.tenantId);
+  const token = useAuthStore((state) => state.accessToken);
+  const storeId = tenantId ? `${import.meta.env.DEV ? "dev" : "prod"}:${tenantId}` : null;
   // ==========================================
   // CHECKOUT IDEMPOTENCY
   // ==========================================
@@ -129,84 +134,10 @@ export const useBilling = () => {
   // ==========================================
 
   const {
-    data: dishes = DISHES,
+    data: dishes = EMPTY_CATALOG,
     refetch: refreshCatalog,
     isLoading: isCatalogLoading,
-  } = useQuery<Dish[]>({
-    queryKey: POS_CATALOG_QUERY_KEY,
-
-    queryFn: async () => {
-      try {
-        const response =
-          await fetch("/api/products");
-
-        if (response.ok) {
-          const data: unknown =
-            await response.json();
-
-          if (
-            Array.isArray(data) &&
-            data.length > 0
-          ) {
-            return data.map(
-              (
-                item: Record<string, unknown>,
-                index: number
-              ) => ({
-                id:
-                  typeof item.id === "number" ||
-                  typeof item.id === "string"
-                    ? Number(item.id)
-                    : index + 1,
-
-                name:
-                  typeof item.name === "string"
-                    ? item.name
-                    : "Dish",
-
-                category:
-                  typeof item.category === "string"
-                    ? item.category
-                    : "Main Course",
-
-                description:
-                  typeof item.description === "string"
-                    ? item.description
-                    : "",
-
-                price:
-                  typeof item.price === "number"
-                    ? item.price
-                    : Number(item.price) || 0,
-
-                stock:
-                  typeof item.stock === "number"
-                    ? item.stock
-                    : undefined,
-
-                lowStockThreshold:
-                  typeof item.lowStockThreshold ===
-                  "number"
-                    ? item.lowStockThreshold
-                    : undefined,
-
-                imageUrl:
-                  typeof item.imageUrl === "string"
-                    ? item.imageUrl
-                    : undefined,
-              })
-            );
-          }
-        }
-      } catch {
-        // Existing static catalog fallback.
-      }
-
-      return DISHES;
-    },
-
-    initialData: DISHES,
-  });
+  } = useCatalogSync();
 
   // ==========================================
   // PRODUCT SEARCH AND CATEGORY FILTER
@@ -510,7 +441,7 @@ export const useBilling = () => {
   const handleCompletePayment = useCallback(
     async (
       checkout: CheckoutRequest
-    ): Promise<boolean> => {
+    ): Promise<CheckoutResult> => {
       // Prevent double submission.
 
       if (checkoutLock.current) {
@@ -644,11 +575,48 @@ export const useBilling = () => {
         );
       }
 
+      const offline = !navigator.onLine;
+      if (offline && pendingPayload.current !== null) {
+        throw new CheckoutError({
+          title: "Previous Order Pending",
+          message: "Reconnect and verify the original checkout before retrying.",
+          requiresVerification: true,
+        });
+      }
+      if (offline && (!storeId || !token)) {
+        throw new Error("Offline checkout requires an authenticated tenant.");
+      }
       checkoutLock.current = true;
 
       pendingPayload.current = fingerprint;
 
       try {
+        if (offline && storeId) {
+          try {
+            await bufferOfflineOrder({
+              storeId,
+              idempotencyKey: getCheckoutHeaders()["Idempotency-Key"],
+              payload,
+              payablePaise,
+              tenderedPaise: receivedPaise,
+              changeDuePaise: receivedPaise - payablePaise,
+            });
+          } catch {
+            pendingPayload.current = null;
+            throw new CheckoutError({
+              title: "Offline Order Not Saved",
+              message: "Local storage failed. Keep the cart and retry after checking storage.",
+              requiresVerification: false,
+            });
+          }
+          setReceipt(null);
+          setIsReceiptOpen(false);
+          resetIdempotencyKey();
+          pendingPayload.current = null;
+          checkoutLock.current = false;
+          clearCart();
+          return "buffered";
+        }
         // ====================================
         // RECORD CHECKOUT START TIME
         // ====================================
@@ -835,6 +803,8 @@ export const useBilling = () => {
       resetIdempotencyKey,
       clearCart,
       printConfirmedReceipt,
+      storeId,
+      token,
     ]
   );
 
