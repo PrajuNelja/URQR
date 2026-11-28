@@ -34,3 +34,30 @@ export interface DateRange {
   to: string;
 }
 
+export interface OrderDetailItem {
+  name: string;
+  qty: number;
+  rate: string;
+  total: string;
+  note?: string;
+}
+
+export interface OrderDetail {
+  id: string;
+  date: string;
+  status: "Completed" | "Cancelled";
+  service: string;
+  cashier: string;
+  terminal: string;
+  token: string;
+  paymentMode: string;
+  paymentColor: string;
+  items: OrderDetailItem[];
+  subtotal: string;
+  cgst: string;
+  sgst: string;
+  serviceCharge: string;
+  grandTotal: string;
+}
+
+
