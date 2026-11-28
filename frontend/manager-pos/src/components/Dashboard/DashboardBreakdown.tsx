@@ -1,245 +1,410 @@
 import { useMemo, useState } from "react";
 
-type ItemCategory = "Mains" | "Sides" | "Beverages" | "Desserts";
+type ItemCategory = "all" | "mains" | "sides" | "beverages" | "desserts";
 type ItemMetric = "units" | "revenue";
 
-const topItems: Array<{
+interface CatalogItem {
   name: string;
-  category: ItemCategory;
+  category: string;
+  color: string;
   units: number;
   revenue: number;
-  color: string;
+}
+
+const catalogData: Record<ItemCategory, CatalogItem[]> = {
+  all: [
+    { name: "Veg Burger", category: "mains", color: "#5C3D26", units: 142, revenue: 21300 },
+    { name: "Chicken Pizza", category: "mains", color: "#8B5E3C", units: 108, revenue: 27000 },
+    { name: "French Fries", category: "sides", color: "#A68B75", units: 97, revenue: 11640 },
+    { name: "Cold Coffee", category: "beverages", color: "#7A6A5A", units: 76, revenue: 9120 },
+    { name: "Brownie", category: "desserts", color: "#D9CDB8", units: 62, revenue: 6820 },
+  ],
+  mains: [
+    { name: "Veg Burger", category: "mains", color: "#5C3D26", units: 142, revenue: 21300 },
+    { name: "Chicken Pizza", category: "mains", color: "#8B5E3C", units: 108, revenue: 27000 },
+    { name: "Ribeye Beef Burger", category: "mains", color: "#6E492E", units: 74, revenue: 18500 },
+    { name: "Wagyu Ribeye", category: "mains", color: "#5C3D26", units: 50, revenue: 24000 },
+    { name: "Lobster Linguine", category: "mains", color: "#8B5E3C", units: 50, revenue: 18000 },
+  ],
+  sides: [
+    { name: "French Fries", category: "sides", color: "#A68B75", units: 97, revenue: 11640 },
+    { name: "Truffle Mushroom Soup", category: "sides", color: "#8B5E3C", units: 45, revenue: 5400 },
+    { name: "Classic Caesar Salad", category: "sides", color: "#5C3D26", units: 35, revenue: 4900 },
+    { name: "Garlic Bread", category: "sides", color: "#B59982", units: 32, revenue: 3840 },
+    { name: "Onion Rings", category: "sides", color: "#7A6A5A", units: 27, revenue: 2700 },
+  ],
+  beverages: [
+    { name: "Cold Coffee", category: "beverages", color: "#7A6A5A", units: 76, revenue: 9120 },
+    { name: "Artisanal Espresso", category: "beverages", color: "#5C3D26", units: 90, revenue: 4500 },
+    { name: "Fresh Lime Soda", category: "beverages", color: "#8B5E3C", units: 52, revenue: 3120 },
+    { name: "Iced Peach Tea", category: "beverages", color: "#A68B75", units: 48, revenue: 2880 },
+    { name: "Mango Smoothie", category: "beverages", color: "#6E492E", units: 30, revenue: 2400 },
+  ],
+  desserts: [
+    { name: "Brownie", category: "desserts", color: "#D9CDB8", units: 62, revenue: 6820 },
+    { name: "Belgian Choc Lava Cake", category: "desserts", color: "#5C3D26", units: 50, revenue: 5500 },
+    { name: "Tiramisu", category: "desserts", color: "#8B5E3C", units: 35, revenue: 4200 },
+    { name: "Berry Cheesecake", category: "desserts", color: "#A68B75", units: 33, revenue: 3960 },
+    { name: "Vanilla Bean Gelato", category: "desserts", color: "#7A6A5A", units: 28, revenue: 2800 },
+  ],
+};
+
+const categoryPillsMeta: Array<{
+  id: ItemCategory;
+  label: string;
+  dotColor?: string;
+  icon?: string;
 }> = [
-  {
-    name: "Veg Burger",
-    category: "Mains",
-    units: 142,
-    revenue: 21300,
-    color: "#5c3d26",
-  },
-  {
-    name: "Chicken Pizza",
-    category: "Mains",
-    units: 108,
-    revenue: 27000,
-    color: "#8b5e3c",
-  },
-  {
-    name: "French Fries",
-    category: "Sides",
-    units: 97,
-    revenue: 11640,
-    color: "#aa8f7a",
-  },
-  {
-    name: "Cold Coffee",
-    category: "Beverages",
-    units: 76,
-    revenue: 9120,
-    color: "#7a6a5a",
-  },
-  {
-    name: "Brownie",
-    category: "Desserts",
-    units: 62,
-    revenue: 6820,
-    color: "#d9cdb8",
-  },
+  { id: "all", label: "All", icon: "done_all" },
+  { id: "mains", label: "Mains", dotColor: "#5C3D26" },
+  { id: "sides", label: "Sides", dotColor: "#8B5E3C" },
+  { id: "beverages", label: "Beverages", dotColor: "#7A6A5A" },
+  { id: "desserts", label: "Desserts", dotColor: "#D9CDB8" },
 ];
 
-const payments = [
+const paymentMethodsList = [
   {
+    mode: "upi",
     name: "UPI (QR / Direct Pay)",
-    orders: 885,
-    revenue: 114483,
-    share: 62,
-    color: "#3b2a1e",
+    orders: "885 orders",
+    amount: "₹1,14,483",
+    pct: "62%",
+    color: "#5C3D26",
   },
   {
+    mode: "card",
     name: "Card (Credit / Debit Chip)",
-    orders: 343,
-    revenue: 44316,
-    share: 24,
-    color: "#8b5e3c",
+    orders: "343 orders",
+    amount: "₹44,316",
+    pct: "24%",
+    color: "#8B5E3C",
   },
   {
+    mode: "cash",
     name: "Cash (Drawer Reconciled)",
-    orders: 200,
-    revenue: 25851,
-    share: 14,
-    color: "#a39587",
+    orders: "200 orders",
+    amount: "₹25,851",
+    pct: "14%",
+    color: "#A68B75",
   },
 ];
-
-const currencyFormatter = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
 
 export function DashboardBreakdown() {
-  const [category, setCategory] = useState<ItemCategory | "All">("All");
-  const [metric, setMetric] = useState<ItemMetric>("units");
-  const visibleItems = useMemo(
-    () =>
-      topItems.filter(
-        (item) => category === "All" || item.category === category,
-      ),
-    [category],
+  const [currentCategory, setCurrentCategory] = useState<ItemCategory>("mains");
+  const [currentMetric, setCurrentMetric] = useState<ItemMetric>("units");
+
+  const items = catalogData[currentCategory] || catalogData.all;
+
+  const totalUnits = useMemo(
+    () => items.reduce((acc, curr) => acc + curr.units, 0),
+    [items],
   );
-  const totalUnits = visibleItems.reduce((sum, item) => sum + item.units, 0);
+  const totalRevenue = useMemo(
+    () => items.reduce((acc, curr) => acc + curr.revenue, 0),
+    [items],
+  );
+
+  const maxValue = useMemo(() => {
+    let max = 0;
+    items.forEach((it) => {
+      const val = currentMetric === "units" ? it.units : it.revenue;
+      if (val > max) max = val;
+    });
+    return max;
+  }, [items, currentMetric]);
+
+  const axisInfo = useMemo(() => {
+    if (currentMetric === "units") {
+      const axisMax = maxValue > 100 ? 150 : 100;
+      return {
+        tick1: Math.round(axisMax / 3).toString(),
+        tick2: Math.round((axisMax * 2) / 3).toString(),
+        tickMax: `${axisMax} units`,
+        axisMax,
+      };
+    } else {
+      const axisMax = maxValue > 20000 ? 30000 : maxValue > 10000 ? 15000 : 8000;
+      return {
+        tick1: `₹${Math.round(axisMax / 3).toLocaleString("en-IN")}`,
+        tick2: `₹${Math.round((axisMax * 2) / 3).toLocaleString("en-IN")}`,
+        tickMax: `₹${axisMax.toLocaleString("en-IN")}`,
+        axisMax,
+      };
+    }
+  }, [currentMetric, maxValue]);
 
   return (
-    <section className="dashboard-breakdown-grid" aria-label="Sales breakdown">
-      <article className="dashboard-panel dashboard-top-items">
-        <div className="dashboard-panel-header">
-          <h2>Top 5 Selling Items</h2>
-          <span className="dashboard-total-badge">{totalUnits} Units Sold</span>
-        </div>
-        <div className="dashboard-item-controls">
-          <div className="dashboard-metric-toggle" aria-label="Item metric">
-            <button
-              type="button"
-              aria-pressed={metric === "units"}
-              className={metric === "units" ? "is-active" : ""}
-              onClick={() => setMetric("units")}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      {/* Left Card: Top 5 Selling Items (Horizontal Bar Graph) */}
+      <div
+        id="topItemsCard"
+        className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl p-6 shadow-sm flex flex-col justify-between h-full"
+      >
+        <div>
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3
+                className="text-2xl font-bold text-[#3B2A1E] tracking-tight"
+                style={{ fontFamily: "Newsreader, Georgia, serif" }}
+              >
+                Top 5 Selling Items
+              </h3>
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center p-1 rounded-xl bg-[#FAF3E6] border border-[#E4D8C3]">
+                  <button
+                    type="button"
+                    id="topMetricUnitsBtn"
+                    onClick={() => setCurrentMetric("units")}
+                    className={`px-3 py-1 rounded-lg font-ticket-mono text-xs font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer ${
+                      currentMetric === "units"
+                        ? "bg-[#5C3D26] text-[#FFFFFF]"
+                        : "text-[#5C3D26] hover:text-[#3B2A1E]"
+                    }`}
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    <span className="text-[11px]">#</span> Units
+                  </button>
+                  <button
+                    type="button"
+                    id="topMetricRevenueBtn"
+                    onClick={() => setCurrentMetric("revenue")}
+                    className={`px-3 py-1 rounded-lg font-ticket-mono text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                      currentMetric === "revenue"
+                        ? "bg-[#5C3D26] text-[#FFFFFF]"
+                        : "text-[#5C3D26] hover:text-[#3B2A1E]"
+                    }`}
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    <span className="text-[11px]">₹</span> Revenue
+                  </button>
+                </div>
+                <span
+                  id="topItemsTotalBadge"
+                  className="px-3 py-1 rounded-full bg-[#FAF3E6] border border-[#E4D8C3] font-ticket-mono text-xs font-bold text-[#3B2A1E] shadow-sm transition-all"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <span id="topItemsUnitsLabel">
+                    {currentMetric === "units"
+                      ? `${totalUnits.toLocaleString("en-IN")} Units Sold`
+                      : `₹${totalRevenue.toLocaleString("en-IN")} Revenue`}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            {/* Dynamic Category Filter Pills */}
+            <div
+              id="topCategoryPillsContainer"
+              role="tablist"
+              aria-label="Catalog Categories"
+              className="p-1.5 rounded-xl bg-[#FAF3E6] border border-[#E4D8C3] flex items-center gap-1.5 overflow-x-auto"
             >
-              # Units
-            </button>
-            <button
-              type="button"
-              aria-pressed={metric === "revenue"}
-              className={metric === "revenue" ? "is-active" : ""}
-              onClick={() => setMetric("revenue")}
-            >
-              ₹ Revenue
-            </button>
+              {categoryPillsMeta.map((pill) => {
+                const isSelected = currentCategory === pill.id;
+                return (
+                  <button
+                    key={pill.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    data-category={pill.id}
+                    onClick={() => setCurrentCategory(pill.id)}
+                    className={`category-pill-btn px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap ${
+                      isSelected
+                        ? "bg-[#5C3D26] text-[#FFFFFF] font-bold"
+                        : "bg-[#FFFDF8] border border-[#E4D8C3] text-[#5C3D26] hover:bg-[#FAF3E6] font-medium"
+                    }`}
+                  >
+                    {pill.id === "all" ? (
+                      <span
+                        className={`material-symbols-outlined text-[15px] check-icon ${
+                          isSelected ? "text-white" : "hidden text-[#7A6A5A]"
+                        }`}
+                      >
+                        done_all
+                      </span>
+                    ) : (
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: pill.dotColor }}
+                      />
+                    )}
+                    <span>{pill.label}</span>
+                    {pill.id !== "all" && (
+                      <span
+                        className={`material-symbols-outlined text-[14px] check-icon ${
+                          isSelected ? "text-white" : "hidden text-[#7A6A5A]"
+                        }`}
+                      >
+                        check
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Horizontal Bars List */}
+          <div className="flex flex-col gap-4" id="topItemsBarsContainer">
+            {items.map((item, idx) => {
+              const metricVal =
+                currentMetric === "units" ? item.units : item.revenue;
+              const pct = Math.min(
+                100,
+                Math.max(8, (metricVal / axisInfo.axisMax) * 100),
+              );
+
+              return (
+                <div
+                  key={item.name}
+                  className="flex flex-col gap-1.5 transition-all duration-300"
+                  style={{
+                    animation: `fadeInRow 0.25s ease ${idx * 40}ms forwards`,
+                  }}
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#3B2A1E] flex items-center gap-1.5">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="truncate">{item.name}</span>
+                    </span>
+                    <div
+                      className="flex items-center gap-3 font-ticket-mono"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                      <span
+                        className={
+                          currentMetric === "units"
+                            ? "text-[#7A6A5A] text-[11px]"
+                            : "font-bold text-[#3B2A1E] text-sm"
+                        }
+                      >
+                        ₹{item.revenue.toLocaleString("en-IN")}
+                      </span>
+                      <span
+                        className={
+                          currentMetric === "units"
+                            ? "font-bold text-[#3B2A1E] text-sm"
+                            : "text-[#7A6A5A] text-[11px]"
+                        }
+                      >
+                        {item.units}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-[#FAF3E6] border border-[#E4D8C3]/50 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        backgroundColor: item.color,
+                        width: `${pct.toFixed(1)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
+
+        {/* Graph axis ticks */}
         <div
-          className="dashboard-category-filters"
-          aria-label="Item categories"
+          id="topItemsAxisTicks"
+          className="flex justify-between items-center text-[11px] font-ticket-mono text-[#7A6A5A] pt-6 border-t border-[#E4D8C3] mt-4"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
         >
-          {(["All", "Mains", "Sides", "Beverages", "Desserts"] as const).map(
-            (itemCategory) => (
-              <button
-                type="button"
-                key={itemCategory}
-                aria-pressed={category === itemCategory}
-                className={
-                  category === itemCategory
-                    ? "dashboard-category-pill is-active"
-                    : "dashboard-category-pill"
-                }
-                onClick={() => setCategory(itemCategory)}
-              >
-                {itemCategory === "All" ? "✓ " : "• "}
-                {itemCategory}
-              </button>
-            ),
-          )}
+          <span>0</span>
+          <span id="axisTick1">{axisInfo.tick1}</span>
+          <span id="axisTick2">{axisInfo.tick2}</span>
+          <span id="axisTickMax">{axisInfo.tickMax}</span>
         </div>
-        <div className="dashboard-item-list">
-          {visibleItems.map((item) => {
-            const metricValue = metric === "units" ? item.units : item.revenue;
-            const maximum = metric === "units" ? 150 : 30000;
-            const percent = Math.min((metricValue / maximum) * 100, 100);
-            return (
-              <div className="dashboard-item-row" key={item.name}>
-                <div className="dashboard-item-label-row">
-                  <span className="dashboard-item-name">
-                    <i style={{ backgroundColor: item.color }} />
-                    {item.name}
-                  </span>
-                  <span className="dashboard-item-figures">
-                    <span>{currencyFormatter.format(item.revenue)}</span>
-                    <strong>{item.units}</strong>
-                  </span>
+      </div>
+
+      {/* Right Card: Payment Method Distribution */}
+      <div
+        id="paymentMethodsCard"
+        className="bg-[#FFFDF8] border border-[#E4D8C3] rounded-xl p-6 shadow-sm flex flex-col justify-between h-full"
+      >
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <h3
+                className="text-xl font-bold text-[#3B2A1E]"
+                style={{ fontFamily: "Newsreader, Georgia, serif" }}
+              >
+                Payment Methods
+              </h3>
+            </div>
+            <span
+              id="paymentTotalBadge"
+              className="px-2.5 py-0.5 rounded-full bg-[#FAF3E6] border border-[#E4D8C3] font-ticket-mono text-xs font-bold text-[#3B2A1E] transition-all"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              <span id="paymentTotalSettledLabel">₹1,84,650</span> Total Settled
+            </span>
+          </div>
+          <p className="text-xs text-[#7A6A5A] mb-3">
+            Tender type allocation across all active POS terminals and tableside tablets
+          </p>
+
+          {/* Payment Bars List */}
+          <div className="flex flex-col gap-4" id="paymentBarsContainer">
+            {paymentMethodsList.map((pay) => (
+              <div
+                key={pay.mode}
+                data-mode={pay.mode}
+                className="flex flex-col gap-1.5 transition-all duration-300"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-3 h-3 rounded shrink-0"
+                      style={{ backgroundColor: pay.color }}
+                    />
+                    <span className="font-bold text-[#3B2A1E]">{pay.name}</span>
+                    <span
+                      className="font-ticket-mono text-[11px] text-[#7A6A5A]"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                      {pay.orders}
+                    </span>
+                  </div>
+                  <div
+                    className="flex items-center gap-2 font-ticket-mono"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    <span className="text-[#7A6A5A] text-[11px]">{pay.amount}</span>
+                    <span className="font-bold text-[#3B2A1E] text-sm mode-pct">
+                      {pay.pct}
+                    </span>
+                  </div>
                 </div>
-                <div
-                  className="dashboard-item-track"
-                  role="progressbar"
-                  aria-label={`${item.name} ${metric}`}
-                  aria-valuemin={0}
-                  aria-valuemax={maximum}
-                  aria-valuenow={metricValue}
-                >
-                  <span
+                <div className="w-full bg-[#FAF3E6] border border-[#E4D8C3]/50 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${percent}%`,
-                      backgroundColor: item.color,
+                      backgroundColor: pay.color,
+                      width: pay.pct,
                     }}
                   />
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-        <div className="dashboard-item-axis" aria-hidden="true">
-          {metric === "units" ? (
-            <>
-              <span>0</span>
-              <span>50</span>
-              <span>100</span>
-              <span>150 units</span>
-            </>
-          ) : (
-            <>
-              <span>₹0</span>
-              <span>₹10k</span>
-              <span>₹20k</span>
-              <span>₹30k revenue</span>
-            </>
-          )}
-        </div>
-      </article>
 
-      <article className="dashboard-panel dashboard-payment-panel">
-        <div className="dashboard-panel-header">
-          <h2>Payment Methods</h2>
-          <span className="dashboard-total-badge">₹1,84,650 Total Settled</span>
+        {/* Payment Summary Footer aligning with Top Items axis ticks */}
+        <div
+          className="flex justify-between items-center text-[11px] font-ticket-mono text-[#7A6A5A] pt-6 border-t border-[#E4D8C3] mt-4"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          <span>3 payment modes</span>
+          <span>1,428 orders settled</span>
         </div>
-        <p className="dashboard-panel-description">
-          Tender type allocation across all active POS terminals and tableside
-          tablets
-        </p>
-        <div className="dashboard-payment-list">
-          {payments.map((payment) => (
-            <div className="dashboard-payment-row" key={payment.name}>
-              <div className="dashboard-payment-label-row">
-                <span className="dashboard-payment-name">
-                  <i style={{ backgroundColor: payment.color }} />
-                  {payment.name}
-                  <small>{payment.orders} orders</small>
-                </span>
-                <span className="dashboard-payment-figures">
-                  {currencyFormatter.format(payment.revenue)}{" "}
-                  <strong>{payment.share}%</strong>
-                </span>
-              </div>
-              <div
-                className="dashboard-payment-track"
-                role="progressbar"
-                aria-label={`${payment.name} share`}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={payment.share}
-              >
-                <span
-                  style={{
-                    width: `${payment.share}%`,
-                    backgroundColor: payment.color,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="dashboard-payment-footer">
-          <span>Total Transactions: 1,428</span>
-          <strong>100% Reconciled</strong>
-        </div>
-      </article>
-    </section>
+      </div>
+    </div>
   );
 }
