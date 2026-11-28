@@ -3,6 +3,7 @@ import AppRouter from "./AppRouter";
 import { NotificationProvider } from "./components/Notification/NotificationProvider";
 import WindowControls from "./components/WindowControls/WindowControls";
 import { ErrorBoundary } from "./components/ErrorBoundary/ErrorBoundary";
+import { NetworkBanner } from "./components/NetworkBanner/NetworkBanner"; // <-- ADDED THIS
 import { bridgeClient, isTauriRuntime } from "./lib/bridge/bridgeClient";
 
 // ADD THESE IMPORTS
@@ -38,6 +39,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-app-bg text-primary">
+      <NetworkBanner /> {/* <-- ADDED THIS HERE */}
       <WindowControls />
       <ErrorBoundary>
         <NotificationProvider>
