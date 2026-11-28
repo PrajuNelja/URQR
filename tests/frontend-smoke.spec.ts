@@ -36,8 +36,8 @@ test('URQR frontend server and asset bundles are available without network drop'
   }
 
   // Verify main app root container exists and renders
-  const rootOrBody = page.locator('#root, body');
-  await expect(rootOrBody).not.toBeEmpty();
+  const rootElement = page.locator('#root');
+  await expect(rootElement).not.toBeEmpty();
 
   // Verify asset delivery integrity
   expect(failedAssets).toEqual([]);

@@ -34,12 +34,12 @@ test.describe('Screen 2: POS Billing & Cart Management', () => {
       return;
     }
 
-    const searchInput = page.locator('#billing-search-input, input[placeholder*="search" i], input[type="search"]').first();
+    const searchInput = page.locator('#billing-search-input, input[placeholder*="search" i]').first();
     await expect(searchInput).toBeVisible({ timeout: 10000 });
 
     await searchInput.fill('Burger');
 
-    const filteredItem = page.locator('.urqr-billing-product-grid, text=/burger/i').first();
+    const filteredItem = page.getByText(/burger/i).first();
     await expect(filteredItem).toBeVisible({ timeout: 10000 });
   });
 
