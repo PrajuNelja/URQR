@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>URQR Manager POS — Day 4 SVG Icons · URQR THEME (Beige / Sepia)</title>
+<style>
+  :root {
+    --urqr-bg: #F5EEE0;
+    --urqr-surface: #FFFDF8;
+    --urqr-surface-alt: #FAF3E6;
+    --urqr-border: #E4D8C3;
+    --urqr-primary: #8B5E3C;
+    --urqr-primary-dark: #5C3D26;
+    --urqr-text: #3B2A1E;
+    --urqr-text-secondary: #7A6A5A;
+    --urqr-success: #3F6B3A;
+    --urqr-success-bg: #EEF3E8;
+    --urqr-warning: #B45309;
+    --urqr-warning-bg: #FDF1E1;
+    --urqr-error: #B91C1C;
+    --urqr-disabled: #D9CDB8;
+    --urqr-disabled-text: #8E7F6C;
+    --urqr-on-primary: #FFFFFF;
+    --urqr-input-bg: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--urqr-bg);
+    color: var(--urqr-text);
+    padding: 28px 32px;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 1px solid var(--urqr-border);
+    padding-bottom: 14px; margin-bottom: 20px;
+  }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--urqr-primary); margin-bottom: 3px; }
+  h1 { font-size: 24px; font-weight: 700; color: var(--urqr-text); }
+  .meta { font-size: 12.5px; color: var(--urqr-text-secondary); text-align: right; }
+
+  .sec-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--urqr-text-secondary); margin: 18px 0 10px;
+  }
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+  }
+  .icon-card {
+    background: var(--urqr-surface); border: 1px solid var(--urqr-border);
+    border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .icon-card .preview {
+    height: 92px; display: flex; align-items: center; justify-content: center;
+    position: relative; border-bottom: 1px solid var(--urqr-border);
+  }
+  .icon-card .kbd {
+    position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700;
+    background: var(--urqr-surface); color: var(--urqr-text-secondary);
+    border: 1px solid var(--urqr-border); border-radius: 5px; padding: 1px 6px;
+  }
+  .meta-body { padding: 10px 12px; }
+  .meta-body .title { font-size: 13.5px; font-weight: 600; color: var(--urqr-text); }
+  .meta-body .file { font-size: 10.5px; font-family: ui-monospace, Menlo, monospace; color: var(--urqr-text-secondary); margin: 2px 0 6px; }
+  .tok-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--urqr-text); }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; border: 1px solid rgba(59,42,30,0.18); flex-shrink: 0; }
+  .tok-row code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--urqr-primary-dark); }
+
+  /* Realistic URQR Screen Component Preview */
+  .screen-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; }
+  .panel {
+    background: var(--urqr-surface); border: 1px solid var(--urqr-border);
+    border-radius: 16px; padding: 18px 20px;
+    box-shadow: 0 8px 24px rgba(59,42,30,0.08);
+  }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--urqr-border);
+  }
+  .panel-title { font-size: 15px; font-weight: 700; color: var(--urqr-text); }
+  .panel-sub { font-size: 11.5px; color: var(--urqr-text-secondary); }
+
+  .hdr-bar {
+    background: var(--urqr-surface); border: 1px solid var(--urqr-border);
+    border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 14px;
+  }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  .pill.success { background: var(--urqr-success-bg); color: var(--urqr-success); }
+  .pill.warning { background: var(--urqr-warning-bg); color: var(--urqr-warning); }
+  .pill.error { background: #FDECEC; color: var(--urqr-error); }
+
+  .pay-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .pay-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 14px 8px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--urqr-border);
+  }
+  .pay-tile.selected { background: var(--urqr-primary); color: var(--urqr-on-primary); border-color: var(--urqr-primary); }
+  .pay-tile.unselected { background: var(--urqr-surface-alt); color: var(--urqr-primary-dark); }
+  .pay-tile.disabled { background: var(--urqr-disabled); color: var(--urqr-disabled-text); border-color: var(--urqr-disabled); }
+
+  .act-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .btn {
+    height: 48px; border-radius: 8px; padding: 0 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13.5px; font-weight: 600; border: 1px solid var(--urqr-border);
+  }
+  .btn-l { display: flex; align-items: center; gap: 8px; }
+  .btn.neutral { background: var(--urqr-surface-alt); color: var(--urqr-text); }
+  .btn.neutral svg { color: var(--urqr-primary-dark); }
+  .btn.primary { background: var(--urqr-primary); color: var(--urqr-on-primary); border-color: var(--urqr-primary); }
+  .btn.disabled-btn { background: var(--urqr-disabled); color: var(--urqr-disabled-text); border-color: var(--urqr-disabled); }
+  .btn.danger { background: var(--urqr-surface); color: var(--urqr-error); border-color: #E7B9B9; }
+  .keycap {
+    font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 5px;
+    background: var(--urqr-surface); color: var(--urqr-text-secondary); border: 1px solid var(--urqr-border);
+  }
+  .btn.primary .keycap { background: rgba(255,255,255,0.2); color: #fff; border-color: transparent; }
+  .btn.danger .keycap { background: #FDECEC; color: var(--urqr-error); border-color: #E7B9B9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">URQR Manager POS &bull; Variable Collection &ldquo;URQR THEME&rdquo; (Beige / Sepia)</div>
+      <h1>Day 4 POS SVG Icons &mdash; Theme-Compatible System (v1.1.0)</h1>
+    </div>
+    <div class="meta">
+      <div><strong>Spec Alignment:</strong> 05 &middot; Specification sheet (1920&times;1080)</div>
+      <div><strong>Tokens:</strong> <code>#F5EEE0</code> &bull; <code>#8B5E3C</code> &bull; <code>#5C3D26</code> &bull; <code>#3F6B3A</code> &bull; <code>#B45309</code> &bull; <code>#B91C1C</code></div>
+    </div>
+  </header>
+
+  <div class="sec-title">All 11 Optimized Icons &mdash; Bound to URQR THEME Tokens</div>
+  <div class="icon-grid">
+    
+    <div class="icon-card">
+      <div class="preview" style="background:#FAF3E6;color:#5C3D26;">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" role="img" aria-label="Cash tender"><rect x="2.21" y="8.35" width="17.45" height="9.09" rx="1.25" transform="rotate(-8 2.21 8.35)" fill="#E4D8C3" stroke="#5C3D26" stroke-width="1.35" stroke-linejoin="round"/><rect x="4.21" y="8.92" width="17.45" height="9.09" rx="1.25" fill="#FAF3E6" stroke="#5C3D26" stroke-width="1.35" stroke-linejoin="round"/><circle cx="12.93" cy="13.46" r="2.95" fill="#FFFDF8" stroke="#5C3D26" stroke-width="1.2"/><path d="M12.19 12.24H13.84L13.74 12.51H13.23C13.34 12.57 13.42 12.66 13.45 12.75H13.84L13.74 13.0H13.47C13.44 13.35 13.17 13.6 12.69 13.65L13.5 14.7H13.04L12.17 13.64V13.4H12.56C12.88 13.4 13.06 13.25 13.09 13.0H12.1L12.19 12.75H13.04C12.99 12.59 12.83 12.51 12.57 12.51H12.1Z" fill="#5C3D26"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Cash Tender</div>
+        <div class="file">urqr-payment-cash.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#5C3D26"></span>
+          <code>primaryDark #5C3D26</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FAF3E6;color:#5C3D26;">
+        
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Credit or Debit Card"><rect height="14" rx="2" width="20" x="2" y="5"/><rect height="3" rx=".5" width="3.5" x="5.5" y="12.5"/><path d="M2 9.5h20M12.5 15h6"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Credit / Debit Card</div>
+        <div class="file">urqr-payment-card.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#5C3D26"></span>
+          <code>primaryDark #5C3D26</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FAF3E6;color:#5C3D26;">
+        
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="UPI QR code"><rect height="6.5" rx="1" width="6.5" x="3" y="3"/><rect height="6.5" rx="1" width="6.5" x="14.5" y="3"/><rect height="6.5" rx="1" width="6.5" x="3" y="14.5"/><path d="M6.25 6.25h.01M17.75 6.25h.01M6.25 17.75h.01M14.5 14.5h2.5v2.5M21 14.5v2.5M14.5 20.5h2.5M19.5 19.5H21V21"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">UPI QR Code</div>
+        <div class="file">urqr-payment-upi-qr.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#5C3D26"></span>
+          <code>primaryDark #5C3D26</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#EEF3E8;color:#3F6B3A;">
+        
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cloud Sync Active"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9ZM8.75 15.5v-4.75M7.25 12.25 8.75 10.75l1.5 1.5M13.25 10.75v4.75M11.75 14 13.25 15.5l1.5-1.5"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Cloud Sync Active</div>
+        <div class="file">urqr-status-cloud-sync.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#3F6B3A"></span>
+          <code>success #3F6B3A</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FDF1E1;color:#B45309;">
+        
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Offline Buffered"><path d="M9.2 5.2A5.5 5.5 0 0 1 15.3 7h1.2a3.75 3.75 0 0 1 1.65 7.12M13.5 14.5H6a3.5 3.5 0 0 1-.82-6.9M4 3.5 18 16.5M6 18.5h12M8.5 21.25h7"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Offline Buffered</div>
+        <div class="file">urqr-status-offline-buffered.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#B45309"></span>
+          <code>warning #B45309</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#EEF3E8;color:#3F6B3A;">
+        
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Centrifugo Connected"><circle cx="12" cy="12" r="2.25"/><path d="M8.11 8.11a5.5 5.5 0 0 0 0 7.78M15.89 8.11a5.5 5.5 0 0 1 0 7.78M5.28 5.28a9.5 9.5 0 0 0 0 13.44M18.72 5.28a9.5 9.5 0 0 1 0 13.44"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Centrifugo Connected</div>
+        <div class="file">urqr-status-centrifugo-connected.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#3F6B3A"></span>
+          <code>success #3F6B3A</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#EEF3E8;color:#3F6B3A;">
+        
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Printer Ready"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1.5M18 12h.01M6 14h6.5M6 14v6a1 1 0 0 0 1 1h4.5M15 18.5 17 20.5 21.5 16"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Printer Ready</div>
+        <div class="file">urqr-status-printer-ready.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#3F6B3A"></span>
+          <code>success #3F6B3A</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FAF3E6;color:#5C3D26;">
+        <span class="kbd">F2</span>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Quick Search (F2)"><circle cx="10.5" cy="10.5" r="7.5"/><path d="M21 21l-5.2-5.2M11.25 6.75 8.75 10.5h3.5l-2.5 3.75"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Quick Search</div>
+        <div class="file">urqr-action-quick-search.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#5C3D26"></span>
+          <code>primaryDark #5C3D26</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FAF3E6;color:#8B5E3C;">
+        <span class="kbd">F4</span>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cash Pay (F4)"><path d="M22 12.25V6.5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9M7.25 7.75h4.75M7.25 10.25h4.75M8.75 7.75a2.1 2.1 0 0 1 0 4.2H7.25l3.5 2.3M15.5 18.25l2 2 4.25-4.5"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Cash Pay</div>
+        <div class="file">urqr-action-cash-pay.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#8B5E3C"></span>
+          <code>primary #8B5E3C</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FAF3E6;color:#5C3D26;">
+        <span class="kbd">F9</span>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Print Last (F9)"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1M6 14h5.5M6 14v6a1 1 0 0 0 1 1h4.25M15.2 16.4a3.25 3.25 0 1 1 .5 3.9M14.75 13.75v2.75h2.75"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Print Last</div>
+        <div class="file">urqr-action-print-last.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#5C3D26"></span>
+          <code>primaryDark #5C3D26</code>
+        </div>
+      </div>
+    </div>
+    <div class="icon-card">
+      <div class="preview" style="background:#FFFDF8;color:#B91C1C;">
+        <span class="kbd">Esc</span>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Void Cart (Esc)"><circle cx="9.25" cy="19.75" r="1.35"/><circle cx="17.25" cy="19.75" r="1.35"/><path d="M2.5 4h2.75l2.2 10.2a1.5 1.5 0 0 0 1.47 1.18h8.7a1.5 1.5 0 0 0 1.46-1.15L20.75 7.5H6M11.65 9.55l3.7 3.7M15.35 9.55l-3.7 3.7"/></svg>
+      </div>
+      <div class="meta-body">
+        <div class="title">Void Cart</div>
+        <div class="file">urqr-action-void-cart.svg</div>
+        <div class="tok-row">
+          <span class="swatch" style="background:#B91C1C"></span>
+          <code>error #B91C1C</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">Live Component States Preview (Billing + Payment Spec)</div>
+  <div class="screen-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">72px Header Status Pills &amp; Payment Method States</span>
+        <span class="panel-sub">surface #FFFDF8 &bull; radius 8/16</span>
+      </div>
+      <div class="hdr-bar">
+        <div class="pills">
+          <span class="pill success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cloud Sync Active"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9ZM8.75 15.5v-4.75M7.25 12.25 8.75 10.75l1.5 1.5M13.25 10.75v4.75M11.75 14 13.25 15.5l1.5-1.5"/></svg>Cloud Sync Active</span>
+          <span class="pill warning"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Offline Buffered"><path d="M9.2 5.2A5.5 5.5 0 0 1 15.3 7h1.2a3.75 3.75 0 0 1 1.65 7.12M13.5 14.5H6a3.5 3.5 0 0 1-.82-6.9M4 3.5 18 16.5M6 18.5h12M8.5 21.25h7"/></svg>Offline Buffered</span>
+          <span class="pill success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Centrifugo Connected"><circle cx="12" cy="12" r="2.25"/><path d="M8.11 8.11a5.5 5.5 0 0 0 0 7.78M15.89 8.11a5.5 5.5 0 0 1 0 7.78M5.28 5.28a9.5 9.5 0 0 0 0 13.44M18.72 5.28a9.5 9.5 0 0 1 0 13.44"/></svg>Centrifugo</span>
+          <span class="pill success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Printer Ready"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1.5M18 12h.01M6 14h6.5M6 14v6a1 1 0 0 0 1 1h4.5M15 18.5 17 20.5 21.5 16"/></svg>Printer Ready</span>
+        </div>
+      </div>
+      <div class="pay-row">
+        <div class="pay-tile selected"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cash tender"><path d="M4.2 17.65a1.25 1.25 0 0 1-1.35-1.08l-.92-6.56a1.25 1.25 0 0 1 1.07-1.41l14.79-2.08a1.25 1.25 0 0 1 1.41 1.06l.19 1.34"/><rect x="4.21" y="8.92" width="17.45" height="9.09" rx="1.25"/><circle cx="12.93" cy="13.46" r="2.95" stroke-width="1.2"/><path d="M12.19 12.24H13.84L13.74 12.51H13.23C13.34 12.57 13.42 12.66 13.45 12.75H13.84L13.74 13.0H13.47C13.44 13.35 13.17 13.6 12.69 13.65L13.5 14.7H13.04L12.17 13.64V13.4H12.56C12.88 13.4 13.06 13.25 13.09 13.0H12.1L12.19 12.75H13.04C12.99 12.59 12.83 12.51 12.57 12.51H12.1Z" fill="currentColor" stroke="none"/></svg><span>Cash (Selected)</span></div>
+        <div class="pay-tile unselected"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Credit or Debit Card"><rect height="14" rx="2" width="20" x="2" y="5"/><rect height="3" rx=".5" width="3.5" x="5.5" y="12.5"/><path d="M2 9.5h20M12.5 15h6"/></svg><span>Card (Default)</span></div>
+        <div class="pay-tile disabled"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="UPI QR code"><rect height="6.5" rx="1" width="6.5" x="3" y="3"/><rect height="6.5" rx="1" width="6.5" x="14.5" y="3"/><rect height="6.5" rx="1" width="6.5" x="3" y="14.5"/><path d="M6.25 6.25h.01M17.75 6.25h.01M6.25 17.75h.01M14.5 14.5h2.5v2.5M21 14.5v2.5M14.5 20.5h2.5M19.5 19.5H21V21"/></svg><span>UPI (Disabled)</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Billing Action Buttons &amp; Confirm States</span>
+        <span class="panel-sub">48–52h &bull; radius 8 &bull; Inter</span>
+      </div>
+      <div class="act-row">
+        <div class="btn neutral"><span class="btn-l"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Quick Search (F2)"><circle cx="10.5" cy="10.5" r="7.5"/><path d="M21 21l-5.2-5.2M11.25 6.75 8.75 10.5h3.5l-2.5 3.75"/></svg>Quick Search</span><span class="keycap">F2</span></div>
+        <div class="btn primary"><span class="btn-l"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cash Pay (F4)"><path d="M22 12.25V6.5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9M7.25 7.75h4.75M7.25 10.25h4.75M8.75 7.75a2.1 2.1 0 0 1 0 4.2H7.25l3.5 2.3M15.5 18.25l2 2 4.25-4.5"/></svg>Cash Pay</span><span class="keycap">F4</span></div>
+        <div class="btn neutral"><span class="btn-l"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Print Last (F9)"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1M6 14h5.5M6 14v6a1 1 0 0 0 1 1h4.25M15.2 16.4a3.25 3.25 0 1 1 .5 3.9M14.75 13.75v2.75h2.75"/></svg>Print Last</span><span class="keycap">F9</span></div>
+        <div class="btn danger"><span class="btn-l"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Void Cart (Esc)"><circle cx="9.25" cy="19.75" r="1.35"/><circle cx="17.25" cy="19.75" r="1.35"/><path d="M2.5 4h2.75l2.2 10.2a1.5 1.5 0 0 0 1.47 1.18h8.7a1.5 1.5 0 0 0 1.46-1.15L20.75 7.5H6M11.65 9.55l3.7 3.7M15.35 9.55l-3.7 3.7"/></svg>Void Cart</span><span class="keycap">Esc</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

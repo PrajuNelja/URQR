@@ -1,0 +1,20 @@
+/* URQR Manager POS — Variable Collection: URQR THEME (Beige / Sepia) */
+:root {
+  --urqr-bg: #F5EEE0;
+  --urqr-surface: #FFFDF8;
+  --urqr-surface-alt: #FAF3E6;
+  --urqr-border: #E4D8C3;
+  --urqr-primary: #8B5E3C;
+  --urqr-primary-dark: #5C3D26;
+  --urqr-text: #3B2A1E;
+  --urqr-text-secondary: #7A6A5A;
+  --urqr-success: #3F6B3A;
+  --urqr-success-bg: #EEF3E8;
+  --urqr-warning: #B45309;
+  --urqr-warning-bg: #FDF1E1;
+  --urqr-error: #B91C1C;
+  --urqr-disabled: #D9CDB8;
+  --urqr-disabled-text: #8E7F6C;
+  --urqr-on-primary: #FFFFFF;
+  --urqr-input-bg: #FFFFFF;
+}

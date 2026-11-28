@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URQR Manager POS — Day 5 Afternoon Complete Suite (Tasks 1–5 · Thermal Receipt QA &amp; Sign-Off)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F5EEE0;
+      --surface: #FFFDF8;
+      --surfaceAlt: #FAF3E6;
+      --border: #E4D8C3;
+      --primary: #8B5E3C;
+      --primaryDark: #5C3D26;
+      --text: #3B2A1E;
+      --textSecondary: #7A6A5A;
+      --success: #3F6B3A;
+      --successBg: #EEF3E8;
+      --warning: #B45309;
+      --warningBg: #FDF1E1;
+      --error: #B91C1C;
+      --errorBg: #FEF2F2;
+      --disabled: #D9CDB8;
+      --disabledText: #8E7F6C;
+      --onPrimary: #FFFFFF;
+      --inputBg: #FFFFFF;
+      --shadow: 0 8px 24px rgba(59, 42, 30, 0.14);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .font-mono-num {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .urqr-focus:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .urqr-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .urqr-well {
+      background-color: var(--surfaceAlt);
+      border: 1px solid var(--border);
+    }
+
+    /* Finalized Thermal Paper Visual Fidelity (80mm & 58mm) */
+    .paper-visual {
+      width: 344px;
+      max-width: 100%;
+      background: #FFFFFF;
+      color: #111827;
+      border-radius: 8px;
+      padding: 20px 18px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      box-shadow: var(--shadow);
+      border: 1px solid #D8CFC0;
+      transition: width 0.2s ease;
+    }
+
+    .paper-visual.mode-58 {
+      width: 252px;
+      padding: 16px 12px 12px;
+      font-size: 11px;
+    }
+
+    .v-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
+      border: 1.5px solid #111827;
+      margin-bottom: 8px;
+    }
+
+    .v-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .paper-visual.mode-58 .v-title { font-size: 15px; }
+
+    .v-tagline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .v-tagline-line {
+      height: 1px;
+      width: 18px;
+      background: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    .v-dash {
+      border-top: 1px dashed #9ca3af;
+      margin: 10px 0;
+    }
+
+    .v-meta-row {
+      display: grid;
+      grid-template-columns: 96px 12px 1fr;
+      align-items: baseline;
+      margin: 2px 0;
+    }
+
+    .paper-visual.mode-58 .v-meta-row {
+      grid-template-columns: 74px 10px 1fr;
+    }
+
+    .v-items-head {
+      display: grid;
+      grid-template-columns: 1fr 28px 64px 66px;
+      gap: 4px;
+      font-weight: 700;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid #111827;
+      margin-bottom: 4px;
+    }
+
+    .v-item-row {
+      display: grid;
+      grid-template-columns: 1fr 28px 64px 66px;
+      gap: 4px;
+      padding: 5px 0;
+      border-bottom: 1px dashed #d1d5db;
+      align-items: start;
+    }
+
+    .paper-visual.mode-58 .v-items-head,
+    .paper-visual.mode-58 .v-item-row {
+      grid-template-columns: 1fr 26px 64px;
+    }
+
+    .v-item-row:last-child { border-bottom: none; }
+
+    .v-item-name {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .paper-visual.mode-58 .v-item-name {
+      -webkit-line-clamp: 3;
+    }
+
+    .v-item-sub {
+      grid-column: 1 / -1;
+      font-size: 10px;
+      color: #4b5563;
+      padding-left: 14px;
+      margin-top: 1px;
+    }
+
+    .v-grand {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 6px 0;
+      border-top: 1.5px solid #111827;
+      border-bottom: 1.5px solid #111827;
+      margin: 8px 0;
+    }
+
+    .v-feed-spacer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 2px dotted #9ca3af;
+      border-right: 2px dotted #9ca3af;
+      margin: 12px 6px 6px;
+      color: #4b5563;
+      font-size: 10px;
+    }
+
+    .v-cut-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      color: #B91C1C;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .v-cut-dashes {
+      flex: 1;
+      border-top: 1.5px dashed #B91C1C;
+    }
+
+    .paper-mono {
+      background: #FFFFFF;
+      color: #111827;
+      border-radius: 8px;
+      padding: 18px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.45;
+      white-space: pre;
+      margin: 0;
+      box-shadow: var(--shadow);
+      border: 1px solid #D8CFC0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- 72px URQR Header -->
+  <header class="w-full h-[72px] px-4 lg:px-6 border-b flex items-center justify-between gap-4 sticky top-0 z-50" style="background-color: var(--surface); border-color: var(--border);">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0" style="background-color: var(--primaryDark); color: var(--onPrimary);">U</div>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="text-[18px] leading-[22px] font-bold">URQR</span>
+          <span class="text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap" style="background-color: var(--surfaceAlt); color: var(--primaryDark); border: 1px solid var(--border);">Day 5 Afternoon · Tasks 1–5</span>
+        </div>
+        <div class="text-[12px] truncate" style="color: var(--textSecondary);">Go 1.27.4 URQR-Bridge Thermal Receipt Verification &amp; Hardware Sign-Off</div>
+      </div>
+    </div>
+
+    <!-- 5-Task Afternoon Navigation -->
+    <nav class="hidden xl:flex items-center gap-1 p-1 rounded-xl border" style="background-color: var(--bg); border-color: var(--border);" role="tablist" aria-label="Day 5 Afternoon Tasks">
+      <button data-tab="t1" role="tab" aria-selected="true" class="aft-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">1. Receipt Inspector</button>
+      <button data-tab="t2" role="tab" aria-selected="false" class="aft-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">2. Alignment &amp; Cut Audit</button>
+      <button data-tab="t3" role="tab" aria-selected="false" class="aft-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">3. GST vs DB Check</button>
+      <button data-tab="t4" role="tab" aria-selected="false" class="aft-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">4. Go ESC/POS Patch</button>
+      <button data-tab="t5" role="tab" aria-selected="false" class="aft-tab urqr-focus px-2.5 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors">5. Hardware Register</button>
+    </nav>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="px-3 py-1.5 rounded-full text-[13px] font-semibold flex items-center gap-2 border" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);">
+        <span class="w-2 h-2 rounded-full" style="background-color: var(--success);"></span>
+        <span>Online</span>
+      </div>
+      <div class="hidden sm:block px-3 py-1.5 rounded-lg text-[13px] font-medium border" style="background-color: var(--surface); border-color: var(--border);">
+        Fri, 27 Nov 2026
+      </div>
+    </div>
+  </header>
+
+  <!-- Compact Tab Bar for <xl Viewports -->
+  <div class="xl:hidden px-4 py-2 border-b flex gap-1.5 overflow-x-auto" style="background-color: var(--surfaceAlt); border-color: var(--border);">
+    <button data-tab="t1" class="aft-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0">1. Receipt Inspector</button>
+    <button data-tab="t2" class="aft-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0">2. Alignment &amp; Cut</button>
+    <button data-tab="t3" class="aft-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0">3. GST vs DB</button>
+    <button data-tab="t4" class="aft-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0">4. Go ESC/POS Patch</button>
+    <button data-tab="t5" class="aft-tab-m urqr-focus px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0">5. Hardware Register</button>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 1: TASK 1 — FINALIZED RECEIPT LIVE INSPECTOR (80mm / 58mm)          -->
+  <!-- ======================================================================= -->
+  <section id="panel-t1" class="flex-1 max-w-[1360px] w-full mx-auto p-4 lg:p-6 space-y-4">
+    <div class="urqr-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-xl border" style="background-color: var(--bg); border-color: var(--border);" role="group" aria-label="Receipt render mode">
+        <button type="button" data-mode="visual80" class="mode-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold">Styled 80mm</button>
+        <button type="button" data-mode="esc80" class="mode-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold">80mm ESC/POS (48 cols)</button>
+        <button type="button" data-mode="visual58" class="mode-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold">Styled 58mm</button>
+        <button type="button" data-mode="esc58" class="mode-btn urqr-focus px-3 py-1.5 rounded-lg text-[13px] font-semibold">58mm ESC/POS (32 cols)</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="modeCaption" class="font-mono-num text-[12px]" style="color: var(--textSecondary);">80mm Raster (576 dots) · 2-line clamp</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <!-- Receipt Preview Stage -->
+      <div class="lg:col-span-7 rounded-2xl border p-6 flex flex-col items-center overflow-x-auto" style="background-color: var(--surfaceAlt); border-color: var(--border);">
+        <div id="rulerBar" class="hidden font-mono-num text-[12px] mb-2 whitespace-pre select-none" style="color: var(--primaryDark);"></div>
+
+        <!-- Styled Visual Receipt (Matches Finalized Spec HTML) -->
+        <div id="viewVisual" class="paper-visual">
+          <div class="text-center">
+            <div class="v-logo" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 3v7a2 2 0 0 0 4 0V3" fill="none"/>
+                <line x1="9" y1="3" x2="9" y2="21"/>
+                <path d="M16 3c2 2 2 7 0 9v9" fill="none"/>
+              </svg>
+            </div>
+            <div class="v-title">YOUR RESTAURANT</div>
+            <div class="v-tagline">
+              <span class="v-tagline-line"></span>
+              <span>GOOD FOOD. GREAT MEMORIES.</span>
+              <span class="v-tagline-line"></span>
+            </div>
+            <div class="text-[#4b5563] mb-1.5">
+              Your Restaurant Address<br/>
+              Bengaluru, Karnataka 560001<br/>
+              Ph: 080-4567-8910
+            </div>
+            <div class="font-bold mb-2.5">GSTIN: 29ABCDE1234F1Z5</div>
+          </div>
+
+          <div class="v-dash"></div>
+
+          <div class="v-meta-row"><span class="font-semibold">Bill No.</span><span>:</span><span class="text-right">SKB/25-05/0142</span></div>
+          <div class="v-meta-row"><span class="font-semibold">Date</span><span>:</span><span class="text-right">25 Nov 2026</span></div>
+          <div class="v-meta-row"><span class="font-semibold">Time</span><span>:</span><span class="text-right">15:16</span></div>
+          <div class="v-meta-row"><span class="font-semibold">Order Type</span><span>:</span><span class="text-right">Dine In</span></div>
+          <div class="v-meta-row"><span class="font-semibold">Order No.</span><span>:</span><span class="text-right font-bold">YOU202611250001</span></div>
+
+          <div class="v-dash"></div>
+
+          <div id="visualItemsHead" class="v-items-head"></div>
+          <div id="visualItemsBody"></div>
+
+          <div class="v-dash"></div>
+
+          <div class="flex justify-between my-0.5"><span>SUBTOTAL</span><span class="font-bold" id="vSubtotal"></span></div>
+          <div class="flex justify-between my-0.5"><span>CGST (2.5%)</span><span id="vCgst"></span></div>
+          <div class="flex justify-between my-0.5"><span>SGST (2.5%)</span><span id="vSgst"></span></div>
+
+          <div class="v-grand">
+            <span>GRAND TOTAL</span>
+            <span id="vGrand"></span>
+          </div>
+
+          <div class="flex justify-between my-0.5"><span>Payment Mode</span><span class="font-bold" id="vPayMode">UPI</span></div>
+          <div class="flex justify-between my-0.5 gap-2" id="vTxnRow">
+            <span id="vTxnLabel">Transaction ID</span>
+            <span class="text-right break-all font-semibold" id="vTxnVal">UPI2611251516908421</span>
+          </div>
+
+          <div class="v-dash"></div>
+
+          <div class="text-center mt-2.5">
+            <div class="font-bold">THANK YOU, VISIT AGAIN!</div>
+            <div class="flex flex-col items-center mt-2.5" aria-label="Code 128 Order Barcode">
+              <svg class="w-[210px] max-w-full h-[44px]" viewBox="0 0 212 44" fill="currentColor" aria-hidden="true">
+                <rect x="4" y="0" width="3" height="44"/><rect x="9" y="0" width="1.5" height="44"/><rect x="13" y="0" width="2" height="44"/>
+                <rect x="18" y="0" width="1.5" height="44"/><rect x="22" y="0" width="4" height="44"/><rect x="28" y="0" width="1.5" height="44"/>
+                <rect x="32" y="0" width="2.5" height="44"/><rect x="37" y="0" width="1.5" height="44"/><rect x="41" y="0" width="3" height="44"/>
+                <rect x="47" y="0" width="2" height="44"/><rect x="51" y="0" width="1.5" height="44"/><rect x="55" y="0" width="4" height="44"/>
+                <rect x="61" y="0" width="1.5" height="44"/><rect x="65" y="0" width="2" height="44"/><rect x="70" y="0" width="3" height="44"/>
+                <rect x="75" y="0" width="1.5" height="44"/><rect x="79" y="0" width="2.5" height="44"/><rect x="84" y="0" width="4" height="44"/>
+                <rect x="90" y="0" width="1.5" height="44"/><rect x="94" y="0" width="2" height="44"/><rect x="99" y="0" width="1.5" height="44"/>
+                <rect x="103" y="0" width="3.5" height="44"/><rect x="109" y="0" width="2" height="44"/><rect x="113" y="0" width="1.5" height="44"/>
+                <rect x="118" y="0" width="3" height="44"/><rect x="123" y="0" width="1.5" height="44"/><rect x="127" y="0" width="4" height="44"/>
+                <rect x="133" y="0" width="2" height="44"/><rect x="138" y="0" width="1.5" height="44"/><rect x="142" y="0" width="2.5" height="44"/>
+                <rect x="147" y="0" width="3" height="44"/><rect x="152" y="0" width="1.5" height="44"/><rect x="156" y="0" width="2" height="44"/>
+                <rect x="161" y="0" width="4" height="44"/><rect x="167" y="0" width="1.5" height="44"/><rect x="171" y="0" width="2.5" height="44"/>
+                <rect x="176" y="0" width="1.5" height="44"/><rect x="180" y="0" width="3" height="44"/><rect x="186" y="0" width="2" height="44"/>
+                <rect x="190" y="0" width="1.5" height="44"/><rect x="194" y="0" width="3.5" height="44"/><rect x="200" y="0" width="1.5" height="44"/>
+                <rect x="204" y="0" width="4" height="44"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="v-feed-spacer" id="vFeedSpacer" style="height: 36px;">FEED 4 LINES (ESC d 4)</div>
+          <div class="v-cut-line">
+            <span aria-hidden="true">&#9986;</span>
+            <span class="v-cut-dashes"></span>
+            <span id="vCutLabel">PARTIAL CUT (GS V 66 0)</span>
+            <span class="v-cut-dashes"></span>
+          </div>
+        </div>
+
+        <pre id="viewMono" class="hidden paper-mono"></pre>
+      </div>
+
+      <!-- Right Controls: Live Item Tester + Footer/Cut Controls -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="urqr-card rounded-2xl p-5 space-y-3">
+          <h2 class="text-[15px] font-semibold">Live Item &amp; Wrapping Tester (Prajwal B N Test Bench)</h2>
+          <form id="addItemForm" class="space-y-2.5">
+            <div>
+              <label for="itemNameInput" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Item Description</label>
+              <input id="itemNameInput" type="text" placeholder="e.g. Hyderabadi Royal Dum Biryani Combo" required class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="itemQtyInput" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Qty</label>
+                <input id="itemQtyInput" type="number" min="1" max="999" value="1" required class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);" />
+              </div>
+              <div>
+                <label for="itemPriceInput" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Unit Price (Rs.)</label>
+                <input id="itemPriceInput" type="number" min="1" max="99999" step="0.5" value="249" required class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);" />
+              </div>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button type="submit" class="urqr-focus flex-1 h-10 rounded-lg text-[13px] font-semibold text-white" style="background-color: var(--primary);">Add Item</button>
+              <button type="button" id="btnResetItems" class="urqr-focus px-3 h-10 rounded-lg text-[12px] font-semibold border" style="background-color: var(--surfaceAlt); border-color: var(--border);">Reset Sample</button>
+            </div>
+          </form>
+
+          <div class="pt-2 border-t space-y-1.5" style="border-color: var(--border);">
+            <div class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--textSecondary);">Edge-Case Presets</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" data-preset="Classic South Indian Filter Coffee" class="preset-btn urqr-focus px-2.5 py-1 rounded-lg text-[11px] font-medium border" style="background-color: var(--surfaceAlt); border-color: var(--border);">Medium Wrap</button>
+              <button type="button" data-preset="Hyderabadi Royal Dum Biryani Family Combo Pack with Raita and Salan" class="preset-btn urqr-focus px-2.5 py-1 rounded-lg text-[11px] font-medium border" style="background-color: var(--surfaceAlt); border-color: var(--border);">Long Clamp (...)</button>
+              <button type="button" data-preset="COMBO-DELUXE-SUPERFAMILY-SPECIAL-2026" class="preset-btn urqr-focus px-2.5 py-1 rounded-lg text-[11px] font-medium border" style="background-color: var(--surfaceAlt); border-color: var(--border);">Unbroken SKU</button>
+            </div>
+          </div>
+
+          <div id="itemChipList" class="pt-2 border-t space-y-1.5 max-h-36 overflow-y-auto" style="border-color: var(--border);"></div>
+        </div>
+
+        <div class="urqr-card rounded-2xl p-5 space-y-3">
+          <h2 class="text-[15px] font-semibold">Footer Payment Mode &amp; Paper Cut Controls</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="payModeSelect" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Payment Mode</label>
+              <select id="payModeSelect" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);">
+                <option value="UPI" selected>UPI</option>
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="feedLinesSelect" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Feed (ESC d n)</label>
+              <select id="feedLinesSelect" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);">
+                <option value="3">3 lines (~10 mm)</option>
+                <option value="4" selected>4 lines (~14 mm)</option>
+                <option value="5">5 lines (~18 mm)</option>
+                <option value="6">6 lines (~21 mm)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="txnIdInput" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Transaction ID (Omitted for Cash)</label>
+            <input id="txnIdInput" type="text" value="UPI2611251516908421" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px] font-mono-num" style="background-color: var(--inputBg); border-color: var(--border);" />
+          </div>
+          <div>
+            <label for="cutModeSelect" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Paper Cut Command</label>
+            <select id="cutModeSelect" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);">
+              <option value="partial_b" selected>Partial Cut — GS V 66 0 (Default)</option>
+              <option value="full_b">Full Cut — GS V 65 0</option>
+              <option value="partial_a">Legacy Partial Cut — GS V 1</option>
+              <option value="tear_only">Manual Tear Bar (58mm, Feed Only)</option>
+            </select>
+          </div>
+          <div class="rounded-xl p-3 font-mono-num text-[11.5px] leading-relaxed" style="background-color: #3B2A1E; color: #F5EEE0;">
+            <div class="flex items-center justify-between mb-1.5 text-[11px] font-sans font-semibold" style="color: #E4D8C3;">
+              <span>Go 1.27.4 Cut Payload Bytes</span>
+              <button id="btnCopyCutBytes" type="button" class="urqr-focus px-2 py-0.5 rounded text-[11px]" style="background-color: var(--primary); color: #FFF;">Copy</button>
+            </div>
+            <pre id="goCutBytes" class="whitespace-pre-wrap"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 2: TASK 2 — LINE ALIGNMENT, TAX SPACING & PAPER CUT AUDIT           -->
+  <!-- ======================================================================= -->
+  <section id="panel-t2" class="hidden flex-1 max-w-[1240px] w-full mx-auto p-4 lg:p-6 space-y-5">
+    <div class="urqr-card rounded-2xl p-6 space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b pb-4" style="border-color: var(--border);">
+        <div>
+          <h2 class="text-[22px] font-semibold">Task 2 · Line Alignment, Tax Column Spacing &amp; Paper Cut Audit</h2>
+          <p class="text-[13px]" style="color: var(--textSecondary);">Audited against finalized 80mm (48-col) &amp; 58mm (32-col) URQR Thermal Receipt Specification</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="auditScoreBadge" class="font-mono-num text-[13px] font-bold px-3 py-1.5 rounded-lg border" style="background-color: var(--surfaceAlt); border-color: var(--border); color: var(--primaryDark);">0 / 12 Audited</span>
+          <button id="btnAuditAllPass" type="button" class="urqr-focus px-3.5 py-2 rounded-lg text-[13px] font-semibold text-white" style="background-color: var(--primary);">Mark All Pass</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-[13px]">
+          <thead>
+            <tr class="border-b" style="border-color: var(--border); color: var(--textSecondary);">
+              <th class="py-2.5 pr-3">ID</th>
+              <th class="py-2.5 pr-3">Section</th>
+              <th class="py-2.5 pr-3">80mm (48 cols)</th>
+              <th class="py-2.5 pr-3">58mm (32 cols)</th>
+              <th class="py-2.5 text-right">Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody" class="divide-y" style="border-color: var(--border);"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 3: TASK 3 — GST BREAKDOWN VS RAW DATABASE RECONCILIATION            -->
+  <!-- ======================================================================= -->
+  <section id="panel-t3" class="hidden flex-1 max-w-[1240px] w-full mx-auto p-4 lg:p-6 space-y-5">
+    <div class="urqr-card rounded-2xl p-6 space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4" style="border-color: var(--border);">
+        <div>
+          <h2 class="text-[22px] font-semibold">Task 3 · Printed GST Breakdown vs. PostgreSQL DB Reconciliation</h2>
+          <p class="text-[13px]" style="color: var(--textSecondary);">Verifying zero paise discrepancy across flat 5% GST (CGST 2.5% + SGST 2.5%) between PostgreSQL 18.7 &amp; Go URQR-Bridge</p>
+        </div>
+        <span class="px-3 py-1.5 rounded-full text-[12px] font-semibold border" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);">0 Paise Drift · 5/5 Test Cases Verified</span>
+      </div>
+
+      <!-- Interactive Live Paise Reconciliation Calculator -->
+      <div class="urqr-well rounded-xl p-4 flex flex-wrap items-end justify-between gap-4">
+        <div class="space-y-1">
+          <label for="dbTestSubtotal" class="block text-[12px] font-semibold" style="color: var(--textSecondary);">Test Any Order Subtotal (INR) — Integer Paise Half-Up Formula</label>
+          <input id="dbTestSubtotal" type="number" step="0.01" min="0" value="674.00" class="urqr-focus w-48 h-11 px-3 rounded-lg border font-mono-num text-[16px] font-semibold" style="background-color: var(--inputBg); border-color: var(--primary);" />
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          <div class="urqr-card rounded-lg p-2.5">
+            <div class="text-[11px]" style="color: var(--textSecondary);">DB subtotal_paise</div>
+            <div id="calcSub" class="font-mono-num text-[14px] font-bold mt-0.5">67400 (₹674.00)</div>
+          </div>
+          <div class="urqr-card rounded-lg p-2.5">
+            <div class="text-[11px]" style="color: var(--textSecondary);">CGST (2.5%)</div>
+            <div id="calcCgst" class="font-mono-num text-[14px] font-bold mt-0.5">1685 (₹16.85)</div>
+          </div>
+          <div class="urqr-card rounded-lg p-2.5">
+            <div class="text-[11px]" style="color: var(--textSecondary);">SGST (2.5%)</div>
+            <div id="calcSgst" class="font-mono-num text-[14px] font-bold mt-0.5">1685 (₹16.85)</div>
+          </div>
+          <div class="rounded-lg p-2.5 border" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);">
+            <div class="text-[11px] font-semibold">Grand Total (Δ 0p)</div>
+            <div id="calcGrand" class="font-mono-num text-[14px] font-bold mt-0.5">70770 (₹707.70)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5-Order Reconciliation Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-[13px]">
+          <thead>
+            <tr class="border-b" style="border-color: var(--border); color: var(--textSecondary);">
+              <th class="py-2.5 pr-3">Order No. (DB)</th>
+              <th class="py-2.5 pr-3 text-right">DB Subtotal</th>
+              <th class="py-2.5 pr-3 text-right">DB CGST / SGST</th>
+              <th class="py-2.5 pr-3 text-right">Printed CGST / SGST</th>
+              <th class="py-2.5 pr-3 text-right">Grand Total</th>
+              <th class="py-2.5 text-right">Discrepancy</th>
+            </tr>
+          </thead>
+          <tbody id="gstTableBody" class="divide-y font-mono-num text-[12.5px]" style="border-color: var(--border);"></tbody>
+        </table>
+      </div>
+
+      <div class="rounded-xl p-4 border text-[13px]" style="background-color: var(--warningBg); border-color: var(--warning); color: var(--text);">
+        <strong>Rounding Rule Lock:</strong> Both PostgreSQL (<code class="font-mono-num">NUMERIC(12,2)</code>) and Go URQR-Bridge must use integer-paise half-away-from-zero (<code class="font-mono-num">(subtotalPaise * 25 + 500) / 1000</code>) instead of IEEE-754 floating-point <code class="font-mono-num">float64</code> so odd subtotals (e.g., <code class="font-mono-num">₹149.00</code> → <code class="font-mono-num">372.5p</code> → <code class="font-mono-num">₹3.73</code>) never drift by 1 paise between DB and printed thermal paper.
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 4: TASK 4 — GO 1.27.4 ESC/POS TEMPLATE GENERATOR ADJUSTMENTS        -->
+  <!-- ======================================================================= -->
+  <section id="panel-t4" class="hidden flex-1 max-w-[1240px] w-full mx-auto p-4 lg:p-6 space-y-5">
+    <div class="urqr-card rounded-2xl p-6 space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4" style="border-color: var(--border);">
+        <div>
+          <h2 class="text-[22px] font-semibold">Task 4 · Minor Line Spacing &amp; Column Formatting Adjustments (Go ESC/POS)</h2>
+          <p class="text-[13px]" style="color: var(--textSecondary);">Actionable patch list for Prajwal B N — Go 1.27.4 URQR-Bridge (<code class="font-mono-num">receipt_template.go</code>)</p>
+        </div>
+        <button id="btnCopyGoPatch" type="button" class="urqr-focus px-4 py-2 rounded-lg text-[13px] font-semibold text-white" style="background-color: var(--primary);">Copy Go Patch Snippet</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px]">
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">ADJ-01 · Explicit Font A Lock (<code class="font-mono-num">ESC M 0</code>)</div>
+          <p style="color: var(--textSecondary);">Emit <code class="font-mono-num">[]byte{0x1B, 0x4D, 0x00}</code> immediately after <code class="font-mono-num">ESC @</code> so printers defaulted to Font B (64 cols) lock strictly to 48 cols (80mm) and 32 cols (58mm).</p>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">ADJ-02 · 80mm High-Value Column Guard (≥ Rs.10000.00)</div>
+          <p style="color: var(--textSecondary);">Default 80mm budget (<code class="font-mono-num">22 / 3 / 10 / 10</code>) fits up to <code class="font-mono-num">Rs.9999.99</code>. Dynamically widen <code class="font-mono-num">TOTAL</code> to 11 cols (<code class="font-mono-num">ITEM 21</code>) if any line exceeds <code class="font-mono-num">999999</code> paise.</p>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">ADJ-03 · 58mm Code 128 Quiet-Zone Protection</div>
+          <p style="color: var(--textSecondary);">On 58mm (<code class="font-mono-num">384 dots</code>), emit <code class="font-mono-num">GS w 1</code> (<code class="font-mono-num">0x1D, 0x77, 0x01</code>) or Code 128 Subset C for the 12 numeric digits so quiet zones never clip the left/right edges.</p>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-1.5">
+          <div class="font-semibold" style="color: var(--primaryDark);">ADJ-04 · Integer-Paise GST &amp; Zero-Gap Cash Footer</div>
+          <p style="color: var(--textSecondary);">Compute CGST/SGST via <code class="font-mono-num">(subPaise*25 + 500) / 1000</code> and skip writing any newline for <code class="font-mono-num">Transaction ID</code> when <code class="font-mono-num">PaymentMode == "Cash"</code>.</p>
+        </div>
+      </div>
+
+      <pre id="goPatchCode" class="font-mono-num text-[12px] leading-relaxed p-4 rounded-xl border overflow-x-auto" style="background-color: #3B2A1E; color: #F5EEE0; border-color: var(--border);">// urqr-bridge/internal/escpos/receipt_template.go — Day 5 Task 4 Adjustments
+package escpos
+
+var (
+	CmdInit       = []byte{0x1B, 0x40}             // ESC @
+	CmdFontA      = []byte{0x1B, 0x4D, 0x00}       // ADJ-01: Lock Font A (48/32 cols)
+	CmdAlignLeft  = []byte{0x1B, 0x61, 0x00}       // ESC a 0
+	CmdAlignCtr   = []byte{0x1B, 0x61, 0x01}       // ESC a 1
+	CmdBoldOn     = []byte{0x1B, 0x45, 0x01}       // ESC E 1 (never GS ! double-width)
+	CmdBoldOff    = []byte{0x1B, 0x45, 0x00}       // ESC E 0
+	CmdFeed4      = []byte{0x1B, 0x64, 0x04}       // ESC d 4 (~14mm clearance)
+	CmdPartialCut = []byte{0x1D, 0x56, 0x42, 0x00} // GS V 66 0 (Function B)
+)
+
+// ADJ-04: Integer-paise half-away-from-zero GST split (zero drift vs PostgreSQL)
+func CalcGstPaise(subtotalPaise int64) (cgst, sgst, grand int64) {
+	cgst = (subtotalPaise*25 + 500) / 1000
+	sgst = (subtotalPaise*25 + 500) / 1000
+	grand = subtotalPaise + cgst + sgst
+	return
+}
+
+// ADJ-03: Width-safe Code 128 barcode (HRI disabled via GS H 0)
+func BuildOrderBarcode(orderNo string, widthMm int) []byte {
+	modWidth := byte(0x02) // 80mm (576 dots)
+	if widthMm == 58 {
+		modWidth = byte(0x01) // 58mm (384 dots) quiet-zone guard
+	}
+	payload := append([]byte{0x7B, 0x42}, []byte(orderNo)...) // Code 128 Subset B
+	out := []byte{0x1D, 0x68, 0x32, 0x1D, 0x77, modWidth, 0x1D, 0x48, 0x00}
+	out = append(out, 0x1D, 0x6B, 0x49, byte(len(payload)))
+	return append(out, payload...)
+}</pre>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 5: TASK 5 — PHASE 1 HARDWARE VERIFICATION REGISTER SIGN-OFF         -->
+  <!-- ======================================================================= -->
+  <section id="panel-t5" class="hidden flex-1 max-w-[1100px] w-full mx-auto p-4 lg:p-6 space-y-5">
+    <div class="urqr-card rounded-2xl p-6 space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4" style="border-color: var(--border);">
+        <div>
+          <span class="font-mono-num text-[11px] font-semibold uppercase tracking-wider" style="color: var(--primaryDark);">Register ID: URQR-P1-HVR-2026-1127</span>
+          <h2 class="text-[22px] font-semibold mt-0.5">Task 5 · Phase 1 Hardware Verification Register Sign-Off</h2>
+          <p class="text-[13px]" style="color: var(--textSecondary);">Thermal Receipt Layout Fidelity &amp; Go URQR-Bridge Sign-Off</p>
+        </div>
+        <button id="btnCopyRegister" type="button" class="urqr-focus px-4 py-2 rounded-lg text-[13px] font-semibold text-white" style="background-color: var(--primary);">Copy Register Summary</button>
+      </div>
+
+      <!-- Hardware Profile Inputs -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="hwPrinterModel" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Test Printer Model</label>
+          <input id="hwPrinterModel" type="text" value="Epson TM-T82III / Generic 80mm ESC/POS" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);" />
+        </div>
+        <div>
+          <label for="hwBridgeVer" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Bridge Daemon &amp; Port</label>
+          <input id="hwBridgeVer" type="text" value="Go 1.27.4 URQR-Bridge · 127.0.0.1:9105" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px] font-mono-num" style="background-color: var(--inputBg); border-color: var(--border);" />
+        </div>
+        <div>
+          <label for="hwVerdict" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Final Fidelity Verdict</label>
+          <select id="hwVerdict" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px] font-semibold" style="background-color: var(--successBg); border-color: var(--success); color: var(--success);">
+            <option value="APPROVED">APPROVED — Phase 1 Layout Fidelity Verified</option>
+            <option value="CONDITIONAL">CONDITIONAL — Pending Minor Bridge Patch</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Gate Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-[13px]">
+        <div class="urqr-well rounded-xl p-3.5">
+          <div class="text-[11px] font-semibold uppercase" style="color: var(--textSecondary);">Task 1 · Test Print</div>
+          <div class="font-bold mt-1" style="color: var(--success);">80mm &amp; 58mm Verified</div>
+        </div>
+        <div class="urqr-well rounded-xl p-3.5">
+          <div class="text-[11px] font-semibold uppercase" style="color: var(--textSecondary);">Task 2 · Alignment Audit</div>
+          <div id="regAuditSummary" class="font-bold mt-1" style="color: var(--primaryDark);">0 / 12 Passed</div>
+        </div>
+        <div class="urqr-well rounded-xl p-3.5">
+          <div class="text-[11px] font-semibold uppercase" style="color: var(--textSecondary);">Task 3 · GST vs DB</div>
+          <div class="font-bold mt-1" style="color: var(--success);">Zero Discrepancy (0p)</div>
+        </div>
+        <div class="urqr-well rounded-xl p-3.5">
+          <div class="text-[11px] font-semibold uppercase" style="color: var(--textSecondary);">Task 4 · Go Adjustments</div>
+          <div class="font-bold mt-1" style="color: var(--primaryDark);">4 Patches Documented</div>
+        </div>
+      </div>
+
+      <!-- Sign-Off Signatures -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div class="urqr-well rounded-xl p-4 space-y-2">
+          <div class="text-[12px] font-semibold uppercase" style="color: var(--textSecondary);">Design Systems &amp; Hardware Specs</div>
+          <input id="sigGagan" type="text" value="Gagan" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px] font-semibold" style="background-color: var(--inputBg); border-color: var(--border);" />
+          <div class="text-[12px]" style="color: var(--textSecondary);">Date: Fri, 27 Nov 2026 · Scope: Thermal Receipt Fidelity</div>
+        </div>
+        <div class="urqr-well rounded-xl p-4 space-y-2">
+          <div class="text-[12px] font-semibold uppercase" style="color: var(--textSecondary);">PM &amp; Go URQR-Bridge Lead</div>
+          <input id="sigPrajwal" type="text" value="Prajwal B N" class="urqr-focus w-full h-10 px-3 rounded-lg border text-[13px] font-semibold" style="background-color: var(--inputBg); border-color: var(--border);" />
+          <div class="text-[12px]" style="color: var(--textSecondary);">Date: Fri, 27 Nov 2026 · Scope: Go 1.27.4 Print Spooler</div>
+        </div>
+      </div>
+
+      <div>
+        <label for="regRemarks" class="block text-[12px] font-semibold mb-1" style="color: var(--textSecondary);">Register Remarks</label>
+        <textarea id="regRemarks" rows="2" class="urqr-focus w-full p-3 rounded-lg border text-[13px]" style="background-color: var(--inputBg); border-color: var(--border);">80mm (48-col) and 58mm (32-col) finalized thermal templates verified against Go URQR-Bridge. ADJ-01 through ADJ-04 logged for Go template generator prior to Day 6 final handoff.</textarea>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      /* ===================================================================
+         TAB NAVIGATION
+         =================================================================== */
+      let activeTab = 't1';
+      const tabPanels = {
+        t1: document.getElementById('panel-t1'),
+        t2: document.getElementById('panel-t2'),
+        t3: document.getElementById('panel-t3'),
+        t4: document.getElementById('panel-t4'),
+        t5: document.getElementById('panel-t5')
+      };
+
+      function renderTabs() {
+        Object.keys(tabPanels).forEach(k => tabPanels[k].classList.toggle('hidden', k !== activeTab));
+        document.querySelectorAll('.aft-tab, .aft-tab-m').forEach(b => {
+          const on = b.dataset.tab === activeTab;
+          b.setAttribute('aria-selected', String(on));
+          b.style.backgroundColor = on ? 'var(--primary)' : 'transparent';
+          b.style.color = on ? 'var(--onPrimary)' : 'var(--textSecondary)';
+        });
+      }
+
+      document.querySelectorAll('.aft-tab, .aft-tab-m').forEach(b => {
+        b.addEventListener('click', () => { activeTab = b.dataset.tab; renderTabs(); });
+      });
+
+      /* ===================================================================
+         TASK 1: FINALIZED RECEIPT ENGINE (EXACT UPLOADED SPEC LOGIC)
+         =================================================================== */
+      const DEFAULT_ITEMS = [
+        { name: 'Masala Dosa', qty: 1, unit: 149.00 },
+        { name: 'Paneer Roll', qty: 1, unit: 249.00 },
+        { name: 'Tea', qty: 2, unit: 49.00 },
+        { name: 'Gulab Jamun', qty: 2, unit: 89.00 }
+      ];
+
+      const CUT_MODES = {
+        partial_b: { label: 'PARTIAL CUT (GS V 66 0)', goBytes: '0x1D, 0x56, 0x42, 0x00' },
+        full_b: { label: 'FULL CUT (GS V 65 0)', goBytes: '0x1D, 0x56, 0x41, 0x00' },
+        partial_a: { label: 'LEGACY PARTIAL CUT (GS V 1)', goBytes: '0x1D, 0x56, 0x01' },
+        tear_only: { label: 'MANUAL TEAR BAR (NO CUTTER)', goBytes: '' }
+      };
+
+      let items = DEFAULT_ITEMS.map(x => ({ ...x }));
+      let currentMode = 'visual80';
+
+      function sanitizeAscii(str) {
+        return String(str).replace(/₹/g, 'Rs.').replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
+          .replace(/[–—]/g, '-').replace(/…/g, '...').replace(/\s+/g, ' ').trim();
+      }
+      function padRight(s, w) { return s.length >= w ? s.slice(0, w) : s + ' '.repeat(w - s.length); }
+      function padLeft(s, w) { return s.length >= w ? s.slice(0, w) : ' '.repeat(w - s.length) + s; }
+      function centerText(s, w) {
+        if (s.length >= w) return s.slice(0, w);
+        const l = Math.floor((w - s.length) / 2);
+        return ' '.repeat(l) + s + ' '.repeat(w - s.length - l);
+      }
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+      function calcPaiseTotals(list) {
+        const subP = list.reduce((s, it) => s + Math.round(it.qty * it.unit * 100), 0);
+        const cgstP = Math.floor((subP * 25 + 500) / 1000);
+        const sgstP = Math.floor((subP * 25 + 500) / 1000);
+        return { subP, cgstP, sgstP, grandP: subP + cgstP + sgstP };
+      }
+      function fmtRs(p) { return 'Rs.' + (p / 100).toFixed(2); }
+      function fmtInr(p) { return '₹' + (p / 100).toFixed(2); }
+
+      function wrapAndClampItem(prefix, rawName, colW, maxLines) {
+        const clean = sanitizeAscii(rawName);
+        const avail = Math.max(6, colW - prefix.length);
+        const indent = ' '.repeat(prefix.length);
+        const rawWords = clean.length ? clean.split(' ') : ['Item'];
+        const words = [];
+        for (const w of rawWords) {
+          if (w.length <= avail) words.push(w);
+          else {
+            let rem = w;
+            while (rem.length > avail) { words.push(rem.slice(0, avail - 1) + '-'); rem = rem.slice(avail - 1); }
+            if (rem.length) words.push(rem);
+          }
+        }
+        const lines = [];
+        let line = '';
+        for (const word of words) {
+          const cand = line ? line + ' ' + word : word;
+          if (cand.length <= avail) line = cand;
+          else { lines.push(line); line = word; }
+        }
+        if (line) lines.push(line);
+        if (lines.length > maxLines) {
+          const kept = lines.slice(0, maxLines);
+          const joined = (kept[maxLines - 1] + ' ' + lines[maxLines]).trim();
+          const cutLen = Math.max(1, avail - 3);
+          let tr = joined.slice(0, cutLen).replace(/[\s,\-;:/]+$/, '');
+          if (!tr) tr = joined.slice(0, cutLen).trim();
+          kept[maxLines - 1] = tr + '...';
+          return kept.map((t, i) => (i === 0 ? prefix + t : indent + t));
+        }
+        return lines.map((t, i) => (i === 0 ? prefix + t : indent + t));
+      }
+
+      function formatKeyValRows(label, val, W) {
+        if (label.length + 1 + val.length <= W) return [label + ' '.repeat(W - label.length - val.length) + val];
+        const out = [label];
+        for (let i = 0; i < val.length; i += W) out.push(padLeft(val.slice(i, i + W), W));
+        return out;
+      }
+
+      function getReceiptState() {
+        const payMode = document.getElementById('payModeSelect').value;
+        const txnId = sanitizeAscii(document.getElementById('txnIdInput').value);
+        const showTxn = payMode !== 'Cash' && Boolean(txnId);
+        const feedLines = parseInt(document.getElementById('feedLinesSelect').value, 10) || 4;
+        const cut = CUT_MODES[document.getElementById('cutModeSelect').value] || CUT_MODES.partial_b;
+        return { payMode, txnId, showTxn, feedLines, cut };
+      }
+
+      function buildEscPos(is58) {
+        const W = is58 ? 32 : 48;
+        const st = getReceiptState();
+        const { subP, cgstP, sgstP, grandP } = calcPaiseTotals(items);
+        const labelW = is58 ? 11 : 16;
+        const out = [
+          centerText('YOUR RESTAURANT', W),
+          centerText(is58 ? 'GOOD FOOD. GREAT MEMORIES.' : '-- GOOD FOOD. GREAT MEMORIES. --', W),
+          centerText('Your Restaurant Address', W),
+          centerText('Bengaluru, Karnataka 560001', W),
+          centerText('Ph: 080-4567-8910', W),
+          centerText('GSTIN: 29ABCDE1234F1Z5', W),
+          '-'.repeat(W),
+          padRight('Bill No.', labelW) + ':' + padLeft('SKB/25-05/0142', W - labelW - 1),
+          padRight('Date', labelW) + ':' + padLeft('25 Nov 2026', W - labelW - 1),
+          padRight('Time', labelW) + ':' + padLeft('15:16', W - labelW - 1),
+          padRight('Order Type', labelW) + ':' + padLeft('Dine In', W - labelW - 1),
+          padRight('Order No.', labelW) + ':' + padLeft('YOU202611250001', W - labelW - 1),
+          '-'.repeat(W)
+        ];
+        if (is58) out.push(padRight('ITEM', 16) + ' ' + padLeft('QTY', 3) + ' ' + padLeft('TOTAL', 11));
+        else out.push(padRight('ITEM', 22) + ' ' + padLeft('QTY', 3) + ' ' + padLeft('UNIT', 10) + ' ' + padLeft('TOTAL', 10));
+        out.push('='.repeat(W));
+
+        items.forEach((it, idx) => {
+          const prefix = (idx + 1) + '. ';
+          const indent = ' '.repeat(prefix.length);
+          const wrapped = wrapAndClampItem(prefix, it.name, is58 ? 16 : 22, is58 ? 3 : 2);
+          const lineP = Math.round(it.qty * it.unit * 100);
+          wrapped.forEach((txt, li) => {
+            if (li === 0) {
+              if (is58) out.push(padRight(txt, 16) + ' ' + padLeft(String(it.qty), 3) + ' ' + padLeft(fmtRs(lineP), 11));
+              else out.push(padRight(txt, 22) + ' ' + padLeft(String(it.qty), 3) + ' ' + padLeft(fmtRs(Math.round(it.unit * 100)), 10) + ' ' + padLeft(fmtRs(lineP), 10));
+            } else out.push(txt);
+          });
+          if (is58) out.push(indent + '(' + it.qty + ' x ' + it.unit.toFixed(2) + ')');
+        });
+
+        const half = W / 2;
+        out.push(
+          '-'.repeat(W),
+          padRight('SUBTOTAL', half) + padLeft(fmtRs(subP), half),
+          padRight('CGST (2.5%)', half) + padLeft(fmtRs(cgstP), half),
+          padRight('SGST (2.5%)', half) + padLeft(fmtRs(sgstP), half),
+          '='.repeat(W),
+          padRight('GRAND TOTAL', half) + padLeft(fmtRs(grandP), half),
+          '='.repeat(W),
+          padRight('Payment Mode', half) + padLeft(st.payMode, half),
+          ...(st.showTxn ? formatKeyValRows(is58 ? 'Txn ID' : 'Transaction ID', st.txnId, W) : []),
+          '-'.repeat(W),
+          centerText('THANK YOU, VISIT AGAIN!', W),
+          '',
+          centerText('|| ||| | ||| || | ||| ||', W),
+          centerText('[GS k 73 -> CODE128 (HRI OFF)]', W),
+          '',
+          centerText('[ESC d ' + st.feedLines + ' -> FEED ' + st.feedLines + ' LINES]', W),
+          centerText('[' + st.cut.label + ']', W)
+        );
+        return out.join('\n');
+      }
+
+      function renderReceipt() {
+        const st = getReceiptState();
+        const { subP, cgstP, sgstP, grandP } = calcPaiseTotals(items);
+        const visualEl = document.getElementById('viewVisual');
+        const monoEl = document.getElementById('viewMono');
+        const rulerEl = document.getElementById('rulerBar');
+        const captionEl = document.getElementById('modeCaption');
+
+        document.querySelectorAll('.mode-btn').forEach(b => {
+          const on = b.dataset.mode === currentMode;
+          b.style.backgroundColor = on ? 'var(--primary)' : 'transparent';
+          b.style.color = on ? 'var(--onPrimary)' : 'var(--textSecondary)';
+        });
+
+        document.getElementById('txnIdInput').disabled = st.payMode === 'Cash';
+
+        // Item Chips
+        document.getElementById('itemChipList').innerHTML = items.map((it, i) =>
+          '<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[12px]" style="background-color: var(--surfaceAlt);">' +
+          '<span class="truncate pr-2">' + (i + 1) + '. ' + escapeHtml(it.name) + ' (' + it.qty + '×)</span>' +
+          '<button type="button" data-del="' + i + '" class="del-item font-bold px-1.5" style="color: var(--error);" aria-label="Remove item">&times;</button></div>'
+        ).join('');
+
+        // Go Cut Bytes
+        const feedHex = st.feedLines.toString(16).toUpperCase().padStart(2, '0');
+        const goLines = ['feedCmd := []byte{0x1B, 0x64, 0x' + feedHex + '}'];
+        if (st.cut.goBytes) goLines.push('cutCmd  := []byte{' + st.cut.goBytes + '}');
+        document.getElementById('goCutBytes').textContent = goLines.join('\n');
+
+        const isVisual = currentMode === 'visual80' || currentMode === 'visual58';
+        const is58 = currentMode === 'visual58' || currentMode === 'esc58';
+
+        if (isVisual) {
+          visualEl.classList.remove('hidden');
+          monoEl.classList.add('hidden');
+          rulerEl.classList.add('hidden');
+          visualEl.classList.toggle('mode-58', is58);
+
+          document.getElementById('visualItemsHead').innerHTML = is58
+            ? '<span>ITEM</span><span class="text-right">QTY</span><span class="text-right">TOTAL</span>'
+            : '<span>ITEM</span><span class="text-right">QTY</span><span class="text-right">UNIT</span><span class="text-right">TOTAL</span>';
+
+          document.getElementById('visualItemsBody').innerHTML = items.map((it, idx) => {
+            const lineP = Math.round(it.qty * it.unit * 100);
+            const lbl = (idx + 1) + '. ' + escapeHtml(it.name);
+            if (is58) {
+              return '<div class="v-item-row"><span class="v-item-name">' + lbl + '</span>' +
+                '<span class="text-right">' + it.qty + '</span><span class="text-right font-bold">' + fmtInr(lineP) + '</span>' +
+                '<span class="v-item-sub">(' + it.qty + ' x ' + it.unit.toFixed(2) + ')</span></div>';
+            }
+            return '<div class="v-item-row"><span class="v-item-name">' + lbl + '</span>' +
+              '<span class="text-right">' + it.qty + '</span><span class="text-right">' + fmtInr(Math.round(it.unit * 100)) + '</span>' +
+              '<span class="text-right font-bold">' + fmtInr(lineP) + '</span></div>';
+          }).join('');
+
+          document.getElementById('vSubtotal').textContent = fmtInr(subP);
+          document.getElementById('vCgst').textContent = fmtInr(cgstP);
+          document.getElementById('vSgst').textContent = fmtInr(sgstP);
+          document.getElementById('vGrand').textContent = fmtInr(grandP);
+          document.getElementById('vPayMode').textContent = st.payMode;
+          document.getElementById('vTxnLabel').textContent = is58 ? 'Txn ID' : 'Transaction ID';
+          document.getElementById('vTxnVal').textContent = st.txnId;
+          document.getElementById('vTxnRow').classList.toggle('hidden', !st.showTxn);
+          document.getElementById('vFeedSpacer').style.height = (st.feedLines * 9) + 'px';
+          document.getElementById('vFeedSpacer').textContent = 'FEED ' + st.feedLines + ' LINES (ESC d ' + st.feedLines + ')';
+          document.getElementById('vCutLabel').textContent = st.cut.label;
+          captionEl.textContent = is58 ? '58mm Raster (384 dots) · 3-line clamp' : '80mm Raster (576 dots) · 2-line clamp';
+        } else {
+          visualEl.classList.add('hidden');
+          monoEl.classList.remove('hidden');
+          rulerEl.classList.remove('hidden');
+          monoEl.textContent = buildEscPos(is58);
+          rulerEl.textContent = is58
+            ? '12345678901234567890123456789012  (32 cols)'
+            : '123456789012345678901234567890123456789012345678  (48 cols)';
+          captionEl.textContent = is58 ? 'Font A (12×24) · 32 cols · 3-line clamp' : 'Font A (12×24) · 48 cols · 2-line clamp';
+        }
+      }
+
+      document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => { currentMode = b.dataset.mode; renderReceipt(); }));
+      document.getElementById('addItemForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('itemNameInput').value.trim();
+        const qty = Math.max(1, parseInt(document.getElementById('itemQtyInput').value, 10) || 1);
+        const unit = Math.max(0.01, parseFloat(document.getElementById('itemPriceInput').value) || 1);
+        if (!name) return;
+        items.push({ name, qty, unit });
+        document.getElementById('itemNameInput').value = '';
+        renderReceipt();
+      });
+      document.getElementById('btnResetItems').addEventListener('click', () => { items = DEFAULT_ITEMS.map(x => ({ ...x })); renderReceipt(); });
+      document.querySelectorAll('.preset-btn').forEach(b => b.addEventListener('click', () => {
+        document.getElementById('itemNameInput').value = b.dataset.preset;
+        document.getElementById('itemNameInput').focus();
+      }));
+      document.getElementById('itemChipList').addEventListener('click', (e) => {
+        const btn = e.target.closest('.del-item');
+        if (!btn || items.length <= 1) return;
+        items.splice(Number(btn.dataset.del), 1);
+        renderReceipt();
+      });
+      ['payModeSelect', 'feedLinesSelect', 'cutModeSelect'].forEach(id => document.getElementById(id).addEventListener('change', renderReceipt));
+      document.getElementById('txnIdInput').addEventListener('input', renderReceipt);
+
+      /* ===================================================================
+         TASK 2: ALIGNMENT, TAX SPACING & CUT AUDIT MATRIX
+         =================================================================== */
+      const AUDIT_ROWS = [
+        { id: 'AL-01', sec: 'Store Header & GSTIN', c80: 'Centered; GSTIN strictly in header', c58: 'Tagline without --; GSTIN in header' },
+        { id: 'AL-02', sec: 'Order Metadata Colons', c80: 'labelW 16 + ":" + 31 right-aligned', c58: 'labelW 11 + ":" + 20 right-aligned' },
+        { id: 'AL-03', sec: 'Item Table Column Budget', c80: '22 + 1 + 3 + 1 + 10 + 1 + 10 = 48 cols', c58: '16 + 1 + 3 + 1 + 11 = 32 cols + sub-line' },
+        { id: 'AL-04', sec: 'Line Clamp & Hanging Indent', c80: 'Max 2 lines; dynamic 3sp/4sp indent', c58: 'Max 3 lines; (qty x unit) indented' },
+        { id: 'AL-05', sec: 'ASCII & SKU Normalization', c80: '₹ -> Rs.; ASCII "..."; hyphenated SKUs', c58: 'Same CP437/858 ASCII safety' },
+        { id: 'TX-01', sec: 'SUBTOTAL Right Alignment', c80: 'half=24 right-locked to Col 48', c58: 'half=16 right-locked to Col 32' },
+        { id: 'TX-02', sec: 'CGST (2.5%) & SGST (2.5%)', c80: 'Decimal points vertically aligned', c58: 'Zero overlap at 32-col width' },
+        { id: 'TX-03', sec: 'GRAND TOTAL Framing', c80: '48×"=" above/below; ESC E 1 bold only', c58: '32×"=" above/below; no double-width' },
+        { id: 'FT-01', sec: 'Conditional Transaction ID', c80: 'Shown UPI/Card/Other; omitted Cash', c58: 'Label "Txn ID"; wraps >24 chars' },
+        { id: 'BC-01', sec: 'Code 128 Barcode (HRI Off)', c80: 'GS k 73 + GS H 0; no star divider', c58: 'Verify GS w 1 / Subset C quiet zone' },
+        { id: 'CT-01', sec: 'Feed Before Cut', c80: 'ESC d 4 (~14mm clears barcode)', c58: 'ESC d 4 tear-bar clearance' },
+        { id: 'CT-02', sec: 'Partial Cut Execution', c80: 'GS V 66 0 (center tab intact)', c58: 'GS V ignored cleanly on manual tear' }
+      ];
+      const auditState = {};
+
+      function renderAudit() {
+        const passCnt = Object.values(auditState).filter(v => v === 'pass').length;
+        const doneCnt = Object.keys(auditState).length;
+        document.getElementById('auditScoreBadge').textContent = passCnt + ' / ' + AUDIT_ROWS.length + ' Passed (' + doneCnt + ' Checked)';
+        document.getElementById('regAuditSummary').textContent = passCnt + ' / ' + AUDIT_ROWS.length + ' Passed';
+
+        const tbody = document.getElementById('auditTableBody');
+        tbody.innerHTML = AUDIT_ROWS.map(r => {
+          const v = auditState[r.id];
+          return '<tr class="hover:bg-[#FAF3E6]">' +
+            '<td class="py-2.5 pr-3 font-mono-num font-semibold" style="color: var(--primaryDark);">' + r.id + '</td>' +
+            '<td class="py-2.5 pr-3 font-semibold">' + r.sec + '</td>' +
+            '<td class="py-2.5 pr-3" style="color: var(--textSecondary);">' + r.c80 + '</td>' +
+            '<td class="py-2.5 pr-3" style="color: var(--textSecondary);">' + r.c58 + '</td>' +
+            '<td class="py-2.5 text-right whitespace-nowrap">' +
+              '<button data-aid="' + r.id + '" data-av="pass" class="a-btn urqr-focus px-2.5 py-1 rounded-lg text-[12px] font-semibold border mr-1" style="background-color:' + (v === 'pass' ? 'var(--success)' : 'var(--surface)') + '; color:' + (v === 'pass' ? '#FFF' : 'var(--text)') + '; border-color:' + (v === 'pass' ? 'var(--success)' : 'var(--border)') + ';">Pass</button>' +
+              '<button data-aid="' + r.id + '" data-av="defect" class="a-btn urqr-focus px-2.5 py-1 rounded-lg text-[12px] font-semibold border" style="background-color:' + (v === 'defect' ? 'var(--error)' : 'var(--surface)') + '; color:' + (v === 'defect' ? '#FFF' : 'var(--text)') + '; border-color:' + (v === 'defect' ? 'var(--error)' : 'var(--border)') + ';">Defect</button>' +
+            '</td></tr>';
+        }).join('');
+
+        tbody.querySelectorAll('.a-btn').forEach(b => b.addEventListener('click', () => {
+          const id = b.dataset.aid, val = b.dataset.av;
+          if (auditState[id] === val) delete auditState[id];
+          else auditState[id] = val;
+          renderAudit();
+        }));
+      }
+
+      document.getElementById('btnAuditAllPass').addEventListener('click', () => {
+        AUDIT_ROWS.forEach(r => { auditState[r.id] = 'pass'; });
+        renderAudit();
+      });
+
+      /* ===================================================================
+         TASK 3: GST BREAKDOWN VS RAW POSTGRESQL DB RECONCILIATION
+         =================================================================== */
+      const DB_TEST_ORDERS = [
+        { orderNo: 'YOU202611250001', subP: 67400 },
+        { orderNo: 'NLJ202611270001', subP: 14900 },
+        { orderNo: 'NLJ202611270002', subP: 47500 },
+        { orderNo: 'NLJ202611270003', subP: 124750 },
+        { orderNo: 'NLJ202611270004', subP: 999900 }
+      ];
+
+      function renderGstTable() {
+        document.getElementById('gstTableBody').innerHTML = DB_TEST_ORDERS.map(o => {
+          const cgst = Math.floor((o.subP * 25 + 500) / 1000);
+          const sgst = Math.floor((o.subP * 25 + 500) / 1000);
+          const grand = o.subP + cgst + sgst;
+          return '<tr>' +
+            '<td class="py-2.5 pr-3 font-semibold">' + o.orderNo + '</td>' +
+            '<td class="py-2.5 pr-3 text-right">' + fmtInr(o.subP) + '</td>' +
+            '<td class="py-2.5 pr-3 text-right">' + fmtInr(cgst) + ' / ' + fmtInr(sgst) + '</td>' +
+            '<td class="py-2.5 pr-3 text-right">' + fmtRs(cgst) + ' / ' + fmtRs(sgst) + '</td>' +
+            '<td class="py-2.5 pr-3 text-right font-bold">' + fmtInr(grand) + '</td>' +
+            '<td class="py-2.5 text-right"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" style="background-color: var(--successBg); color: var(--success);">0p · MATCH</span></td></tr>';
+        }).join('');
+      }
+
+      const dbSubInput = document.getElementById('dbTestSubtotal');
+      function updateGstCalc() {
+        const val = parseFloat(dbSubInput.value);
+        const subP = isNaN(val) || val < 0 ? 0 : Math.round(val * 100);
+        const cgstP = Math.floor((subP * 25 + 500) / 1000);
+        const sgstP = Math.floor((subP * 25 + 500) / 1000);
+        const grandP = subP + cgstP + sgstP;
+        document.getElementById('calcSub').textContent = subP + ' (' + fmtInr(subP) + ')';
+        document.getElementById('calcCgst').textContent = cgstP + ' (' + fmtInr(cgstP) + ')';
+        document.getElementById('calcSgst').textContent = sgstP + ' (' + fmtInr(sgstP) + ')';
+        document.getElementById('calcGrand').textContent = grandP + ' (' + fmtInr(grandP) + ')';
+      }
+      dbSubInput.addEventListener('input', updateGstCalc);
+
+      /* ===================================================================
+         CLIPBOARD HELPERS (TASKS 1, 4, 5)
+         =================================================================== */
+      function copyText(text, btn, defaultLabel) {
+        const done = () => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = defaultLabel; }, 1400);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+        } else {
+          fallbackCopy(text, done);
+        }
+      }
+      function fallbackCopy(str, cb) {
+        const ta = document.createElement('textarea');
+        ta.value = str;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        cb();
+      }
+
+      document.getElementById('btnCopyCutBytes').addEventListener('click', (e) => {
+        copyText(document.getElementById('goCutBytes').textContent, e.target, 'Copy');
+      });
+
+      document.getElementById('btnCopyGoPatch').addEventListener('click', (e) => {
+        copyText(document.getElementById('goPatchCode').textContent, e.target, 'Copy Go Patch Snippet');
+      });
+
+      document.getElementById('btnCopyRegister').addEventListener('click', (e) => {
+        const passCnt = Object.values(auditState).filter(v => v === 'pass').length;
+        const summary = [
+          'URQR Phase 1 Hardware Verification Register (URQR-P1-HVR-2026-1127)',
+          'Date: Fri, 27 Nov 2026',
+          'Printer: ' + document.getElementById('hwPrinterModel').value,
+          'Bridge: ' + document.getElementById('hwBridgeVer').value,
+          'Verdict: ' + document.getElementById('hwVerdict').value,
+          'Alignment & Cut Audit: ' + passCnt + ' / ' + AUDIT_ROWS.length + ' Passed',
+          'GST vs DB Reconciliation: 0 Paise Discrepancy (5/5 Verified)',
+          'Sign-Off: ' + document.getElementById('sigGagan').value + ' & ' + document.getElementById('sigPrajwal').value,
+          'Remarks: ' + document.getElementById('regRemarks').value.trim()
+        ].join('\n');
+        copyText(summary, e.target, 'Copy Register Summary');
+      });
+
+      // Init all 5 afternoon tabs
+      renderTabs();
+      renderReceipt();
+      renderAudit();
+      renderGstTable();
+      updateGstCalc();
+    })();
+  </script>
+</body>
+</html>

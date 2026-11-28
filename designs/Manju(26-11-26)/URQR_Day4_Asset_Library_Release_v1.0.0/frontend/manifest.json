@@ -1,0 +1,293 @@
+{
+  "package": "@urqr/ui-pos-icons",
+  "version": "1.2.0",
+  "themeCollection": "URQR THEME (Beige / Sepia)",
+  "date": "2026-11-26",
+  "author": "Gagan (Design Systems & Hardware Specs)",
+  "recipients": [
+    "Swaroopa",
+    "Vishal"
+  ],
+  "tokens": {
+    "bg": "#F5EEE0",
+    "surface": "#FFFDF8",
+    "surfaceAlt": "#FAF3E6",
+    "border": "#E4D8C3",
+    "primary": "#8B5E3C",
+    "primaryDark": "#5C3D26",
+    "text": "#3B2A1E",
+    "textSecondary": "#7A6A5A",
+    "success": "#3F6B3A",
+    "successBg": "#EEF3E8",
+    "warning": "#B45309",
+    "warningBg": "#FDF1E1",
+    "error": "#B91C1C",
+    "disabled": "#D9CDB8",
+    "disabledText": "#8E7F6C",
+    "onPrimary": "#FFFFFF",
+    "inputBg": "#FFFFFF"
+  },
+  "standard": {
+    "grid": "24x24",
+    "strokeWidth": 1.75,
+    "strokeLinecap": "round",
+    "strokeLinejoin": "round",
+    "colorModes": [
+      "currentColor (React/Tailwind)",
+      "URQR THEME baked hex (Figma/img)"
+    ]
+  },
+  "iconCount": 11,
+  "totalBytesCurrentColor": 4488,
+  "totalBytesThemed": 4480,
+  "icons": [
+    {
+      "id": "urqr-payment-cash",
+      "name": "Cash Tender",
+      "category": "payment",
+      "component": "CashTenderIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/payment/urqr-payment-cash.svg",
+        "urqrTheme": "icons/urqr-theme/payment/urqr-payment-cash.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "primaryDark",
+        "strokeHex": "#5C3D26",
+        "surfaceToken": "surfaceAlt",
+        "surfaceHex": "#FAF3E6",
+        "duotoneFills": {
+          "backNote": "#E4D8C3 (border)",
+          "frontNote": "#FAF3E6 (surfaceAlt)",
+          "centerCircle": "#FFFDF8 (surface)",
+          "strokeAndRupee": "#5C3D26 (primaryDark)"
+        }
+      },
+      "states": "Unselected: primaryDark on surfaceAlt; Selected: onPrimary on primary; Disabled: disabledText on disabled",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 792,
+      "bytesThemed": 834
+    },
+    {
+      "id": "urqr-payment-card",
+      "name": "Credit / Debit Card",
+      "category": "payment",
+      "component": "CardPaymentIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/payment/urqr-payment-card.svg",
+        "urqrTheme": "icons/urqr-theme/payment/urqr-payment-card.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "primaryDark",
+        "strokeHex": "#5C3D26",
+        "surfaceToken": "surfaceAlt",
+        "surfaceHex": "#FAF3E6"
+      },
+      "states": "Unselected: primaryDark on surfaceAlt; Selected: onPrimary on primary; Disabled: disabledText on disabled",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 335,
+      "bytesThemed": 330
+    },
+    {
+      "id": "urqr-payment-upi-qr",
+      "name": "UPI QR Code",
+      "category": "payment",
+      "component": "UpiQrIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/payment/urqr-payment-upi-qr.svg",
+        "urqrTheme": "icons/urqr-theme/payment/urqr-payment-upi-qr.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "primaryDark",
+        "strokeHex": "#5C3D26",
+        "surfaceToken": "surfaceAlt",
+        "surfaceHex": "#FAF3E6"
+      },
+      "states": "Unselected: primaryDark on surfaceAlt; Selected: onPrimary on primary; Disabled: disabledText on disabled",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 466,
+      "bytesThemed": 461
+    },
+    {
+      "id": "urqr-status-cloud-sync",
+      "name": "Cloud Sync Active",
+      "category": "status",
+      "component": "CloudSyncActiveIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/status/urqr-status-cloud-sync.svg",
+        "urqrTheme": "icons/urqr-theme/status/urqr-status-cloud-sync.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "success",
+        "strokeHex": "#3F6B3A",
+        "surfaceToken": "successBg",
+        "surfaceHex": "#EEF3E8"
+      },
+      "states": "72px Header pill: success (#3F6B3A) on successBg (#EEF3E8)",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 351,
+      "bytesThemed": 346
+    },
+    {
+      "id": "urqr-status-offline-buffered",
+      "name": "Offline Buffered",
+      "category": "status",
+      "component": "OfflineBufferedIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/status/urqr-status-offline-buffered.svg",
+        "urqrTheme": "icons/urqr-theme/status/urqr-status-offline-buffered.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "warning",
+        "strokeHex": "#B45309",
+        "surfaceToken": "warningBg",
+        "surfaceHex": "#FDF1E1"
+      },
+      "states": "72px Header / queue pill: warning (#B45309) on warningBg (#FDF1E1); pure Offline uses error (#B91C1C)",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 337,
+      "bytesThemed": 332
+    },
+    {
+      "id": "urqr-status-centrifugo-connected",
+      "name": "Centrifugo Connected",
+      "category": "status",
+      "component": "CentrifugoConnectedIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/status/urqr-status-centrifugo-connected.svg",
+        "urqrTheme": "icons/urqr-theme/status/urqr-status-centrifugo-connected.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "success",
+        "strokeHex": "#3F6B3A",
+        "surfaceToken": "successBg",
+        "surfaceHex": "#EEF3E8"
+      },
+      "states": "72px Header live pill: success (#3F6B3A) on successBg (#EEF3E8)",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 374,
+      "bytesThemed": 369
+    },
+    {
+      "id": "urqr-status-printer-ready",
+      "name": "Printer Ready",
+      "category": "status",
+      "component": "PrinterReadyIcon",
+      "shortcut": null,
+      "files": {
+        "currentColor": "icons/currentColor/status/urqr-status-printer-ready.svg",
+        "urqrTheme": "icons/urqr-theme/status/urqr-status-printer-ready.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "success",
+        "strokeHex": "#3F6B3A",
+        "surfaceToken": "successBg",
+        "surfaceHex": "#EEF3E8"
+      },
+      "states": "72px Header printer pill: success (#3F6B3A) on successBg (#EEF3E8)",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 371,
+      "bytesThemed": 366
+    },
+    {
+      "id": "urqr-action-quick-search",
+      "name": "Quick Search",
+      "category": "actions",
+      "component": "QuickSearchIcon",
+      "shortcut": "F2",
+      "files": {
+        "currentColor": "icons/currentColor/actions/urqr-action-quick-search.svg",
+        "urqrTheme": "icons/urqr-theme/actions/urqr-action-quick-search.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "primaryDark",
+        "strokeHex": "#5C3D26",
+        "surfaceToken": "surfaceAlt",
+        "surfaceHex": "#FAF3E6"
+      },
+      "states": "Neutral action: primaryDark (#5C3D26) on surfaceAlt (#FAF3E6) with border (#E4D8C3)",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 296,
+      "bytesThemed": 291
+    },
+    {
+      "id": "urqr-action-cash-pay",
+      "name": "Cash Pay",
+      "category": "actions",
+      "component": "CashPayIcon",
+      "shortcut": "F4",
+      "files": {
+        "currentColor": "icons/currentColor/actions/urqr-action-cash-pay.svg",
+        "urqrTheme": "icons/urqr-theme/actions/urqr-action-cash-pay.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "primary",
+        "strokeHex": "#8B5E3C",
+        "surfaceToken": "surfaceAlt",
+        "surfaceHex": "#FAF3E6"
+      },
+      "states": "Primary confirm CTA: onPrimary (#FFFFFF) on primary (#8B5E3C); Disabled: disabledText on disabled",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 364,
+      "bytesThemed": 359
+    },
+    {
+      "id": "urqr-action-print-last",
+      "name": "Print Last",
+      "category": "actions",
+      "component": "PrintLastIcon",
+      "shortcut": "F9",
+      "files": {
+        "currentColor": "icons/currentColor/actions/urqr-action-print-last.svg",
+        "urqrTheme": "icons/urqr-theme/actions/urqr-action-print-last.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "primaryDark",
+        "strokeHex": "#5C3D26",
+        "surfaceToken": "surfaceAlt",
+        "surfaceHex": "#FAF3E6"
+      },
+      "states": "Neutral action: primaryDark (#5C3D26) on surfaceAlt (#FAF3E6) with border (#E4D8C3)",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 393,
+      "bytesThemed": 388
+    },
+    {
+      "id": "urqr-action-void-cart",
+      "name": "Void Cart",
+      "category": "actions",
+      "component": "VoidCartIcon",
+      "shortcut": "Esc",
+      "files": {
+        "currentColor": "icons/currentColor/actions/urqr-action-void-cart.svg",
+        "urqrTheme": "icons/urqr-theme/actions/urqr-action-void-cart.svg"
+      },
+      "urqrThemeToken": {
+        "strokeToken": "error",
+        "strokeHex": "#B91C1C",
+        "surfaceToken": "surface",
+        "surfaceHex": "#FFFDF8"
+      },
+      "states": "Destructive action: error (#B91C1C) on surface (#FFFDF8) with subtle error border",
+      "viewBox": "0 0 24 24",
+      "strokeWidth": 1.75,
+      "bytesCurrentColor": 409,
+      "bytesThemed": 404
+    }
+  ]
+}
