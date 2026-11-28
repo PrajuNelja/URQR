@@ -1,8 +1,5 @@
 package com.nelja.urqr.common.id;
 
-import com.nelja.urqr.auth.hotel.Hotel;
-import com.nelja.urqr.auth.hotel.HotelRepository;
-import com.nelja.urqr.billing.payment.PaymentMethod;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -26,11 +23,9 @@ public class BusinessIdGenerator {
             """;
 
     private final JdbcTemplate jdbc;
-    private final HotelRepository hotels;
 
-    public BusinessIdGenerator(JdbcTemplate jdbc, HotelRepository hotels) {
+    public BusinessIdGenerator(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
-        this.hotels = hotels;
     }
 
     public String nextStaffId(String hotelId, String roleName) {
@@ -66,8 +61,9 @@ public class BusinessIdGenerator {
         return next(prefix, 5);
     }
 
-    public String nextPaymentId(String hotelId, PaymentMethod method) {
-        String paymentType = method.name().replaceAll("[^A-Z0-9]", "");
+    public String nextPaymentId(String hotelId, Object method) {
+        String methodName = method == null ? "PAY" : method.toString();
+        String paymentType = methodName.replaceAll("[^A-Z0-9]", "");
         String prefix = paymentType + hotelPrefix(hotelId) + UTC_DATE.format(Instant.now());
         return next(prefix, 3);
     }
@@ -86,9 +82,18 @@ public class BusinessIdGenerator {
     }
 
     private String hotelPrefix(String hotelId) {
-        Hotel hotel = hotels.findById(hotelId)
-                .orElseThrow(() -> new IllegalArgumentException("Hotel not found for ID generation"));
-        return namePrefix(hotel.getName());
+        if (hotelId == null || hotelId.isBlank()) {
+            throw new IllegalArgumentException("Hotel ID is required for ID generation");
+        }
+        String name = jdbc.query(
+                "SELECT name FROM hotel WHERE id = ?",
+                rs -> rs.next() ? rs.getString(1) : null,
+                hotelId
+        );
+        if (name == null || name.isBlank()) {
+            return namePrefix(hotelId);
+        }
+        return namePrefix(name);
     }
 
     private static String namePrefix(String value) {
