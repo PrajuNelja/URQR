@@ -5,6 +5,9 @@ const candidateUrls = [
   process.env.BACKEND_BASE_URL,
   process.env.API_PORT ? `http://localhost:${process.env.API_PORT}` : null,
   'http://localhost:8080',
+  'http://localhost:8081',
+  'http://127.0.0.1:8089',
+  'http://localhost:8089',
   'http://localhost:8082',
 ].filter(Boolean) as string[];
 
