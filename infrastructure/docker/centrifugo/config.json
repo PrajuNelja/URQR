@@ -1,0 +1,63 @@
+{
+  "http_server": {
+    "port": 8000,
+    "internal_port": "9000"
+  },
+
+  "client": {
+    "token": {
+      "hmac_secret_key": "${CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY}"
+    },
+    "allowed_origins": ["*"]
+  },
+
+  "http_api": {
+    "key": "${CENTRIFUGO_HTTP_API_KEY}",
+    "external": true
+  },
+
+  "admin": {
+    "enabled": true,
+    "password": "${CENTRIFUGO_ADMIN_PASSWORD}",
+    "secret": "${CENTRIFUGO_ADMIN_SECRET}"
+  },
+
+  "prometheus": {
+    "enabled": true
+  },
+
+  "health": {
+    "enabled": true
+  },
+
+  "log": {
+    "level": "info"
+  },
+
+  "channel": {
+    "namespaces": [
+      {
+        "name": "orders",
+        "presence": true,
+        "join_leave": true,
+        "history_size": 100,
+        "history_ttl": "1m",
+        "force_recovery": true
+      },
+      {
+        "name": "kitchen",
+        "presence": true,
+        "join_leave": true,
+        "history_size": 50,
+        "history_ttl": "1m",
+        "force_recovery": true
+      },
+      {
+        "name": "notifications",
+        "presence": false,
+        "history_size": 0,
+        "force_recovery": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>URQR Phase 1 — Day 4 Task 4: SVGO Optimization Audit</title>
+<style>
+  :root {
+    --bg: #F5F0EB; --surface: #FFFFFF; --surface-alt: #F5EEE0;
+    --ink: #2C1E14; --ink-muted: #6B5748; --espresso: #5C3D26;
+    --terracotta: #BD461D; --border: #E2D6C8; --emerald: #15803D;
+    --emerald-bg: #ECFDF5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    background: var(--bg); color: var(--ink); padding: 28px 32px; line-height: 1.5;
+  }
+  .container { max-width: 1080px; margin: 0 auto; }
+  header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 2px solid var(--border); padding-bottom: 14px; margin-bottom: 20px;
+  }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--terracotta); margin-bottom: 3px; }
+  h1 { font-size: 22px; font-weight: 700; }
+  .meta { font-size: 12.5px; color: var(--ink-muted); text-align: right; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
+  .kpi .val { font-size: 22px; font-weight: 700; margin-top: 2px; color: var(--ink); }
+  .kpi .val.green { color: var(--emerald); }
+  .kpi .sub { font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface-alt); text-align: left; padding: 10px 14px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--ink-muted); border-bottom: 1px solid var(--border);
+  }
+  thead th.num { text-align: right; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #F0E8DF; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  .icon-cell { width: 52px; text-align: center; color: var(--espresso); }
+  .icon-cell svg { display: inline-block; vertical-align: middle; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bold { font-weight: 700; }
+  .save { color: var(--emerald); font-weight: 600; }
+  .ok { color: var(--emerald); font-weight: 600; font-size: 12px; }
+  .cat { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .b-pay { background: #FEF3C7; color: #92400E; }
+  .b-stat { background: #E0F2FE; color: #075985; }
+  .b-act { background: #FEE2E2; color: #991B1B; }
+  tfoot td {
+    background: var(--surface-alt); padding: 11px 14px; font-weight: 700;
+    border-top: 2px solid var(--border);
+  }
+  .note {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; font-size: 12.5px; color: var(--ink-muted);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="eyebrow">Nelja Tech &bull; URQR Platform &bull; Phase 1 Standalone Manager POS</div>
+      <h1>Day 4 Morning &mdash; Task 4: SVGO Optimization Audit Report</h1>
+    </div>
+    <div class="meta">
+      <div><strong>Assignee:</strong> Gagan (Design Systems &amp; Hardware Specs)</div>
+      <div><strong>Date:</strong> Thursday, 26 November 2026</div>
+    </div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Icons Optimized</div><div class="val">11 / 11</div><div class="sub">3 Payment &bull; 4 Status &bull; 4 Action</div></div>
+    <div class="kpi"><div class="lbl">Total Footprint</div><div class="val">4,043 B</div><div class="sub">Down from 5,105 B raw</div></div>
+    <div class="kpi"><div class="lbl">Total Savings</div><div class="val green">-20.8%</div><div class="sub">-1,062 bytes stripped</div></div>
+    <div class="kpi"><div class="lbl">Visual Parity</div><div class="val green">100%</div><div class="sub">Max pixel diff: 7 (0% drift)</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>Filename</th>
+          <th>Group</th>
+          <th class="num">Before</th>
+          <th class="num">After</th>
+          <th class="num">Reduction</th>
+          <th class="num">Pixel Diff</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cash Pay (F4)"><path d="M22 12.25V6.5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9M7.25 7.75h4.75M7.25 10.25h4.75M8.75 7.75a2.1 2.1 0 0 1 0 4.2H7.25l3.5 2.3M15.5 18.25l2 2 4.25-4.5"/></svg></td>
+        <td class="mono">urqr-action-cash-pay.svg</td>
+        <td><span class="cat b-act">Action</span></td>
+        <td class="num">463 B</td>
+        <td class="num bold">364 B</td>
+        <td class="num save">-99 B (21.4%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Print Last (F9)"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1M6 14h5.5M6 14v6a1 1 0 0 0 1 1h4.25M15.2 16.4a3.25 3.25 0 1 1 .5 3.9M14.75 13.75v2.75h2.75"/></svg></td>
+        <td class="mono">urqr-action-print-last.svg</td>
+        <td><span class="cat b-act">Action</span></td>
+        <td class="num">507 B</td>
+        <td class="num bold">393 B</td>
+        <td class="num save">-114 B (22.5%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Quick Search (F2)"><circle cx="10.5" cy="10.5" r="7.5"/><path d="M21 21l-5.2-5.2M11.25 6.75 8.75 10.5h3.5l-2.5 3.75"/></svg></td>
+        <td class="mono">urqr-action-quick-search.svg</td>
+        <td><span class="cat b-act">Action</span></td>
+        <td class="num">352 B</td>
+        <td class="num bold">296 B</td>
+        <td class="num save">-56 B (15.9%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Void Cart (Esc)"><circle cx="9.25" cy="19.75" r="1.35"/><circle cx="17.25" cy="19.75" r="1.35"/><path d="M2.5 4h2.75l2.2 10.2a1.5 1.5 0 0 0 1.47 1.18h8.7a1.5 1.5 0 0 0 1.46-1.15L20.75 7.5H6M11.65 9.55l3.7 3.7M15.35 9.55l-3.7 3.7"/></svg></td>
+        <td class="mono">urqr-action-void-cart.svg</td>
+        <td><span class="cat b-act">Action</span></td>
+        <td class="num">483 B</td>
+        <td class="num bold">409 B</td>
+        <td class="num save">-74 B (15.3%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Credit or Debit Card"><rect height="14" rx="2" width="20" x="2" y="5"/><rect height="3" rx=".5" width="3.5" x="5.5" y="12.5"/><path d="M2 9.5h20M12.5 15h6"/></svg></td>
+        <td class="mono">urqr-payment-card.svg</td>
+        <td><span class="cat b-pay">Payment</span></td>
+        <td class="num">397 B</td>
+        <td class="num bold">335 B</td>
+        <td class="num save">-62 B (15.6%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cash tender"><rect height="13" rx="2" width="20" x="2" y="4.5"/><path d="M5 20.5h14M5.5 11h.01M18.5 11h.01M9.5 8h5M9.5 10.75h5M11 8a2.25 2.25 0 0 1 0 4.5H9.5l3.75 2.5"/></svg></td>
+        <td class="mono">urqr-payment-cash.svg</td>
+        <td><span class="cat b-pay">Payment</span></td>
+        <td class="num">465 B</td>
+        <td class="num bold">347 B</td>
+        <td class="num save">-118 B (25.4%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="UPI QR code"><rect height="6.5" rx="1" width="6.5" x="3" y="3"/><rect height="6.5" rx="1" width="6.5" x="14.5" y="3"/><rect height="6.5" rx="1" width="6.5" x="3" y="14.5"/><path d="M6.25 6.25h.01M17.75 6.25h.01M6.25 17.75h.01M14.5 14.5h2.5v2.5M21 14.5v2.5M14.5 20.5h2.5M19.5 19.5H21V21"/></svg></td>
+        <td class="mono">urqr-payment-upi-qr.svg</td>
+        <td><span class="cat b-pay">Payment</span></td>
+        <td class="num">605 B</td>
+        <td class="num bold">466 B</td>
+        <td class="num save">-139 B (23.0%)</td>
+        <td class="num ok">7</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Centrifugo Connected"><circle cx="12" cy="12" r="2.25"/><path d="M8.11 8.11a5.5 5.5 0 0 0 0 7.78M15.89 8.11a5.5 5.5 0 0 1 0 7.78M5.28 5.28a9.5 9.5 0 0 0 0 13.44M18.72 5.28a9.5 9.5 0 0 1 0 13.44"/></svg></td>
+        <td class="mono">urqr-status-centrifugo-connected.svg</td>
+        <td><span class="cat b-stat">Status</span></td>
+        <td class="num">461 B</td>
+        <td class="num bold">374 B</td>
+        <td class="num save">-87 B (18.9%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cloud Sync Active"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9ZM8.75 15.5v-4.75M7.25 12.25 8.75 10.75l1.5 1.5M13.25 10.75v4.75M11.75 14 13.25 15.5l1.5-1.5"/></svg></td>
+        <td class="mono">urqr-status-cloud-sync.svg</td>
+        <td><span class="cat b-stat">Status</span></td>
+        <td class="num">450 B</td>
+        <td class="num bold">351 B</td>
+        <td class="num save">-99 B (22.0%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Offline Buffered"><path d="M9.2 5.2A5.5 5.5 0 0 1 15.3 7h1.2a3.75 3.75 0 0 1 1.65 7.12M13.5 14.5H6a3.5 3.5 0 0 1-.82-6.9M4 3.5 18 16.5M6 18.5h12M8.5 21.25h7"/></svg></td>
+        <td class="mono">urqr-status-offline-buffered.svg</td>
+        <td><span class="cat b-stat">Status</span></td>
+        <td class="num">436 B</td>
+        <td class="num bold">337 B</td>
+        <td class="num save">-99 B (22.7%)</td>
+        <td class="num ok">7</td>
+      </tr>
+      <tr>
+        <td class="icon-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Printer Ready"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1.5M18 12h.01M6 14h6.5M6 14v6a1 1 0 0 0 1 1h4.5M15 18.5 17 20.5 21.5 16"/></svg></td>
+        <td class="mono">urqr-status-printer-ready.svg</td>
+        <td><span class="cat b-stat">Status</span></td>
+        <td class="num">486 B</td>
+        <td class="num bold">371 B</td>
+        <td class="num save">-115 B (23.7%)</td>
+        <td class="num ok">0px (Exact)</td>
+      </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total Bundle (11 Custom POS Icons)</td>
+          <td class="num">5,105 B</td>
+          <td class="num">4,043 B</td>
+          <td class="num save">-1,062 B (-20.8%)</td>
+          <td class="num ok">Verified</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="note">
+    <span><strong>Optimizations applied:</strong> Path merging (<code>mergePaths</code>), decimal zero stripping (<code>cleanupNumericValues</code>), whitespace minification, metadata removal; <code>viewBox</code>, <code>currentColor</code>, <code>role</code>, and <code>aria-label</code> preserved.</span>
+    <span><strong>Config:</strong> <code>svgo.config.mjs</code></span>
+  </div>
+</div>
+</body>
+</html>

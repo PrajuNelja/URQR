@@ -1,0 +1,9 @@
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@import "./styles/theme.css";
+@import "./styles/base.css";
+@import "./styles/typography.css";
+@import "./styles/components.css";

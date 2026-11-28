@@ -44,6 +44,11 @@ temp/
 *.sqlite3
 *.sqlitedb
 
+# Lockfiles from other package managers (pnpm is the source of truth)
+package-lock.json
+yarn.lock
+
+
 # Test reports and generated artifacts
 test-results/
 reports/
@@ -51,3 +56,10 @@ surefire-reports/
 failsafe-reports/
 allure-results/
 *.generated.*
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/k6-results/

@@ -1,0 +1,3 @@
+package com.nelja.urqr.auth.audit;
+import com.nelja.urqr.common.id.BusinessIdGenerator; import org.springframework.stereotype.Service;
+@Service public class AuditService {private final AuditRecordRepository repository;private final BusinessIdGenerator ids;public AuditService(AuditRecordRepository r,BusinessIdGenerator ids){repository=r;this.ids=ids;}public void record(String hotel,String user,String action,String entity,String id,String oldValue,String newValue){repository.save(new AuditRecord(ids.nextAuditId(hotel),hotel,user,action,entity,id,oldValue,newValue));}public void recordSystem(String hotel,String action,String entity,String id,String value){repository.save(new AuditRecord(ids.nextAuditId(hotel),hotel,null,action,entity,id,null,value));}}

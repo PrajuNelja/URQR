@@ -1,0 +1,57 @@
+name: URQR QA Performance Pipeline
+
+# =============================================================================
+# URQR Platform — Phase 1 Standalone Manager POS
+# Assignee: Bharath | Role: QA Automation & Hardware Lead
+# Job: k6 Baseline Performance Test (p95 < 200ms SLA Verification)
+# =============================================================================
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "qa/k6-tests/**"
+      - ".github/workflows/qa-performance.yml"
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: k6-perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  k6-benchmark:
+    name: "QA — k6 Performance Baseline"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup k6 CLI
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 Performance Benchmark
+        run: |
+          node scripts/run-k6-benchmark.js
+        env:
+          BASE_URL: "http://localhost:8080"
+          VUS: "5"
+          DURATION: "10s"
+
+      - name: Archive Performance Benchmark Summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-report
+          path: |
+            qa/evidence/k6-summary.html
+            qa/evidence/k6-summary.json
+            k6-results/
+          retention-days: 7

@@ -1,0 +1,45 @@
+================================================================================
+URQR PLATFORM — 80MM (48-COLUMN) THERMAL RECEIPT MONOSPACE TYPOGRAPHICAL AUDIT
+Assignee: Bharath | Role: QA Automation & Hardware Lead
+Date: 2026-11-25 | Standard: ESC/POS Thermal Protocol (80mm / 48 Columns)
+================================================================================
+
+[LINE 01]                  GRAND HORIZON                   | LENGTH: 48 | OK
+[LINE 02]             HOTEL & RESTAURANT POS               | LENGTH: 48 | OK
+[LINE 03]              GSTIN: 29AAAAA0000A1Z5              | LENGTH: 48 | OK
+[LINE 04] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 05] Order #: ORD-2026-98102    Date: 25-Nov-2026     | LENGTH: 48 | OK
+[LINE 06] Cashier: Cashier-Terminal-01  Time: 14:32:10     | LENGTH: 48 | OK
+[LINE 07] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 08] ITEM                         QTY  PRICE   TOTAL  | LENGTH: 48 | OK
+[LINE 09] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 10] Paneer Butter Masala           2 240.00  480.00  | LENGTH: 48 | OK
+[LINE 11] Garlic Naan                    4  45.00  180.00  | LENGTH: 48 | OK
+[LINE 12] Jeera Rice                     1 160.00  160.00  | LENGTH: 48 | OK
+[LINE 13] Masala Chaas                   3  35.00  105.00  | LENGTH: 48 | OK
+[LINE 14] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 15] SUBTOTAL:                                925.00  | LENGTH: 48 | OK
+[LINE 16] ITEM DISCOUNT:                            46.25  | LENGTH: 48 | OK
+[LINE 17] NET TAXABLE VALUE:                       878.75  | LENGTH: 48 | OK
+[LINE 18] CGST (2.5%):                              21.97  | LENGTH: 48 | OK
+[LINE 19] SGST (2.5%):                              21.97  | LENGTH: 48 | OK
+[LINE 20] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 21] GRAND TOTAL:                             922.69  | LENGTH: 48 | OK
+[LINE 22] ROUND OFF:                                +0.31  | LENGTH: 48 | OK
+[LINE 23] PAYABLE AMOUNT:                 INR     923.00   | LENGTH: 48 | OK
+[LINE 24] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 25] PAYMENT METHOD: CASH            RECEIVED: 1000.00| LENGTH: 48 | OK
+[LINE 26] CHANGE RETURNED:                          77.00  | LENGTH: 48 | OK
+[LINE 27] ------------------------------------------------ | LENGTH: 48 | OK
+[LINE 28]              THANK YOU! VISIT AGAIN              | LENGTH: 48 | OK
+[LINE 29]         POWERED BY URQR CLOUD POS ENGINE         | LENGTH: 48 | OK
+================================================================================
+AUDIT SUMMARY:
+Total Lines Checked: 29
+Maximum Line Width: 48 Characters
+Minimum Line Width: 48 Characters
+Column Overflow Errors: 0
+Byte Truncation Warnings: 0
+ESC/POS Command Opcodes: Init (0x1B 0x40), Bold (0x1B 0x45), Cut (0x1D 0x56 0x00)
+STATUS: 100% COMPLIANT WITH 80MM (48-COLUMN) POS THERMAL PRINTER HARDWARE
+================================================================================

@@ -3,6 +3,7 @@ package com.nelja.urqr.common.exception;
 import com.nelja.urqr.common.response.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.DateTimeException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -55,9 +57,22 @@ public class ApiExceptionHandler {
         return response(HttpStatus.BAD_REQUEST,"BAD_REQUEST",exception.getMessage(),List.of(),request);
     }
 
+    @ExceptionHandler(DateTimeException.class)
+    ResponseEntity<ApiError> invalidDateTime(DateTimeException exception, HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "INVALID_DATE_TIME",
+                "A date, time, or timezone value is invalid", List.of(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ApiError> forbidden(AccessDeniedException exception, HttpServletRequest request) {
+        return response(HttpStatus.FORBIDDEN, "FORBIDDEN", "You do not have permission to perform this action",
+                List.of(), request);
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> unexpected(Exception exception, HttpServletRequest request) {
-        log.error("Unexpected request failure correlationId={}",request.getAttribute(RequestIdFilter.ATTRIBUTE));
+        log.error("Unexpected request failure correlationId={}",
+                request.getAttribute(RequestIdFilter.ATTRIBUTE), exception);
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "An unexpected error occurred", List.of(), request);
     }
 

@@ -1,0 +1,17 @@
+permissions:
+  '@tanstack/react-router':
+    skills: false
+  '@tanstack/react-table':
+    skills: false
+  '@tanstack/router-plugin':
+    skills: false
+  msw:
+    build: true
+  protobufjs:
+    build: false
+packages:
+  - "manager-pos"
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  protobufjs: set this to true or false

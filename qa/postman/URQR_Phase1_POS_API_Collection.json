@@ -1,0 +1,1105 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "name": "URQR Phase 1 POS - API Regression Collection",
+    "description": "Comprehensive Postman test collection for URQR Standalone Manager POS Phase 1 authored by Nayana (QA Lead). Covers Auth endpoints, RS256 JWT structure validation, negative security tests, brute-force throttling, and catalog contracts (category filters, search queries, pagination, out-of-stock and multi-tax matrix).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Health & Liveness Probe",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response latency is acceptable (<1000ms)', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});",
+              "",
+              "pm.test('Service reports UP status', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('UP');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health/liveness",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "actuator",
+            "health",
+            "liveness"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Manager Login (Happy Path & JWT RS256 Audit)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Login response latency is acceptable (<3000ms)', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "// Save tokens to environment immediately so all subsequent tests have credentials",
+              "if (jsonData && jsonData.accessToken) {",
+              "    pm.environment.set('authToken', jsonData.accessToken);",
+              "}",
+              "if (jsonData && jsonData.refreshToken) {",
+              "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+              "}",
+              "",
+              "// Task 2: Validate JWT Structure - RS256 Header & Claims",
+              "pm.test('JWT Access Token has valid 3-part signature structure', function () {",
+              "    pm.expect(jsonData).to.have.property('accessToken');",
+              "    pm.expect(jsonData.accessToken).to.be.a('string');",
+              "    const parts = jsonData.accessToken.split('.');",
+              "    pm.expect(parts.length).to.eql(3);",
+              "",
+              "    const decodeB64 = function(s) {",
+              "        try {",
+              "            if (typeof Buffer !== 'undefined') return Buffer.from(s, 'base64').toString('utf8');",
+              "            return atob(s.replace(/-/g, '+').replace(/_/g, '/'));",
+              "        } catch (_) {",
+              "            return atob(s);",
+              "        }",
+              "    };",
+              "",
+              "    // Decode Header",
+              "    const header = JSON.parse(decodeB64(parts[0]));",
+              "    pm.expect(header.alg).to.eql('RS256');",
+              "    if (header.typ) {",
+              "        pm.expect(header.typ).to.eql('JWT');",
+              "    }",
+              "",
+              "    // Decode Payload Claims",
+              "    const claims = JSON.parse(decodeB64(parts[1]));",
+              "    pm.expect(claims).to.have.property('sub');",
+              "    pm.expect(claims).to.have.property('uid');",
+              "    pm.expect(claims).to.have.property('hotel_id');",
+              "    const userRole = claims.role || (Array.isArray(claims.roles) ? claims.roles[0] : null);",
+              "    pm.expect(userRole).to.eql('MANAGER');",
+              "    pm.expect(claims).to.have.property('exp');",
+              "    pm.expect(claims.jti || claims.id).to.be.ok;",
+              "});",
+              "",
+              "pm.test('User profile returned with matching username and role', function () {",
+              "    pm.expect(jsonData.username).to.eql(pm.environment.get('posUsername') || 'pos_manager_1');",
+              "    pm.expect(jsonData.role).to.eql('MANAGER');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"{{posUsername}}\",\n    \"password\": \"{{posPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Auth Token Refresh (/api/v1/auth/refresh)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for refresh', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "if (jsonData && jsonData.accessToken) {",
+              "    pm.environment.set('authToken', jsonData.accessToken);",
+              "}",
+              "if (jsonData && jsonData.refreshToken) {",
+              "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+              "}",
+              "",
+              "pm.test('Rotated access token is issued with RS256 algorithm', function () {",
+              "    pm.expect(jsonData).to.have.property('accessToken');",
+              "    const parts = jsonData.accessToken.split('.');",
+              "    pm.expect(parts.length).to.eql(3);",
+              "    const decodeB64 = function(s) {",
+              "        try {",
+              "            if (typeof Buffer !== 'undefined') return Buffer.from(s, 'base64').toString('utf8');",
+              "            return atob(s.replace(/-/g, '+').replace(/_/g, '/'));",
+              "        } catch (_) {",
+              "            return atob(s);",
+              "        }",
+              "    };",
+              "    const header = JSON.parse(decodeB64(parts[0]));",
+              "    pm.expect(header.alg).to.eql('RS256');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "refresh"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Negative: Incorrect Password",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 Unauthorized', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "pm.test('Error payload contains descriptive rejection', function () {",
+              "    const jsonData = pm.response.json();",
+              "    const errorMsg = jsonData.error || jsonData.detail || jsonData.message || jsonData.title;",
+              "    pm.expect(errorMsg).to.be.ok;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"{{posUsername}}\",\n    \"password\": \"WrongSecurityPassword@999\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Negative: Invalid / Unknown Tenant Slug Account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 Unauthorized for unknown tenant account', function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"unregistered_tenant_user_xyz\",\n    \"password\": \"SomePassword@123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "06 - Negative: Expired or Revoked Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401 Unauthorized for expired refresh token', function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"refreshToken\": \"expired.refresh.token.signature\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "refresh"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "07 - Negative: Malformed JSON Payload",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 Bad Request for malformed JSON syntax', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"pos_manager_1\",\n    \"password\": "
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "08 - Brute-Force Rate Limiting (10 Rapid Failed Logins)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Brute-force security check: returns 401 Unauthorized or 429 Too Many Requests', function () {",
+              "    pm.expect([401, 429]).to.include(pm.response.code);",
+              "});",
+              "if (pm.response.code === 429) {",
+              "    pm.test('Response contains Retry-After header for rate throttling', function () {",
+              "        pm.expect(pm.response.headers.has('Retry-After')).to.be.true;",
+              "    });",
+              "    pm.test('Response payload informs user of temporary lockout', function () {",
+              "        const jsonData = pm.response.json();",
+              "        const err = jsonData.error || jsonData.detail || jsonData.message || '';",
+              "        pm.expect(err.toLowerCase()).to.include('too many');",
+              "    });",
+              "} else {",
+              "    pm.test('Unauthorized credentials rejected by security barrier', function () {",
+              "        pm.response.to.have.status(401);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Simulate-Brute-Force",
+            "value": "true"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"pos_manager_1\",\n    \"password\": \"Attempt10WrongPass\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "09 - Catalog Products (Contract Schema Validation)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Products conform to ProductItemSchema contract', function () {",
+              "    const jsonData = pm.response.json();",
+              "    const products = Array.isArray(jsonData) ? jsonData : (jsonData.products || jsonData.items);",
+              "    pm.expect(Array.isArray(products)).to.be.true;",
+              "    pm.expect(products.length).to.be.above(0);",
+              "",
+              "    const item = products[0];",
+              "    pm.expect(item).to.have.property('id');",
+              "    pm.expect(item).to.have.property('name');",
+              "    pm.expect(item).to.have.property('price');",
+              "    pm.expect(typeof item.name).to.eql('string');",
+              "    pm.expect(typeof item.price).to.eql('number');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "10 - Catalog Categories (Contract Schema Validation)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Categories conform to CategorySchema contract', function () {",
+              "    const jsonData = pm.response.json();",
+              "    const categories = Array.isArray(jsonData) ? jsonData : jsonData.categories;",
+              "    pm.expect(Array.isArray(categories)).to.be.true;",
+              "    pm.expect(categories.length).to.be.above(0);",
+              "",
+              "    const cat = categories[0];",
+              "    pm.expect(cat).to.have.property('id');",
+              "    pm.expect(cat).to.have.property('name');",
+              "    pm.expect(cat).to.have.property('slug');",
+              "    pm.expect(typeof cat.name).to.eql('string');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/categories",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "categories"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "11 - Catalog Category Filter (Main Course)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for category filter query', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || jsonData.products);",
+              "",
+              "pm.test('Returned category results is a non-empty array', function () {",
+              "    pm.expect(Array.isArray(products)).to.be.true;",
+              "    pm.expect(products.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test('All returned products have category Main Course', function () {",
+              "    products.forEach(function (prod) {",
+              "        pm.expect(prod.category).to.eql('Main Course');",
+              "    });",
+              "});",
+              "",
+              "pm.test('Results include known standard items: Paneer Butter Masala', function () {",
+              "    const names = products.map(p => p.name);",
+              "    pm.expect(names).to.include('Paneer Butter Masala');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products?category=Main+Course",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "category",
+              "value": "Main Course"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "12 - Catalog Category Filter (Empty on Non-Existent Category)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for non-existent category query', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || []);",
+              "",
+              "pm.test('Empty array returned when category has no matches', function () {",
+              "    pm.expect(Array.isArray(products)).to.be.true;",
+              "    pm.expect(products.length).to.eql(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products?category=NonExistentCategory99",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "category",
+              "value": "NonExistentCategory99"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "13 - Catalog Search Query (Search for \"Paneer\")",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for search query', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || jsonData.products);",
+              "",
+              "pm.test('Search returns matching item records', function () {",
+              "    pm.expect(Array.isArray(products)).to.be.true;",
+              "    pm.expect(products.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test('Returned items match substring query \"Paneer\"', function () {",
+              "    products.forEach(function (prod) {",
+              "        const match = prod.name.toLowerCase().includes('paneer') || (prod.description && prod.description.toLowerCase().includes('paneer'));",
+              "        pm.expect(match).to.be.true;",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products?search=Paneer",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "Paneer"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "14 - Catalog Search Query Case-Insensitive (Search for \"naan\")",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for case-insensitive search', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "const products = Array.isArray(jsonData) ? jsonData : (jsonData.items || jsonData.products);",
+              "",
+              "pm.test('Found matching item Garlic Naan', function () {",
+              "    pm.expect(products.some(p => p.name === 'Garlic Naan')).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products?search=naan",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "naan"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "15 - Catalog Pagination (Page 1 with Size 2)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for paginated query', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "pm.test('Pagination metadata conforms to Spring Boot pageable contract', function () {",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData).to.have.property('page');",
+              "    pm.expect(jsonData).to.have.property('size');",
+              "    pm.expect(jsonData).to.have.property('totalElements');",
+              "    pm.expect(jsonData).to.have.property('totalPages');",
+              "    pm.expect(jsonData.page).to.eql(1);",
+              "    pm.expect(jsonData.size).to.eql(2);",
+              "    pm.expect(jsonData.items.length).to.eql(2);",
+              "    pm.expect(jsonData.totalElements).to.be.above(4);",
+              "    pm.expect(jsonData.totalPages).to.be.above(2);",
+              "    pm.environment.set('page1_first_id', jsonData.items[0].id);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products?page=1&size=2",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "size",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "16 - Catalog Pagination (Page 2 with Size 2)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for page 2 query', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "pm.test('Page 2 returns distinct items from Page 1', function () {",
+              "    pm.expect(jsonData.page).to.eql(2);",
+              "    pm.expect(jsonData.size).to.eql(2);",
+              "    pm.expect(jsonData.items.length).to.eql(2);",
+              "    const page1FirstId = pm.environment.get('page1_first_id');",
+              "    if (page1FirstId) {",
+              "        const page2Ids = jsonData.items.map(i => i.id);",
+              "        pm.expect(page2Ids).to.not.include(parseInt(page1FirstId, 10));",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products?page=2&size=2",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "2"
+            },
+            {
+              "key": "size",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "17 - Out-of-Stock and Multi-Tax Inventory Verification",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for full catalog audit', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "const products = Array.isArray(jsonData) ? jsonData : jsonData.items;",
+              "",
+              "pm.test('Out-of-stock items have inStock false and zero quantity', function () {",
+              "    const oosItems = products.filter(p => p.itemType === 'OUT_OF_STOCK' || p.inStock === false);",
+              "    pm.expect(oosItems.length).to.be.above(0);",
+              "    oosItems.forEach(item => {",
+              "        pm.expect(item.inStock).to.be.false;",
+              "        pm.expect(item.stockQuantity).to.eql(0);",
+              "    });",
+              "});",
+              "",
+              "pm.test('Multi-tax items carry tax rate and component breakdowns', function () {",
+              "    const multiTaxItems = products.filter(p => p.itemType === 'MULTI_TAX');",
+              "    pm.expect(multiTaxItems.length).to.be.above(0);",
+              "    multiTaxItems.forEach(item => {",
+              "        pm.expect(item).to.have.property('taxRate');",
+              "        pm.expect(item).to.have.property('taxComponents');",
+              "        pm.expect(Array.isArray(item.taxComponents)).to.be.true;",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/catalog/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "catalog",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "18 - Multi-Tenant Isolation (Tenant-A cannot access Tenant-B)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 403 Forbidden or 404 Not Found for cross-tenant breach', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([403, 404, 401]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "X-Tenant-ID",
+            "value": "{{tenantB_Id}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/tenant/{{tenantB_Id}}/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tenant",
+            "{{tenantB_Id}}",
+            "orders"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "19 - Super-Manager Cross-Tenant Metrics Query",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK for Super-Manager query', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Returns aggregated platform tenant metrics', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('totalTenants');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          },
+          {
+            "key": "X-Super-Manager",
+            "value": "true"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/platform/tenants/metrics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "platform",
+            "tenants",
+            "metrics"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

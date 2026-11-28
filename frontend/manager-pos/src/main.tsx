@@ -1,0 +1,49 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { registerSW } from 'virtual:pwa-register'; // <-- ADDED
+
+
+import App from "./App";
+import "./index.css";
+import { queryClient } from "./queryClient";
+import { isTauriRuntime } from "./lib/bridge/bridgeClient";
+
+// Register PWA Service Worker
+registerSW({ immediate: true }); // <-- ADDED
+
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element not found. Check index.html.");
+}
+
+if (isTauriRuntime()) {
+  window.addEventListener(
+    "contextmenu",
+    (event) => {
+      event.preventDefault();
+    },
+    true,
+  );
+}
+
+async function enableMocking() {
+  if (import.meta.env.DEV && !isTauriRuntime()) {
+    const { worker } = await import("./mocks/browser");
+
+    await worker.start({
+      onUnhandledRequest: "warn",
+    });
+  }
+}
+
+enableMocking().then(() => {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+});
