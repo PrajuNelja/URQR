@@ -7,8 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.Locale;
@@ -22,8 +20,8 @@ import com.nelja.urqr.auth.access.role.Role;
 @Table(name = "staff_user", uniqueConstraints = {@UniqueConstraint(name="uk_user_hotel_username", columnNames={"hotel_id","username"}),@UniqueConstraint(name="uk_user_hotel_id",columnNames={"hotel_id","id"})},indexes=@jakarta.persistence.Index(name="ix_user_hotel_role_status",columnList="hotel_id,role_id,status"))
 public class StaffUser {
     @Id
-    @GeneratedValue(strategy=GenerationType.UUID)
-    private UUID id;
+    @Column(length = 96)
+    private String id;
 
     @Column(name = "hotel_id", nullable = false, length = 64)
     private String hotelId;
@@ -49,12 +47,12 @@ public class StaffUser {
 
     protected StaffUser() { }
 
-    public StaffUser(String hotelId, UUID roleId, String username, String passwordHash) {
-        this.hotelId=hotelId; this.roleId=roleId; this.username=username.trim().toLowerCase(Locale.ROOT);
+    public StaffUser(String id, String hotelId, UUID roleId, String username, String passwordHash) {
+        this.id=id; this.hotelId=hotelId; this.roleId=roleId; this.username=username.trim().toLowerCase(Locale.ROOT);
         this.passwordHash=passwordHash; this.status="ACTIVE"; this.createdAt=Instant.now();
     }
 
-    public UUID getId() { return id; }
+    public String getId() { return id; }
     public String getHotelId() { return hotelId; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }

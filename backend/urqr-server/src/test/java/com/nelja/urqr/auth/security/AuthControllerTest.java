@@ -41,7 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 class AuthControllerTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID USER_ID = UUID.randomUUID();
+    private static final String USER_ID = "MGRTES01";
     private static final UUID ROLE_ID = UUID.randomUUID();
 
     @Mock private AuthenticationManager authenticationManager;
@@ -145,7 +145,7 @@ class AuthControllerTest {
         when(jwt.getClaimAsString("token_type")).thenReturn("refresh");
         when(jwt.getClaimAsString("principal_type")).thenReturn(null);
         when(jwt.getClaimAsString("hotel_id")).thenReturn(HOTEL_ID.toString());
-        when(jwt.getClaimAsString("uid")).thenReturn(USER_ID.toString());
+        when(jwt.getClaimAsString("uid")).thenReturn(USER_ID);
         when(jwt.getSubject()).thenReturn("manager@example.test");
         when(jwt.getId()).thenReturn("token-jti-123");
 
@@ -184,7 +184,7 @@ class AuthControllerTest {
         when(jwt.getClaimAsString("token_type")).thenReturn("refresh");
         when(jwt.getClaimAsString("principal_type")).thenReturn(null);
         when(jwt.getClaimAsString("hotel_id")).thenReturn(HOTEL_ID.toString());
-        when(jwt.getClaimAsString("uid")).thenReturn(USER_ID.toString());
+        when(jwt.getClaimAsString("uid")).thenReturn(USER_ID);
         when(jwt.getSubject()).thenReturn("manager@example.test");
         when(jwt.getId()).thenReturn("token-reused-id");
 

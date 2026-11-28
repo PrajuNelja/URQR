@@ -6,8 +6,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -18,7 +16,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 import jakarta.persistence.FetchType;
 
 @Entity
@@ -28,8 +25,8 @@ import jakarta.persistence.FetchType;
 }, indexes = @Index(name = "ix_order_hotel_created", columnList = "hotel_id,created_at"))
 public class Order {
 
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Id @Column(length=96)
+    private String id;
     @Column(name = "hotel_id", nullable = false, length = 64)
     private String hotelId;
     @Column(name = "order_number", nullable = false, length = 40)
@@ -55,8 +52,8 @@ public class Order {
     private BigDecimal taxTotal = BigDecimal.ZERO.setScale(2);
     @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal grandTotal = BigDecimal.ZERO.setScale(2);
-    @Column(name = "created_by", nullable = false)
-    private UUID createdBy;
+    @Column(name = "created_by", nullable = false, length=96)
+    private String createdBy;
     @Column(name = "cancel_reason", length = 500)
     private String cancelReason;
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -66,7 +63,8 @@ public class Order {
 
     protected Order() { }
 
-    public Order(String hotelId, UUID userId, String number) {
+    public Order(String id, String hotelId, String userId, String number) {
+        this.id = id;
         this.hotelId = hotelId;
         createdBy = userId;
         orderNumber = number;
@@ -75,7 +73,7 @@ public class Order {
 
     @PreUpdate void touch() { updatedAt = Instant.now(); }
 
-    public UUID getId() { return id; }
+    public String getId() { return id; }
     public String getHotelId() { return hotelId; }
     public String getOrderNumber() { return orderNumber; }
     public OrderStatus getStatus() { return status; }
@@ -84,7 +82,7 @@ public class Order {
     public BigDecimal getDiscountTotal() { return discountTotal; }
     public BigDecimal getTaxTotal() { return taxTotal; }
     public BigDecimal getGrandTotal() { return grandTotal; }
-    public UUID getCreatedBy() { return createdBy; }
+    public String getCreatedBy() { return createdBy; }
     public String getCancelReason() { return cancelReason; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

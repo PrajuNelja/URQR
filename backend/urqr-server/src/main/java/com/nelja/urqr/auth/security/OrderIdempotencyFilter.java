@@ -86,7 +86,7 @@ public class OrderIdempotencyFilter extends OncePerRequestFilter {
         }
 
         String hotelId = stringClaim(jwtAuthentication, "hotel_id");
-        UUID userId = uuidClaim(jwtAuthentication, "uid");
+        String userId = stringClaim(jwtAuthentication, "uid");
         if (hotelId == null || userId == null) {
             chain.doFilter(request, response);
             return;
@@ -222,17 +222,9 @@ public class OrderIdempotencyFilter extends OncePerRequestFilter {
         objectMapper.writeValue(response.getOutputStream(), error);
     }
 
-    static String responseKey(String hotelId, UUID userId, String key) {
+    static String responseKey(String hotelId, String userId, String key) {
         return REDIS_PREFIX + hotelId + ":" + userId + ":" + sha256(key.trim().getBytes(StandardCharsets.UTF_8))
                 + ":response";
-    }
-
-    private static UUID uuidClaim(JwtAuthenticationToken authentication, String claim) {
-        try {
-            return UUID.fromString(authentication.getToken().getClaimAsString(claim));
-        } catch (RuntimeException exception) {
-            return null;
-        }
     }
 
     private static String stringClaim(JwtAuthenticationToken authentication, String claim) {

@@ -27,7 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 class RoleControllerTest {
 
     private static final String HOTEL_ID = UUID.randomUUID().toString();
-    private static final UUID USER_ID = UUID.randomUUID();
+    private static final String USER_ID = "MGRTES01";
 
     @Mock private RoleRepository roles;
     @Mock private CurrentHotel tenant;

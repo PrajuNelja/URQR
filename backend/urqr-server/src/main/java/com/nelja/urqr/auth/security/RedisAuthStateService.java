@@ -3,7 +3,6 @@ package com.nelja.urqr.auth.security;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,7 @@ public class RedisAuthStateService {
         this.authorizationTtl = Duration.ofSeconds(authorizationTtlSeconds);
     }
 
-    public void registerToken(String tokenId, String tokenType, Instant expiresAt, String hotelId, UUID userId) {
+    public void registerToken(String tokenId, String tokenType, Instant expiresAt, String hotelId, String userId) {
         Duration ttl = Duration.between(Instant.now(), expiresAt);
         if (tokenId == null || ttl.isNegative() || ttl.isZero()) {
             throw new IllegalArgumentException("Token ID and future expiry are required");
@@ -64,7 +63,7 @@ public class RedisAuthStateService {
         return "refresh".equals(tokenType);
     }
 
-    public String staffRole(String hotelId, UUID userId) {
+    public String staffRole(String hotelId, String userId) {
         String cacheKey = staffAuthzKey(hotelId, userId);
         String cachedRole = redis.opsForValue().get(cacheKey);
         if (cachedRole != null) return cachedRole;
@@ -72,12 +71,12 @@ public class RedisAuthStateService {
         String role = authorizationLookup.findActiveRole(hotelId, userId);
         redis.opsForValue().set(cacheKey, role, authorizationTtl);
         String index = hotelStaffIndexKey(hotelId);
-        redis.opsForSet().add(index, userId.toString());
+        redis.opsForSet().add(index, userId);
         redis.expire(index, INDEX_TTL);
         return role;
     }
 
-    public void invalidateStaffAuthorization(String hotelId, UUID userId) {
+    public void invalidateStaffAuthorization(String hotelId, String userId) {
         afterCommit(() -> redis.delete(staffAuthzKey(hotelId, userId)));
     }
 
@@ -87,7 +86,7 @@ public class RedisAuthStateService {
             Set<String> staffIds = redis.opsForSet().members(index);
             if (staffIds != null && !staffIds.isEmpty()) {
                 redis.delete(staffIds.stream()
-                        .map(id -> staffAuthzKey(hotelId, UUID.fromString(id))).toList());
+                        .map(id -> staffAuthzKey(hotelId, id)).toList());
             }
             redis.delete(index);
         });
@@ -104,7 +103,7 @@ public class RedisAuthStateService {
         });
     }
 
-    public void revokeStaffTokens(String hotelId, UUID userId) {
+    public void revokeStaffTokens(String hotelId, String userId) {
         afterCommit(() -> {
             String index = staffTokenIndexKey(hotelId, userId);
             Set<String> tokenIds = redis.opsForSet().members(index);
@@ -115,7 +114,7 @@ public class RedisAuthStateService {
         });
     }
 
-    private static String staffAuthzKey(String hotelId, UUID userId) {
+    private static String staffAuthzKey(String hotelId, String userId) {
         return STAFF_AUTHZ_PREFIX + hotelId + ":" + userId;
     }
 
@@ -127,7 +126,7 @@ public class RedisAuthStateService {
         return HOTEL_TOKEN_INDEX_PREFIX + hotelId;
     }
 
-    private static String staffTokenIndexKey(String hotelId, UUID userId) {
+    private static String staffTokenIndexKey(String hotelId, String userId) {
         return STAFF_TOKEN_INDEX_PREFIX + hotelId + ":" + userId;
     }
 

@@ -140,7 +140,7 @@ All business endpoints are versioned under `/api/v1` and return JSON. Date/time 
 ### Representative sale flow
 
 1. `GET /api/v1/menu/items` shows active menu items for the caller's hotel (optionally filter with `categoryId` and availability).
-2. `POST /api/v1/orders` accepts `{"items":[{"menuItemId":"<menu item UUID>","quantity":2}]}`. It accepts menu item IDs and quantities only. The server loads current hotel-owned prices, stores name/price snapshots, and calculates subtotal and grand total.
+2. `POST /api/v1/orders` accepts `{"items":[{"menuItemId":"<formatted menu item ID>","quantity":2}]}`. Business entity IDs are strings without underscores. It accepts menu item IDs and quantities only. The server loads current hotel-owned prices, stores name/price snapshots, and calculates subtotal and grand total.
 3. `GET /api/v1/orders/{id}/bill` returns the server-calculated bill.
 4. Accept cash or show the hotel's UPI scanner. For UPI, staff first verifies the transfer in the hotel app, then records the payment with `POST /api/v1/orders/{id}/payments`. Overpayment is rejected; the order becomes completed when fully paid. Payment, order state, receipt snapshot, and audit write are transactional.
 5. `GET /api/v1/orders/{id}/receipt` returns the stored receipt snapshot, unaffected by future menu or hotel configuration changes.

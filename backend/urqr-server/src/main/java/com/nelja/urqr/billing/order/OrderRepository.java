@@ -2,7 +2,6 @@ package com.nelja.urqr.billing.order;
 
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,13 +10,13 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface OrderRepository extends JpaRepository<Order, UUID> {
+public interface OrderRepository extends JpaRepository<Order, String> {
 
-    Optional<Order> findByIdAndHotelId(UUID id, String hotel);
+    Optional<Order> findByIdAndHotelId(String id, String hotel);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id=:id and o.hotelId=:hotel")
-    Optional<Order> findForUpdate(@Param("id") UUID id, @Param("hotel") String hotel);
+    Optional<Order> findForUpdate(@Param("id") String id, @Param("hotel") String hotel);
 
     // Explicit casts keep PostgreSQL from treating nullable filter parameters as unknown types.
     @Query(value = """

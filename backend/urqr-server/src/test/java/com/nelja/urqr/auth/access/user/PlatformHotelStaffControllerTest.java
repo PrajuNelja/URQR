@@ -15,6 +15,7 @@ import com.nelja.urqr.auth.audit.AuditService;
 import com.nelja.urqr.auth.hotel.Hotel;
 import com.nelja.urqr.auth.hotel.HotelRepository;
 import com.nelja.urqr.auth.security.HotelRlsContext;
+import com.nelja.urqr.common.id.BusinessIdGenerator;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Optional;
@@ -42,6 +43,7 @@ class PlatformHotelStaffControllerTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private HotelRlsContext rlsContext;
     @Mock private AuditService audit;
+    @Mock private BusinessIdGenerator ids;
     @Captor private ArgumentCaptor<StaffUser> userCaptor;
     @InjectMocks private PlatformHotelStaffController controller;
 
@@ -64,6 +66,8 @@ class PlatformHotelStaffControllerTest {
         when(roles.findByHotelIdAndName(HOTEL_ID, "CASHIER")).thenReturn(Optional.of(cashierRole));
         when(passwordEncoder.encode("ManagerPass@123")).thenReturn("hashed-manager-password");
         when(passwordEncoder.encode("CashierPass@123")).thenReturn("hashed-cashier-password");
+        when(ids.nextStaffId(HOTEL_ID, "MANAGER")).thenReturn("MGRTES01");
+        when(ids.nextStaffId(HOTEL_ID, "CASHIER")).thenReturn("CSRTES01");
 
         StaffUser managerResponse = savedUser("manager-1");
         StaffUser cashierResponse = savedUser("cashier-1");
@@ -129,7 +133,7 @@ class PlatformHotelStaffControllerTest {
 
     private static StaffUser savedUser(String username) {
         StaffUser user = mock(StaffUser.class);
-        when(user.getId()).thenReturn(UUID.randomUUID());
+        when(user.getId()).thenReturn("MGRTES01");
         when(user.getUsername()).thenReturn(username);
         when(user.getStatus()).thenReturn("ACTIVE");
         when(user.getCreatedAt()).thenReturn(Instant.parse("2026-01-01T00:00:00Z"));

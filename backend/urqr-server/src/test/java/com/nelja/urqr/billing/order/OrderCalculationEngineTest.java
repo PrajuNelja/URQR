@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.nelja.urqr.billing.catalog.item.MenuItem;
 import java.math.BigDecimal;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class OrderCalculationEngineTest {
@@ -13,7 +12,7 @@ class OrderCalculationEngineTest {
 
     @Test
     void discountsAndRoundsEachTaxComponentPerLine() {
-        MenuItem item = new MenuItem(UUID.randomUUID().toString(), UUID.randomUUID(), "Tea", new BigDecimal("100.00"));
+        MenuItem item = new MenuItem("CATGRA0001", "GRA0001", "CATGRA001", "Tea", new BigDecimal("100.00"));
         item.update(item.getCategoryId(), "Tea", new BigDecimal("100.00"), new BigDecimal("9.00"),
                 new BigDecimal("9.00"), BigDecimal.ZERO, new BigDecimal("10.00"));
 
@@ -29,7 +28,7 @@ class OrderCalculationEngineTest {
 
     @Test
     void calculatesZeroDiscountAndZeroTax() {
-        MenuItem item = new MenuItem(UUID.randomUUID().toString(), UUID.randomUUID(), "Mineral Water", new BigDecimal("25.00"));
+        MenuItem item = new MenuItem("CATGRA0002", "GRA0001", "CATGRA001", "Mineral Water", new BigDecimal("25.00"));
         item.update(item.getCategoryId(), "Mineral Water", new BigDecimal("25.00"), BigDecimal.ZERO,
                 BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
 
@@ -45,7 +44,7 @@ class OrderCalculationEngineTest {
 
     @Test
     void calculatesMultiQuantityWithCGSTAndSGST() {
-        MenuItem item = new MenuItem(UUID.randomUUID().toString(), UUID.randomUUID(), "Paneer Butter Masala", new BigDecimal("240.00"));
+        MenuItem item = new MenuItem("CATGRA0003", "GRA0001", "CATGRA001", "Paneer Butter Masala", new BigDecimal("240.00"));
         item.update(item.getCategoryId(), "Paneer Butter Masala", new BigDecimal("240.00"), new BigDecimal("2.50"),
                 new BigDecimal("2.50"), BigDecimal.ZERO, new BigDecimal("5.00"));
 
@@ -67,7 +66,7 @@ class OrderCalculationEngineTest {
 
     @Test
     void calculatesVATOnlyWithoutGST() {
-        MenuItem item = new MenuItem(UUID.randomUUID().toString(), UUID.randomUUID(), "Special Juice", new BigDecimal("120.00"));
+        MenuItem item = new MenuItem("CATGRA0004", "GRA0001", "CATGRA001", "Special Juice", new BigDecimal("120.00"));
         item.update(item.getCategoryId(), "Special Juice", new BigDecimal("120.00"), BigDecimal.ZERO,
                 BigDecimal.ZERO, new BigDecimal("12.50"), BigDecimal.ZERO);
 
@@ -87,7 +86,7 @@ class OrderCalculationEngineTest {
 
     @Test
     void calculatesFullHundredPercentDiscount() {
-        MenuItem item = new MenuItem(UUID.randomUUID().toString(), UUID.randomUUID(), "Complimentary Sweet", new BigDecimal("50.00"));
+        MenuItem item = new MenuItem("CATGRA0005", "GRA0001", "CATGRA001", "Complimentary Sweet", new BigDecimal("50.00"));
         item.update(item.getCategoryId(), "Complimentary Sweet", new BigDecimal("50.00"), new BigDecimal("9.00"),
                 new BigDecimal("9.00"), BigDecimal.ZERO, new BigDecimal("100.00"));
 
@@ -103,7 +102,7 @@ class OrderCalculationEngineTest {
 
     @Test
     void calculatesHalfUpRoundingPrecisionOnFractionalAmounts() {
-        MenuItem item = new MenuItem(UUID.randomUUID().toString(), UUID.randomUUID(), "Idli Set", new BigDecimal("33.33"));
+        MenuItem item = new MenuItem("CATGRA0006", "GRA0001", "CATGRA001", "Idli Set", new BigDecimal("33.33"));
         item.update(item.getCategoryId(), "Idli Set", new BigDecimal("33.33"), new BigDecimal("2.50"),
                 new BigDecimal("2.50"), BigDecimal.ZERO, BigDecimal.ZERO);
 

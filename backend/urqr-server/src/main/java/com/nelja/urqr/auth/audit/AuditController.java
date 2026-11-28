@@ -3,7 +3,6 @@ package com.nelja.urqr.auth.audit;
 import com.nelja.urqr.auth.security.CurrentHotel;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.time.Instant;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,7 +39,7 @@ public class AuditController {
         return audit.findAllByHotelIdOrderByCreatedAtDesc(tenant.hotelId(jwt), bounded).map(AuditDto::from);
     }
 
-    public record AuditDto(UUID id, UUID userId, String action, String entity, String entityId,
+    public record AuditDto(String id, String userId, String action, String entity, String entityId,
             String oldValue, String newValue, Instant createdAt) {
         static AuditDto from(AuditRecord record) {
             return new AuditDto(record.getId(), record.getUserId(), record.getAction(), record.getEntity(),

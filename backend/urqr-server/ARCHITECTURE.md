@@ -37,7 +37,8 @@ The custom outbox table is the single delivery source. It is used instead of Spr
 
 - V1-V3 created the original tenant auth and billing tables. They remain in migration history so existing databases can be upgraded in order.
 - V4-V10 added the hotel-owned POS, staff, receipt, and outbox model and later schema improvements.
-- V11 moves `outbox_events` from `tenant_id` to `hotel_id`, adds a hotel foreign key and hotel RLS policy, then drops the unused tenant auth and billing tables. Existing outbox rows are retained when their owner UUID matches a hotel UUID.
+- V11 moves `outbox_events` from `tenant_id` to `hotel_id`, adds a hotel foreign key and hotel RLS policy, then drops the unused tenant auth and billing tables. Existing outbox rows are retained when their owner ID matches a hotel ID.
+- V14 converts staff, audit, catalog, order, payment, and receipt IDs to formatted strings, migrates their references, and seeds atomic sequence counters.
 - Never edit an applied migration. Add a new `V<n>__description.sql` file for schema changes.
 - Hibernate uses `ddl-auto=validate`; Flyway is the schema writer. `application-local.properties` also validates rather than silently updating tables.
 - Testcontainers applies the complete migration chain to clean PostgreSQL 18.7. Check the local Docker database separately with the command below before relying on its state.
@@ -77,10 +78,10 @@ Check the Flyway history in the local Docker PostgreSQL database:
 docker compose --env-file .env -f docker-compose.yaml exec postgres psql -U urqr -d urqr -c "SELECT version, script, checksum, installed_on FROM flyway_schema_history ORDER BY installed_rank;"
 ```
 
-To seed demo menu data, use an existing hotel UUID only in a disposable local database. The script is idempotent and outside Flyway's migration folder. This simple command runs as the local database owner, so it bypasses RLS; use the non-owner `urqr_app` role when you specifically want to exercise the policies:
+To seed demo menu data, use an existing hotel ID only in a disposable local database. The script is idempotent and outside Flyway's migration folder. This simple command runs as the local database owner, so it bypasses RLS; use the non-owner `urqr_app` role when you specifically want to exercise the policies:
 
 ```powershell
-$hotelId = "<existing hotel UUID>"
+$hotelId = "<existing hotel ID>"
 Get-Content -Raw -Encoding utf8 .\src\main\resources\db\dev-seed.sql |
   docker compose --env-file .env -f docker-compose.yaml exec -T postgres psql -U urqr -d urqr -v "hotel_id=$hotelId"
 ```
