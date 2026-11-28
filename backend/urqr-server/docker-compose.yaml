@@ -2,14 +2,14 @@ services:
   postgres:
     image: postgres:18.7-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-urqr}
-      POSTGRES_USER: ${DB_MIGRATION_USER:-urqr}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-NeljaTeck}
+      POSTGRES_DB: urqr
+      POSTGRES_USER: urqr
+      POSTGRES_PASSWORD: NeljaTeck
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - postgres-data-v3:/var/lib/postgresql
+      - postgres-data-v3:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
